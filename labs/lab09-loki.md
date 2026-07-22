@@ -13,11 +13,15 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
-## Summary
+## Introduction
 
 This lab introduces centralized logging using Grafana Loki.
 
 Loki stores Kubernetes logs while Grafana Alloy collects logs from the cluster and forwards them to Loki. Grafana is extended with Loki as an additional data source, providing a unified interface for metrics and logs.
+
+## Outcome
+
+Implement and validate Loki and Alloy in the complete platform reference implementation.
 
 ## Prerequisites
 
@@ -97,10 +101,6 @@ This lab consists of the following high-level tasks.
 6. Verify log collection
 7. Query Kubernetes logs
 8. Validate end-to-end logging
-
-## Outcome
-
-Implement and validate Loki and Alloy in the complete platform reference implementation.
 
 ## Repository Changes
 

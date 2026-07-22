@@ -13,13 +13,29 @@
 | **Kubernetes** | No |
 | **GitOps** | No |
 
-## Summary
+## Introduction
 
 This lab provisions the foundational AWS networking layer for the platform.
 
 A production-inspired Virtual Private Cloud (VPC) is created with public and private subnets distributed across multiple Availability Zones. Internet connectivity, outbound access and routing are configured to support future workloads running on Amazon EKS.
 
 The networking resources created in this lab form the foundation for every subsequent lab in the project.
+
+## Outcome
+
+In this lab you create the first reusable infrastructure module and the first environment-specific live Terraform stack.
+
+The completed implementation provisions:
+
+- one dedicated VPC using primary CIDR `10.100.0.0/24`
+- optional secondary VPC CIDR `100.64.0.0/18` for EKS-ready private subnets
+- two public subnets across two Availability Zones
+- two platform private subnets, plus optional EKS private subnets, across two Availability Zones
+- one Internet Gateway
+- one cost-optimized NAT Gateway by default
+- public and private route tables
+- subnet discovery tags required by future EKS load balancers
+- remote Terraform state in the S3 backend created during Lab 02
 
 ## Prerequisites
 
@@ -162,22 +178,6 @@ This lab consists of the following high-level tasks.
 7. Configure Route Tables
 8. Associate Route Tables with subnets
 9. Verify network connectivity
-
-## Outcome
-
-In this lab you create the first reusable infrastructure module and the first environment-specific live Terraform stack.
-
-The completed implementation provisions:
-
-- one dedicated VPC using primary CIDR `10.100.0.0/24`
-- optional secondary VPC CIDR `100.64.0.0/18` for EKS-ready private subnets
-- two public subnets across two Availability Zones
-- two platform private subnets, plus optional EKS private subnets, across two Availability Zones
-- one Internet Gateway
-- one cost-optimized NAT Gateway by default
-- public and private route tables
-- subnet discovery tags required by future EKS load balancers
-- remote Terraform state in the S3 backend created during Lab 02
 
 The expected repository layout is:
 

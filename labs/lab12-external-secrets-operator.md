@@ -13,6 +13,12 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
+## Introduction
+
+This lab introduces External Secrets Operator for synchronizing secrets from AWS Secrets Manager into Kubernetes.
+
+The goal is to keep real secret values outside Git while still managing the secret synchronization configuration declaratively through the platform GitOps repository.
+
 ## Outcome
 Implement and validate External Secrets Operator in the complete platform reference implementation.
 

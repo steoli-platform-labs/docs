@@ -13,6 +13,12 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
+## Introduction
+
+This lab introduces Kubernetes NetworkPolicies for controlling pod-to-pod and pod-to-platform traffic.
+
+Network policies provide workload isolation inside the cluster and make application connectivity explicit instead of relying on default open namespace networking.
+
 ## Outcome
 Implement and validate Network Policies in the complete platform reference implementation.
 

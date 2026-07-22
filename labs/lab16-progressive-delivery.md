@@ -13,6 +13,12 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
+## Introduction
+
+This lab introduces progressive delivery for the sample application.
+
+Progressive delivery makes releases safer by shifting traffic gradually and keeping image updates explicit, reviewable and traceable through GitOps.
+
 ## Outcome
 Implement and validate Progressive Delivery in the complete platform reference implementation.
 

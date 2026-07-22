@@ -13,6 +13,12 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
+## Introduction
+
+This lab improves the sample application's availability and resilience configuration.
+
+The lab validates probes, disruption handling and scheduling rules so the workload behaves predictably during node maintenance, pod restarts and normal cluster changes.
+
 ## Outcome
 Implement and validate High Availability and Resilience in the complete platform reference implementation.
 

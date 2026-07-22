@@ -13,11 +13,15 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
-## Summary
+## Introduction
 
 This lab introduces IAM Roles for Service Accounts (IRSA), enabling Kubernetes workloads to authenticate securely with AWS services without using static credentials.
 
 IRSA integrates Kubernetes service accounts with AWS IAM through the Amazon EKS OIDC identity provider, allowing workloads to obtain temporary AWS credentials automatically.
+
+## Outcome
+
+Implement and validate IRSA in the complete platform reference implementation.
 
 ## Prerequisites
 
@@ -108,10 +112,6 @@ This lab consists of the following high-level tasks.
 7. Migrate Karpenter
 8. Verify AWS authentication
 9. Remove static credentials
-
-## Outcome
-
-Implement and validate IRSA in the complete platform reference implementation.
 
 ## Repository Changes
 

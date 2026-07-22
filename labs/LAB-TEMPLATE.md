@@ -13,6 +13,11 @@
 | **Kubernetes** | Yes/No |
 | **GitOps** | Yes/No |
 
+## Introduction
+
+Describe what this lab is about and why it matters in two or three short paragraphs.
+Use `Introduction` consistently; do not add a separate `Summary` section.
+
 ## Outcome
 
 State what the lab produces in one or two sentences.
@@ -75,8 +80,6 @@ Link to the next lab.
 
 Use these only when they add clarity:
 
-- `## Introduction`
-- `## Summary`
 - `## Required Software`
 - `## Project Repository Structure`
 - `## Local Workspace`

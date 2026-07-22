@@ -13,6 +13,12 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
+## Introduction
+
+This lab introduces a multi-environment GitOps layout for the platform.
+
+The platform starts separating environment-specific desired state so development, staging and production-style environments can evolve without mixing namespace, policy or application configuration.
+
 ## Outcome
 Implement and validate Multi-Environment Platform in the complete platform reference implementation.
 

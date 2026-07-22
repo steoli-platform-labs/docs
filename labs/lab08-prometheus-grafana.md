@@ -13,13 +13,17 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
-## Summary
+## Introduction
 
 This lab introduces Prometheus and Grafana to provide observability for the Kubernetes platform.
 
 Prometheus collects metrics from Kubernetes and platform components, while Grafana visualizes those metrics through dashboards. Together they establish the monitoring foundation for the platform.
 
 This observability platform will be extended with centralized logging in Lab 09 and distributed tracing in Lab 10.
+
+## Outcome
+
+Implement and validate Prometheus and Grafana in the complete platform reference implementation.
 
 ## Prerequisites
 
@@ -105,10 +109,6 @@ This lab consists of the following high-level tasks.
 7. Import Kubernetes dashboards
 8. Verify metrics collection
 9. Explore the Grafana interface
-
-## Outcome
-
-Implement and validate Prometheus and Grafana in the complete platform reference implementation.
 
 ## Repository Changes
 

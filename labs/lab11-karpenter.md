@@ -13,6 +13,12 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
+## Introduction
+
+This lab introduces Karpenter as the cluster autoscaling component for the platform.
+
+Karpenter watches unschedulable pods and provisions right-sized compute capacity for the EKS cluster. In this lab it is managed through GitOps so autoscaling configuration remains declarative and reviewable.
+
 ## Outcome
 Implement and validate Karpenter in the complete platform reference implementation.
 

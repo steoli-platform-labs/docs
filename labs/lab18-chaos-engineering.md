@@ -13,6 +13,12 @@
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
+## Introduction
+
+This lab introduces lightweight chaos validation for the platform.
+
+The goal is to run controlled failure tests against the sample application and verify that the platform's deployment, observability and resilience settings recover as expected.
+
 ## Outcome
 Implement and validate Chaos Engineering in the complete platform reference implementation.
 

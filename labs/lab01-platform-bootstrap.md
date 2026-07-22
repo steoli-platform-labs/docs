@@ -13,13 +13,19 @@
 | **Kubernetes** | No |
 | **GitOps** | No |
 
-## Summary
+## Introduction
 
 This lab prepares the local development environment and AWS account for the Platform Engineering project.
 
 No cloud infrastructure is provisioned during this lab. Instead, the required development tools, AWS access and Git repositories are prepared for the remainder of the project.
 
 This is the only lab that requires manual setup of the local workstation.
+
+## Outcome
+
+After completing this guide, you will have a verified local toolchain, authenticated AWS CLI access, a GitHub organization with seven repositories and a local workspace containing all repository clones.
+
+This guide does not provision AWS infrastructure.
 
 ## Prerequisites
 
@@ -130,12 +136,6 @@ This lab consists of the following high-level tasks.
 4. Create the GitHub repositories
 5. Clone the repositories locally
 6. Verify the development environment
-
-## Outcome
-
-After completing this guide, you will have a verified local toolchain, authenticated AWS CLI access, a GitHub organization with seven repositories and a local workspace containing all repository clones.
-
-This guide does not provision AWS infrastructure.
 
 ## Repository Changes
 
