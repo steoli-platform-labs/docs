@@ -213,7 +213,9 @@ Common issues:
 
 ## Commit and Push
 
-Commit the workflow and documentation changes in the repositories that changed. Do not commit virtual environments, local Docker artifacts, tokens or generated files.
+No commit is required if the workflow files already exist and the validation commands pass.
+
+If you changed a workflow file while completing this lab, commit only the changed workflow file in the repository that owns it. Do not commit virtual environments, local Docker artifacts, tokens or generated files.
 
 In `sample-api`:
 
@@ -269,6 +271,8 @@ git add labs/lab06-github-actions.md
 git commit -m "complete lab 06 github actions guide"
 git push
 ```
+
+Skip the `docs` commit unless you changed this guide.
 
 ## Final Repository State
 
