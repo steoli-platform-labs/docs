@@ -180,17 +180,6 @@ Use a focused conventional commit such as `feat: complete lab 10`.
 
 The implementation remains GitOps-driven and mergeable to `main`.
 
-## Success Criteria
-
-This lab is complete when:
-
-- Tempo is operational.
-- OpenTelemetry Collector is operational.
-- Distributed traces are visible in Grafana.
-- The sample application generates trace data.
-- Metrics, logs and traces can be correlated.
-- The observability platform is fully operational.
-
 ## Best Practices
 
 This lab follows cloud-native observability best practices.
@@ -207,19 +196,13 @@ No cleanup is required.
 
 Tempo and OpenTelemetry remain permanent platform services.
 
-## Lessons Learned
-
-Distributed tracing provides visibility into request flows across distributed systems.
-
-By combining Tempo, OpenTelemetry, Prometheus, Loki and Grafana, the platform now delivers a complete observability solution capable of supporting production-grade Kubernetes workloads.
-
 ## References
 
-- Grafana Tempo Documentation
-- OpenTelemetry Documentation
-- Grafana Documentation
-- CNCF Observability Landscape
-- OpenTelemetry Specification
+- [Grafana Tempo Documentation](https://grafana.com/docs/tempo/latest/)
+- [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
+- [CNCF Observability Landscape](https://landscape.cncf.io/card-mode?category=observability-and-analysis)
+- [OpenTelemetry Specification](https://opentelemetry.io/docs/specs/otel/)
 
 ## Next Steps
 

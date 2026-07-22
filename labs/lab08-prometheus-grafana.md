@@ -187,16 +187,6 @@ Use a focused conventional commit such as `feat: complete lab 08`.
 
 The implementation remains GitOps-driven and mergeable to `main`.
 
-## Success Criteria
-
-This lab is complete when:
-
-- Prometheus is operational.
-- Grafana is operational.
-- Kubernetes metrics are visible.
-- Dashboards display live platform metrics.
-- The observability platform is ready for logging and tracing integration.
-
 ## Best Practices
 
 This lab follows observability best practices.
@@ -213,21 +203,13 @@ No cleanup is required.
 
 Prometheus and Grafana remain core platform services for the remainder of the project.
 
-## Lessons Learned
-
-Observability begins with metrics.
-
-By deploying Prometheus and Grafana through ArgoCD, the platform gains continuous visibility into Kubernetes health and performance while remaining fully aligned with GitOps principles.
-
-This monitoring foundation will be extended with centralized logging and distributed tracing in the following labs.
-
 ## References
 
-- Prometheus Documentation
-- Prometheus Operator Documentation
-- kube-prometheus-stack Documentation
-- Grafana Documentation
-- CNCF Observability Landscape
+- [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
+- [Prometheus Operator Documentation](https://prometheus-operator.dev/docs/)
+- [kube-prometheus-stack Documentation](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
+- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
+- [CNCF Observability Landscape](https://landscape.cncf.io/card-mode?category=observability-and-analysis)
 
 ## Next Steps
 

@@ -89,8 +89,5 @@ Use these only when they add clarity:
 - `## Network Layout`
 - `## Implementation Overview`
 - `## Values Used in This Guide`
-- `## Success Criteria`
 - `## Best Practices`
-- `## Completion Checklist`
-- `## Lessons Learned`
 - `## References`

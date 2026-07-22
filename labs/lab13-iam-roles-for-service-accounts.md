@@ -201,16 +201,6 @@ Use a focused conventional commit such as `feat: complete lab 13`.
 
 The implementation remains GitOps-driven and mergeable to `main`.
 
-## Success Criteria
-
-This lab is complete when:
-
-- Kubernetes workloads authenticate using IRSA.
-- AWS STS issues temporary credentials.
-- External Secrets Operator uses IRSA.
-- Karpenter uses IRSA.
-- Static AWS credentials have been eliminated.
-
 ## Best Practices
 
 This lab follows AWS identity best practices.
@@ -227,19 +217,13 @@ No cleanup is required.
 
 IRSA becomes the platform's standard authentication mechanism for AWS access.
 
-## Lessons Learned
-
-IAM Roles for Service Accounts eliminate the need for static AWS credentials in Kubernetes.
-
-By combining OIDC federation, IAM and AWS STS, the platform achieves secure, scalable and production-ready workload authentication aligned with AWS best practices.
-
 ## References
 
-- Amazon EKS IAM Roles for Service Accounts
-- AWS STS Documentation
-- Amazon EKS Best Practices Guide
-- Kubernetes Service Accounts
-- AWS IAM Documentation
+- [Amazon EKS IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+- [AWS STS Documentation](https://docs.aws.amazon.com/STS/latest/APIReference/welcome.html)
+- [Amazon EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
+- [Kubernetes Service Accounts](https://kubernetes.io/docs/concepts/security/service-accounts/)
+- [AWS IAM Documentation](https://docs.aws.amazon.com/iam/)
 
 ## Next Steps
 

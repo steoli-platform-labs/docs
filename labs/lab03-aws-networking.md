@@ -523,16 +523,6 @@ At completion:
 - Network code is separated into a reusable module and a live environment stack.
 - No temporary connectivity-test resources remain.
 
-## Success Criteria
-
-This lab is complete when:
-
-- The networking infrastructure has been successfully provisioned.
-- Public and private routing functions correctly.
-- The network is prepared for Amazon EKS.
-- All resources are managed through Terraform.
-- The platform foundation is ready for Amazon EKS.
-
 ## Best Practices
 
 This lab follows AWS networking best practices.
@@ -548,12 +538,6 @@ This lab follows AWS networking best practices.
 No cleanup is required.
 
 The networking infrastructure created during this lab will be used throughout the remainder of the project.
-
-## Lessons Learned
-
-Networking is one of the most important components of any cloud platform.
-
-By establishing a dedicated, highly available networking layer early in the project, future services such as Amazon EKS, GitOps, monitoring and application workloads can be deployed consistently and securely.
 
 ## References
 

@@ -188,16 +188,6 @@ Use a focused conventional commit such as `feat: complete lab 09`.
 
 The implementation remains GitOps-driven and mergeable to `main`.
 
-## Success Criteria
-
-This lab is complete when:
-
-- Loki is operational.
-- Grafana Alloy collects logs successfully.
-- Grafana displays Kubernetes logs.
-- Platform and application logs are searchable.
-- The observability platform is prepared for distributed tracing.
-
 ## Best Practices
 
 This lab follows cloud-native logging best practices.
@@ -214,21 +204,13 @@ No cleanup is required.
 
 Loki and Grafana Alloy remain permanent platform services.
 
-## Lessons Learned
-
-Centralized logging provides operational visibility across the Kubernetes platform.
-
-By combining Loki, Grafana Alloy and Grafana, the platform now supports both metrics and logs within a unified observability stack deployed entirely through GitOps.
-
-This observability foundation will be completed in the next lab by introducing distributed tracing.
-
 ## References
 
-- Grafana Loki Documentation
-- Grafana Alloy Documentation
-- Grafana Documentation
-- Kubernetes Logging Architecture
-- CNCF Observability Landscape
+- [Grafana Loki Documentation](https://grafana.com/docs/loki/latest/)
+- [Grafana Alloy Documentation](https://grafana.com/docs/alloy/latest/)
+- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
+- [Kubernetes Logging Architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/)
+- [CNCF Observability Landscape](https://landscape.cncf.io/card-mode?category=observability-and-analysis)
 
 ## Next Steps
 

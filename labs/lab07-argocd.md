@@ -238,17 +238,6 @@ Use a focused conventional commit such as `feat: complete lab 07`.
 
 The implementation remains GitOps-driven and mergeable to `main`.
 
-## Success Criteria
-
-This lab is complete when:
-
-- ArgoCD is operational.
-- Git repositories are connected.
-- Applications deploy automatically.
-- Drift detection functions correctly.
-- Self-healing restores modified resources.
-- Git becomes the single source of truth for Kubernetes deployments.
-
 ## Best Practices
 
 This lab follows GitOps best practices.
@@ -267,21 +256,13 @@ No cleanup is required.
 
 ArgoCD becomes the primary deployment platform for all remaining Kubernetes workloads.
 
-## Lessons Learned
-
-GitOps provides a declarative deployment model where Git defines the desired state of the platform.
-
-By combining GitHub Actions, Helm and ArgoCD, the platform now has a modern deployment pipeline that separates validation from deployment while ensuring consistent, automated and auditable application delivery.
-
-This establishes the operational foundation for the remaining platform services.
-
 ## References
 
-- ArgoCD Documentation
-- GitOps Principles
-- Helm Documentation
-- Kubernetes Documentation
-- CNCF Argo Project
+- [Argo CD Documentation](https://argo-cd.readthedocs.io/)
+- [OpenGitOps Principles](https://opengitops.dev/)
+- [Helm Documentation](https://helm.sh/docs/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [CNCF Argo Project](https://www.cncf.io/projects/argo/)
 
 ## Next Steps
 
