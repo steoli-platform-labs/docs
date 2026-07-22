@@ -21,12 +21,6 @@ A production-inspired Virtual Private Cloud (VPC) is created with public and pri
 
 The networking resources created in this lab form the foundation for every subsequent lab in the project.
 
-## Purpose
-
-The purpose of this lab is to establish a secure, scalable and highly available network architecture that will host all future platform components.
-
-Rather than using the default AWS VPC, a dedicated networking environment is created following AWS networking best practices.
-
 ## Prerequisites
 
 Before starting this lab:

@@ -19,12 +19,6 @@ This lab introduces IAM Roles for Service Accounts (IRSA), enabling Kubernetes w
 
 IRSA integrates Kubernetes service accounts with AWS IAM through the Amazon EKS OIDC identity provider, allowing workloads to obtain temporary AWS credentials automatically.
 
-## Purpose
-
-The purpose of this lab is to establish secure workload authentication between Kubernetes and AWS.
-
-By replacing static credentials with IAM roles and temporary credentials, the platform follows AWS security best practices while reducing operational risk.
-
 ## Prerequisites
 
 Before starting this lab:

@@ -19,12 +19,6 @@ This lab introduces ArgoCD as the GitOps deployment platform for Kubernetes.
 
 ArgoCD continuously monitors Git repositories and automatically synchronizes the desired platform state with the Amazon EKS cluster. From this point onward, Git becomes the single source of truth for Kubernetes deployments.
 
-## Purpose
-
-The purpose of this lab is to implement a GitOps workflow where Kubernetes deployments are managed declaratively through Git repositories instead of manual commands.
-
-By introducing ArgoCD, deployments become automated, auditable, repeatable and consistent across environments.
-
 ## Prerequisites
 
 Before starting this lab:

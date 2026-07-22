@@ -21,12 +21,6 @@ No cloud infrastructure is provisioned during this lab. Instead, the required de
 
 This is the only lab that requires manual setup of the local workstation.
 
-## Purpose
-
-The purpose of this lab is to establish a consistent and repeatable development environment.
-
-By the end of this lab, both the AWS environment and the local workstation will be ready for Infrastructure as Code deployments.
-
 ## Prerequisites
 
 Before starting this lab, ensure you have:

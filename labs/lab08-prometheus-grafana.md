@@ -21,12 +21,6 @@ Prometheus collects metrics from Kubernetes and platform components, while Grafa
 
 This observability platform will be extended with centralized logging in Lab 09 and distributed tracing in Lab 10.
 
-## Purpose
-
-The purpose of this lab is to implement a production-inspired monitoring platform that provides visibility into the health, performance and capacity of the Kubernetes environment.
-
-Monitoring is a fundamental capability of every Platform Engineering team and forms the basis for alerting, troubleshooting and capacity planning.
-
 ## Prerequisites
 
 Before starting this lab:

@@ -19,12 +19,6 @@ This lab introduces centralized logging using Grafana Loki.
 
 Loki stores Kubernetes logs while Grafana Alloy collects logs from the cluster and forwards them to Loki. Grafana is extended with Loki as an additional data source, providing a unified interface for metrics and logs.
 
-## Purpose
-
-The purpose of this lab is to implement centralized log collection for the Kubernetes platform.
-
-Centralized logging enables efficient troubleshooting, operational visibility and incident investigation by aggregating logs from platform services and applications into a single location.
-
 ## Prerequisites
 
 Before starting this lab:

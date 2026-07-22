@@ -77,7 +77,6 @@ Use these only when they add clarity:
 
 - `## Introduction`
 - `## Summary`
-- `## Purpose`
 - `## Required Software`
 - `## Project Repository Structure`
 - `## Local Workspace`
