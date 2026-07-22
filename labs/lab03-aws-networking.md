@@ -95,62 +95,21 @@ Before starting this lab:
 
 The networking architecture follows AWS Well-Architected design principles.
 
-### Dedicated VPC
+- **Dedicated VPC:** The default AWS VPC is not used. A dedicated VPC provides better isolation, easier management and greater flexibility for future platform expansion.
 
-The default AWS VPC is not used.
+- **CIDR planning:** The primary VPC CIDR is intentionally small: `10.100.0.0/24`. Treat the primary CIDR as part of the agreed IP plan because it may need to route to customer networks, shared services, VPNs, Transit Gateway or other VPCs later. Amazon EKS can consume many IP addresses when using the AWS VPC CNI. To avoid exhausting the primary range, the lab can optionally allocate EKS-ready private subnets from a secondary VPC CIDR: `100.64.0.0/18`. `100.64.0.0/10` is the RFC 6598 shared address space, also known as CGNAT space. AWS allows it for VPC CIDRs, and it is commonly used for Kubernetes pod-heavy ranges, but it is not magic private space. The selected secondary CIDR is platform-internal and must still be planned so it does not overlap with current or future connected networks.
 
-A dedicated VPC provides better isolation, easier management and greater flexibility for future platform expansion.
+- **Public subnets:** Public subnets are reserved for infrastructure components that require direct internet connectivity, such as Application Load Balancers and NAT Gateways.
 
-### CIDR Planning
+- **Private subnets:** Application workloads will never receive public IP addresses. Future workloads include Amazon EKS worker nodes, platform services, GitOps components, the monitoring stack and the logging stack.
 
-The primary VPC CIDR is intentionally small: `10.100.0.0/24`.
+- **Multi-AZ deployment:** Resources are distributed across two Availability Zones to improve availability and resilience.
 
-Treat the primary CIDR as part of the agreed IP plan because it may need to route to customer networks, shared services, VPNs, Transit Gateway or other VPCs later.
+- **Cost-optimized NAT Gateway:** The Development environment uses one NAT Gateway by default to limit recurring lab cost. This creates an Availability Zone dependency for private-subnet outbound connectivity. The reusable module supports one NAT Gateway per Availability Zone when a higher-availability production configuration is required.
 
-Amazon EKS can consume many IP addresses when using the AWS VPC CNI. To avoid exhausting the primary range, the lab can optionally allocate EKS-ready private subnets from a secondary VPC CIDR: `100.64.0.0/18`.
+- **EKS-ready subnet discovery:** Public and private subnets are tagged for future AWS Load Balancer Controller discovery. Public subnets use `kubernetes.io/role/elb = 1`, while private subnets use `kubernetes.io/role/internal-elb = 1`.
 
-`100.64.0.0/10` is the RFC 6598 shared address space, also known as CGNAT space. AWS allows it for VPC CIDRs, and it is commonly used for Kubernetes pod-heavy ranges, but it is not magic private space. The selected secondary CIDR is platform-internal and must still be planned so it does not overlap with current or future connected networks.
-
-### Public Subnets
-
-Public subnets are reserved for infrastructure components that require direct internet connectivity.
-
-Future examples include:
-
-- Application Load Balancers
-- NAT Gateway
-
-### Private Subnets
-
-Application workloads will never receive public IP addresses.
-
-Future workloads include:
-
-- Amazon EKS worker nodes
-- Platform services
-- GitOps components
-- Monitoring stack
-- Logging stack
-
-### Multi-AZ Deployment
-
-Resources are distributed across two Availability Zones to improve availability and resilience.
-
-### Cost-Optimized NAT Gateway
-
-The Development environment uses one NAT Gateway by default to limit recurring lab cost.
-
-This creates an Availability Zone dependency for private-subnet outbound connectivity. The reusable module supports one NAT Gateway per Availability Zone when a higher-availability production configuration is required.
-
-### EKS-Ready Subnet Discovery
-
-Public and private subnets are tagged for future AWS Load Balancer Controller discovery.
-
-Public subnets use `kubernetes.io/role/elb = 1`, while private subnets use `kubernetes.io/role/internal-elb = 1`.
-
-### Reusable Module and Live Configuration
-
-Reusable VPC logic is stored in `platform-modules`, while environment-specific values and remote state configuration are stored in `platform-live`.
+- **Reusable module and live configuration:** Reusable VPC logic is stored in `platform-modules`, while environment-specific values and remote state configuration are stored in `platform-live`.
 
 ## Network Layout
 

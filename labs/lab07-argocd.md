@@ -68,52 +68,21 @@ ArgoCD is deployed as a Kubernetes application inside the existing Amazon EKS cl
 
 The platform follows modern GitOps best practices.
 
-### Git as the Source of Truth
+- **Git as the source of truth:** Git repositories define the desired state of the platform. Manual changes to the Kubernetes cluster are not considered permanent.
 
-Git repositories define the desired state of the platform.
+- **Declarative deployments:** Applications are deployed declaratively using Kubernetes manifests and Helm charts stored in Git.
 
-Manual changes to the Kubernetes cluster are not considered permanent.
+- **Continuous reconciliation:** ArgoCD continuously compares the desired state in Git with the actual state running inside Kubernetes.
 
-### Declarative Deployments
+- **Self-healing:** When cluster resources drift from the desired state, ArgoCD automatically restores the correct configuration.
 
-Applications are deployed declaratively using Kubernetes manifests and Helm charts stored in Git.
+- **Drift detection:** Configuration drift is detected automatically without requiring manual validation.
 
-### Continuous Reconciliation
+- **Automatic synchronization:** Application changes are deployed automatically after they have been validated by the Continuous Integration pipeline.
 
-ArgoCD continuously compares the desired state in Git with the actual state running inside Kubernetes.
+- **Helm integration:** ArgoCD uses Helm as the deployment engine for Kubernetes applications. Helm remains the packaging solution while ArgoCD becomes the deployment orchestrator.
 
-### Self-Healing
-
-When cluster resources drift from the desired state, ArgoCD automatically restores the correct configuration.
-
-### Drift Detection
-
-Configuration drift is detected automatically without requiring manual validation.
-
-### Automatic Synchronization
-
-Application changes are deployed automatically after they have been validated by the Continuous Integration pipeline.
-
-### Helm Integration
-
-ArgoCD uses Helm as the deployment engine for Kubernetes applications.
-
-Helm remains the packaging solution while ArgoCD becomes the deployment orchestrator.
-
-### Separation of Responsibilities
-
-GitHub Actions is responsible for:
-
-- Validation
-- Testing
-- Building artifacts
-
-ArgoCD is responsible for:
-
-- Deployment
-- Synchronization
-- Drift detection
-- Self-healing
+- **Separation of responsibilities:** GitHub Actions is responsible for validation, testing and building artifacts. ArgoCD is responsible for deployment, synchronization, drift detection and self-healing.
 
 ## Implementation Overview
 

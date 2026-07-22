@@ -61,33 +61,17 @@ Tempo and the OpenTelemetry Collector are deployed into the existing Amazon EKS 
 
 The tracing platform follows cloud-native observability best practices.
 
-### GitOps Deployment
+- **GitOps deployment:** All tracing components are deployed through ArgoCD.
 
-All tracing components are deployed through ArgoCD.
+- **Tempo:** Grafana Tempo is selected because it integrates naturally with Grafana and complements the existing observability stack.
 
-### Tempo
+- **OpenTelemetry:** OpenTelemetry is adopted as the platform's standard telemetry framework. Using an open standard avoids vendor lock-in and simplifies future integrations.
 
-Grafana Tempo is selected because it integrates naturally with Grafana and complements the existing observability stack.
+- **Unified observability:** Grafana provides a single interface for metrics, logs and traces. Users can navigate seamlessly between different telemetry signals during troubleshooting.
 
-### OpenTelemetry
+- **Correlation:** Metrics, logs and traces should be correlated wherever possible to improve incident investigation.
 
-OpenTelemetry is adopted as the platform's standard telemetry framework.
-
-Using an open standard avoids vendor lock-in and simplifies future integrations.
-
-### Unified Observability
-
-Grafana provides a single interface for metrics, logs and traces.
-
-Users can navigate seamlessly between different telemetry signals during troubleshooting.
-
-### Correlation
-
-Metrics, logs and traces should be correlated wherever possible to improve incident investigation.
-
-### Platform-First Deployment
-
-Tracing is enabled for both platform services and application workloads where appropriate.
+- **Platform-first deployment:** Tracing is enabled for both platform services and application workloads where appropriate.
 
 ## Implementation Overview
 

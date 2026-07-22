@@ -66,38 +66,17 @@ The following AWS resources are introduced during this lab.
 
 The platform follows AWS security best practices.
 
-### Workload Identity
+- **Workload identity:** Each Kubernetes workload authenticates using its own IAM role.
 
-Each Kubernetes workload authenticates using its own IAM role.
+- **Least privilege:** Each IAM role grants only the permissions required by the associated workload.
 
-### Least Privilege
+- **OIDC federation:** Authentication is performed using the Amazon EKS OIDC provider.
 
-Each IAM role grants only the permissions required by the associated workload.
+- **Temporary credentials:** AWS STS issues temporary credentials automatically. No long-lived AWS access keys are stored in Kubernetes.
 
-### OIDC Federation
+- **GitOps deployment:** All Kubernetes manifests are managed through ArgoCD. Terraform provisions the required IAM resources.
 
-Authentication is performed using the Amazon EKS OIDC provider.
-
-### Temporary Credentials
-
-AWS STS issues temporary credentials automatically.
-
-No long-lived AWS access keys are stored in Kubernetes.
-
-### GitOps Deployment
-
-All Kubernetes manifests are managed through ArgoCD.
-
-Terraform provisions the required IAM resources.
-
-### Platform Migration
-
-Existing platform services are migrated from static credentials to IRSA.
-
-This includes:
-
-- External Secrets Operator
-- Karpenter
+- **Platform migration:** Existing platform services, including External Secrets Operator and Karpenter, are migrated from static credentials to IRSA.
 
 ## Implementation Overview
 

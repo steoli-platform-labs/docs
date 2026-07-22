@@ -64,37 +64,17 @@ Prometheus and Grafana are deployed into the existing Amazon EKS cluster using A
 
 The observability platform follows cloud-native best practices.
 
-### GitOps Deployment
+- **GitOps deployment:** Prometheus and Grafana are deployed through ArgoCD. No manual Helm installations are performed.
 
-Prometheus and Grafana are deployed through ArgoCD.
+- **kube-prometheus-stack:** The platform uses the community-maintained **kube-prometheus-stack** Helm chart, which includes Prometheus Operator and recommended Kubernetes monitoring components.
 
-No manual Helm installations are performed.
+- **Prometheus Operator:** Prometheus Operator manages Prometheus instances and monitoring resources such as ServiceMonitors and PodMonitors.
 
-### kube-prometheus-stack
+- **Grafana as the observability portal:** Grafana serves as the primary interface for platform observability. Additional data sources introduced in later labs will integrate into the existing Grafana instance.
 
-The platform uses the community-maintained **kube-prometheus-stack** Helm chart, which includes Prometheus Operator and recommended Kubernetes monitoring components.
+- **Standard dashboards:** Community-maintained Kubernetes dashboards are used as the initial monitoring dashboards. Custom dashboards may be added later as the platform evolves.
 
-### Prometheus Operator
-
-Prometheus Operator manages Prometheus instances and monitoring resources such as ServiceMonitors and PodMonitors.
-
-### Grafana as the Observability Portal
-
-Grafana serves as the primary interface for platform observability.
-
-Additional data sources introduced in later labs will integrate into the existing Grafana instance.
-
-### Standard Dashboards
-
-Community-maintained Kubernetes dashboards are used as the initial monitoring dashboards.
-
-Custom dashboards may be added later as the platform evolves.
-
-### Metrics First
-
-Metrics provide the first layer of observability.
-
-Logging and distributed tracing will be introduced in subsequent labs.
+- **Metrics first:** Metrics provide the first layer of observability. Logging and distributed tracing will be introduced in subsequent labs.
 
 ## Implementation Overview
 

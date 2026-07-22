@@ -59,35 +59,17 @@ Loki and Grafana Alloy are deployed into the existing Amazon EKS cluster using A
 
 The logging platform follows cloud-native observability best practices.
 
-### GitOps Deployment
+- **GitOps deployment:** All logging components are deployed through ArgoCD. No manual Helm installations are performed.
 
-All logging components are deployed through ArgoCD.
+- **Loki:** Grafana Loki is selected as the centralized logging platform because it integrates natively with Grafana and is optimized for Kubernetes environments.
 
-No manual Helm installations are performed.
+- **Grafana Alloy:** Grafana Alloy is used as the log collection agent. Alloy replaces Promtail and provides a unified telemetry collector capable of collecting logs, metrics and traces.
 
-### Loki
+- **Unified observability:** Grafana provides a single interface for metrics and logs. Distributed tracing will be integrated in the next lab.
 
-Grafana Loki is selected as the centralized logging platform because it integrates natively with Grafana and is optimized for Kubernetes environments.
+- **Label-based indexing:** Loki indexes labels rather than full log contents, reducing storage requirements and improving scalability.
 
-### Grafana Alloy
-
-Grafana Alloy is used as the log collection agent.
-
-Alloy replaces Promtail and provides a unified telemetry collector capable of collecting logs, metrics and traces.
-
-### Unified Observability
-
-Grafana provides a single interface for metrics and logs.
-
-Distributed tracing will be integrated in the next lab.
-
-### Label-Based Indexing
-
-Loki indexes labels rather than full log contents, reducing storage requirements and improving scalability.
-
-### Platform-First Deployment
-
-Logging is enabled for both platform services and application workloads.
+- **Platform-first deployment:** Logging is enabled for both platform services and application workloads.
 
 ## Implementation Overview
 
