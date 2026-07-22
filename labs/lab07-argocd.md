@@ -175,7 +175,18 @@ Key files:
    kubectl apply -f platform-config/bootstrap/root-application.yaml
    ```
 
-6. Verify that Argo CD creates child Applications and reports them as synced or progressing.
+6. Verify that Argo CD creates child Applications and reports them as synced or progressing:
+
+   ```bash
+   kubectl -n argocd get pods
+   kubectl -n argocd get applications.argoproj.io
+   kubectl -n argocd describe application platform-root
+   kubectl -n argocd get application platform-root \
+     -o jsonpath='{.status.sync.status}{" / "}{.status.health.status}{"\n"}'
+   kubectl -n argocd logs deployment/argocd-application-controller --since=10m
+   kubectl get events -A --sort-by=.lastTimestamp | tail -50
+   ```
+
 7. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
 
 The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
@@ -185,18 +196,6 @@ The direct install/bootstrap commands in this section are only for bringing up A
 Argo CD is installed in the `argocd` namespace, the `platform-root` Application exists, and Argo CD begins reconciling the child Applications from `platform-config/clusters/dev`.
 
 ## Validation
-
-### Argo CD verification
-
-```bash
-kubectl -n argocd get pods
-kubectl -n argocd get applications.argoproj.io
-kubectl -n argocd describe application platform-root
-kubectl -n argocd get application platform-root \
-  -o jsonpath='{.status.sync.status}{" / "}{.status.health.status}{"\n"}'
-kubectl -n argocd logs deployment/argocd-application-controller --since=10m
-kubectl get events -A --sort-by=.lastTimestamp | tail -50
-```
 
 Pass criteria:
 

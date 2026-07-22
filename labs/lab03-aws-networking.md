@@ -343,13 +343,7 @@ After completion:
 terraform output
 ```
 
-## Expected Results
-
-Terraform provisions the Development VPC, public subnets, private platform subnets, optional EKS private subnets, Internet Gateway, NAT Gateway, route tables and subnet discovery tags. State is stored in the S3 backend created in Lab 02.
-
-## Validation
-
-### Terraform State and Outputs
+Validate Terraform state and outputs:
 
 ```bash
 terraform state list
@@ -366,53 +360,17 @@ Verify the remote state object:
 aws s3api head-object   --bucket "$(awk -F'"' '/bucket/ {print $2}' backend.hcl)"   --key "platform-live/dev/terraform.tfstate"
 ```
 
-### AWS Resource Configuration
-
-Store the VPC ID:
+Inspect the AWS resource configuration:
 
 ```bash
 VPC_ID="$(terraform output -raw vpc_id)"
-```
-
-Inspect the VPC:
-
-```bash
 aws ec2 describe-vpcs   --vpc-ids "${VPC_ID}"   --query 'Vpcs[0].{VpcId:VpcId,Cidr:CidrBlock,DnsSupport:EnableDnsSupport,DnsHostnames:EnableDnsHostnames}'
-```
-
-Inspect subnets and routing metadata:
-
-```bash
 aws ec2 describe-subnets   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'Subnets[].{SubnetId:SubnetId,AZ:AvailabilityZone,Cidr:CidrBlock,PublicIpOnLaunch:MapPublicIpOnLaunch}'   --output table
-```
-
-Inspect NAT Gateways:
-
-```bash
 aws ec2 describe-nat-gateways   --filter "Name=vpc-id,Values=${VPC_ID}"   --query 'NatGateways[].{Id:NatGatewayId,State:State,Subnet:SubnetId}'   --output table
-```
-
-Inspect route tables:
-
-```bash
 aws ec2 describe-route-tables   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'RouteTables[].{RouteTableId:RouteTableId,Routes:Routes[].{Destination:DestinationCidrBlock,Gateway:GatewayId,NatGateway:NatGatewayId}}'
 ```
 
-### EKS Subnet Discovery Tags
-
-Public subnets must carry:
-
-```text
-kubernetes.io/role/elb = 1
-```
-
-Private subnets must carry:
-
-```text
-kubernetes.io/role/internal-elb = 1
-```
-
-Check them:
+Check EKS subnet discovery tags:
 
 ```bash
 aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json public_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/elb"
@@ -420,9 +378,17 @@ aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform outpu
 aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json private_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/internal-elb"
 ```
 
-The commands above use `jq`. You may also inspect the subnet tags in the AWS Console.
+The tag commands use `jq`. You may also inspect the subnet tags in the AWS Console.
 
-### Connectivity Tests
+## Expected Results
+
+Terraform provisions the Development VPC, public subnets, private platform subnets, optional EKS private subnets, Internet Gateway, NAT Gateway, route tables and subnet discovery tags. State is stored in the S3 backend created in Lab 02.
+
+## Validation
+
+Public subnets must carry `kubernetes.io/role/elb = 1`.
+
+Private subnets must carry `kubernetes.io/role/internal-elb = 1`.
 
 No EC2 instance is launched solely for connectivity testing because it would add temporary infrastructure and cost. Routing is validated through Terraform state, route-table inspection and later by the EKS worker nodes deployed in Lab 04.
 

@@ -125,39 +125,37 @@ Review the Loki and log collection desired-state files and update any environmen
    kubectl -n argocd get application loki alloy -o wide
    ```
 
-5. Validate Loki readiness and confirm Alloy is forwarding Kubernetes logs.
+5. Validate Loki readiness and confirm Alloy is forwarding Kubernetes logs:
+
+   ```bash
+   kubectl -n argocd get application loki alloy -o wide
+   kubectl -n monitoring get pods -l app.kubernetes.io/name=loki
+   kubectl -n monitoring get pods -l app.kubernetes.io/name=alloy
+   kubectl -n monitoring logs -l app.kubernetes.io/name=alloy --since=10m --tail=200
+   kubectl -n monitoring port-forward svc/loki 3100:3100
+   ```
+
+   In another terminal:
+
+   ```bash
+   curl -fsS http://localhost:3100/ready
+   curl -G -fsS http://localhost:3100/loki/api/v1/query_range \
+     --data-urlencode 'query={namespace="sample-api-dev"}' \
+     --data-urlencode "start=$(date -u -v-10M +%s)000000000" \
+     --data-urlencode "end=$(date -u +%s)000000000"
+   ```
+
+   Generate a known log line:
+
+   ```bash
+   kubectl -n sample-api-dev logs deploy/sample-api --tail=5
+   ```
 
 ## Expected Results
 
 The `loki` and `alloy` Argo CD Applications reconcile successfully and log data begins flowing into Loki.
 
 ## Validation
-
-### Loki and Alloy verification
-
-```bash
-kubectl -n argocd get application loki alloy -o wide
-kubectl -n monitoring get pods -l app.kubernetes.io/name=loki
-kubectl -n monitoring get pods -l app.kubernetes.io/name=alloy
-kubectl -n monitoring logs -l app.kubernetes.io/name=alloy --since=10m --tail=200
-kubectl -n monitoring port-forward svc/loki 3100:3100
-```
-
-In another terminal:
-
-```bash
-curl -fsS http://localhost:3100/ready
-curl -G -fsS http://localhost:3100/loki/api/v1/query_range \
-  --data-urlencode 'query={namespace="sample-api-dev"}' \
-  --data-urlencode "start=$(date -u -v-10M +%s)000000000" \
-  --data-urlencode "end=$(date -u +%s)000000000"
-```
-
-Generate a known log line:
-
-```bash
-kubectl -n sample-api-dev logs deploy/sample-api --tail=5
-```
 
 Pass criteria:
 

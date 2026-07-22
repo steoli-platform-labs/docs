@@ -45,33 +45,31 @@ Review the External Secrets desired-state files and update any environment-speci
    kubectl -n argocd get application external-secrets -o wide
    ```
 
-5. Validate the operator, `ClusterSecretStore` readiness and a test `ExternalSecret` reconciliation.
+5. Validate the operator, `ClusterSecretStore` readiness and a test `ExternalSecret` reconciliation:
+
+   ```bash
+   kubectl -n argocd get application external-secrets -o wide
+   kubectl -n external-secrets get pods,serviceaccounts
+   kubectl get clustersecretstore aws-secrets-manager -o yaml
+   kubectl describe clustersecretstore aws-secrets-manager
+   kubectl -n sample-api-dev get externalsecret,secret
+   kubectl -n sample-api-dev describe externalsecret sample-api
+   kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
+   ```
+
+   Create or identify a non-sensitive test secret in AWS Secrets Manager, enable the chart's ExternalSecret configuration, sync Argo CD and verify the Kubernetes Secret metadata and key names without printing values:
+
+   ```bash
+   kubectl -n sample-api-dev get secret sample-api -o jsonpath='{.metadata.name}{"\n"}'
+   kubectl -n sample-api-dev get secret sample-api -o go-template='{{range $key, $_ := .data}}{{printf "%s\n" $key}}{{end}}'
+   ```
+
+   Do not decode, print or screenshot real secret values in terminals, issue comments, pull requests or CI logs.
 
 ## Expected Results
 The `external-secrets` Argo CD Application reconciles successfully and the operator can read from the configured AWS Secrets Manager store.
 
 ## Validation
-### External Secrets Operator verification
-
-```bash
-kubectl -n argocd get application external-secrets -o wide
-kubectl -n external-secrets get pods,serviceaccounts
-kubectl get clustersecretstore aws-secrets-manager -o yaml
-kubectl describe clustersecretstore aws-secrets-manager
-kubectl -n sample-api-dev get externalsecret,secret
-kubectl -n sample-api-dev describe externalsecret sample-api
-kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
-```
-
-Create or identify a non-sensitive test secret in AWS Secrets Manager, enable the chart's ExternalSecret configuration, sync Argo CD and verify the Kubernetes Secret metadata and key names without printing values:
-
-```bash
-kubectl -n sample-api-dev get secret sample-api -o jsonpath='{.metadata.name}{"\n"}'
-kubectl -n sample-api-dev get secret sample-api -o go-template='{{range $key, $_ := .data}}{{printf "%s\n" $key}}{{end}}'
-```
-
-Do not decode, print or screenshot real secret values in terminals, issue comments, pull requests or CI logs.
-
 Pass criteria:
 
 - The operator application is `Synced / Healthy`.

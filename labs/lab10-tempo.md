@@ -126,28 +126,28 @@ Review the Tempo and tracing desired-state files and update any environment-spec
    kubectl -n argocd get application tempo opentelemetry -o wide
    ```
 
-5. Validate Tempo readiness and confirm traces can be queried through Grafana.
+5. Validate Tempo readiness and confirm traces can be queried through Grafana:
+
+   ```bash
+   kubectl -n argocd get application tempo opentelemetry -o wide
+   kubectl -n monitoring get pods
+   kubectl -n monitoring logs -l app.kubernetes.io/name=opentelemetry-collector --since=10m --tail=200
+   kubectl -n monitoring port-forward svc/tempo 3200:3200
+   ```
+
+   In another terminal:
+
+   ```bash
+   curl -fsS http://localhost:3200/ready
+   ```
+
+   Send traffic through the instrumented sample API, then use Grafana Explore to search Tempo by service name and inspect a trace.
 
 ## Expected Results
 
 The `tempo` and `opentelemetry` Argo CD Applications reconcile successfully and the tracing stack becomes ready.
 
 ## Validation
-
-### Tempo and OpenTelemetry verification
-
-```bash
-kubectl -n argocd get application tempo opentelemetry -o wide
-kubectl -n monitoring get pods
-kubectl -n monitoring logs -l app.kubernetes.io/name=opentelemetry-collector --since=10m --tail=200
-kubectl -n monitoring port-forward svc/tempo 3200:3200
-```
-
-```bash
-curl -fsS http://localhost:3200/ready
-```
-
-Send traffic through the instrumented sample API, then use Grafana Explore to search Tempo by service name and inspect a trace.
 
 Pass criteria:
 

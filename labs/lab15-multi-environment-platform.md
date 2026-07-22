@@ -45,26 +45,24 @@ Review the multi-environment configuration files and update any environment-spec
    kubectl -n argocd get applications.argoproj.io -o wide
    ```
 
-5. Validate that each namespace has isolated workloads, policies and configuration.
+5. Validate that each namespace has isolated workloads, policies and configuration:
+
+   ```bash
+   kubectl get namespaces -L environment
+   kubectl get applications.argoproj.io -n argocd
+   for ns in sample-api-dev sample-api-staging sample-api-production; do
+     echo "===== $ns ====="
+     kubectl -n "$ns" get deploy,rollout,svc,pod,externalsecret,networkpolicy,pdb
+     kubectl -n "$ns" get resourcequota,limitrange
+   done
+   ```
+
+   Query each environment's API and confirm the response identifies the correct environment and image version.
 
 ## Expected Results
 The environment namespaces exist and each environment is represented by explicit GitOps desired state rather than ad hoc manual deployment.
 
 ## Validation
-### Multi-environment verification
-
-```bash
-kubectl get namespaces -L environment
-kubectl get applications.argoproj.io -n argocd
-for ns in sample-api-dev sample-api-staging sample-api-production; do
-  echo "===== $ns ====="
-  kubectl -n "$ns" get deploy,rollout,svc,pod,externalsecret,networkpolicy,pdb
-  kubectl -n "$ns" get resourcequota,limitrange
-done
-```
-
-Query each environment's API and confirm the response identifies the correct environment and image version.
-
 Pass criteria:
 
 - Dev, staging and production namespaces exist with correct labels.

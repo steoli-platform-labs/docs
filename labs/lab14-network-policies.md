@@ -50,31 +50,34 @@ Review the NetworkPolicy desired-state files and update any environment-specific
    kubectl -n argocd get application sample-api -o wide
    ```
 
+6. Confirm that the cluster networking implementation enforces Kubernetes NetworkPolicy before interpreting results:
+
+   ```bash
+   kubectl -n sample-api-dev get networkpolicy -o yaml
+   kubectl -n sample-api-dev get pods -l app.kubernetes.io/name=sample-api -o wide
+   ```
+
+7. Run positive and negative tests using temporary pods:
+
+   ```bash
+   kubectl -n sample-api-dev run allowed-client --rm -it --restart=Never \
+     --image=curlimages/curl -- curl -fsS http://sample-api/
+   kubectl create namespace network-denied-test
+   kubectl -n network-denied-test run denied-client --rm -it --restart=Never \
+     --image=curlimages/curl --max-time=5 -- curl -fsS http://sample-api.sample-api-dev.svc.cluster.local/
+   ```
+
+8. Validate DNS and required HTTPS egress from the application pod.
+9. Delete the temporary namespace after validation:
+
+   ```bash
+   kubectl delete namespace network-denied-test
+   ```
+
 ## Expected Results
 The `sample-api` chart renders a NetworkPolicy and the deployed application still passes health checks while unintended traffic is denied.
 
 ## Validation
-### NetworkPolicy verification
-
-Confirm that the cluster networking implementation enforces Kubernetes NetworkPolicy before interpreting results.
-
-```bash
-kubectl -n sample-api-dev get networkpolicy -o yaml
-kubectl -n sample-api-dev get pods -l app.kubernetes.io/name=sample-api -o wide
-```
-
-Run positive and negative tests using temporary pods:
-
-```bash
-kubectl -n sample-api-dev run allowed-client --rm -it --restart=Never \
-  --image=curlimages/curl -- curl -fsS http://sample-api/
-kubectl create namespace network-denied-test
-kubectl -n network-denied-test run denied-client --rm -it --restart=Never \
-  --image=curlimages/curl --max-time=5 -- curl -fsS http://sample-api.sample-api-dev.svc.cluster.local/
-```
-
-Validate DNS and required HTTPS egress from the application pod.
-
 Pass criteria:
 
 - The intended ingress source can reach the API.
@@ -83,12 +86,6 @@ Pass criteria:
 - Only documented outbound destinations/ports work.
 - Existing probes and monitoring traffic continue to function.
 - Denials are reproducible and disappear when the policy is removed in a controlled test.
-
-Delete the temporary namespace after validation:
-
-```bash
-kubectl delete namespace network-denied-test
-```
 
 If the installed AWS VPC CNI configuration does not have NetworkPolicy enforcement enabled, the manifest may exist while traffic remains unrestricted; that is a failed validation.
 

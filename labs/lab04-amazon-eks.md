@@ -91,12 +91,6 @@ terraform apply tfplan
 
 Review the plan before applying. EKS creation can take several minutes.
 
-## Expected Results
-
-Terraform creates an active EKS control plane, a managed node group and access entries configured by the live environment. `kubectl` can connect to the cluster after kubeconfig is updated.
-
-## Validation
-
 Configure kubectl:
 
 ```bash
@@ -117,6 +111,12 @@ kubectl get nodes -o wide
 kubectl get pods -A
 kubectl get --raw='/readyz?verbose'
 ```
+
+## Expected Results
+
+Terraform creates an active EKS control plane, a managed node group and access entries configured by the live environment. `kubectl` can connect to the cluster after kubeconfig is updated.
+
+## Validation
 
 Pass criteria:
 

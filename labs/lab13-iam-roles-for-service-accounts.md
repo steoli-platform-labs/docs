@@ -135,10 +135,35 @@ Review the IRSA Terraform and GitOps files and update any environment-specific v
    ```
 
 4. Commit and push GitOps annotation changes after the IAM roles exist.
-5. Let Argo CD reconcile affected Applications and validate that pods use the annotated service accounts:
+5. Let Argo CD reconcile affected Applications:
 
    ```bash
    kubectl -n argocd get applications.argoproj.io -o wide
+   ```
+
+6. Validate that pods use the annotated service accounts:
+
+   ```bash
+   kubectl -n external-secrets get serviceaccount external-secrets -o yaml
+   kubectl -n karpenter get serviceaccount karpenter -o yaml
+   kubectl -n external-secrets get pod -l app.kubernetes.io/name=external-secrets \
+     -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
+   kubectl -n karpenter get pod -l app.kubernetes.io/name=karpenter \
+     -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
+   ```
+
+   Verify each service account contains the expected annotation:
+
+   ```text
+   eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<role-name>
+   ```
+
+7. Inspect the role trust policy and permissions:
+
+   ```bash
+   aws iam get-role --role-name <role-name>
+   aws iam list-attached-role-policies --role-name <role-name>
+   aws iam list-role-policies --role-name <role-name>
    ```
 
 ## Expected Results
@@ -146,31 +171,6 @@ Review the IRSA Terraform and GitOps files and update any environment-specific v
 IAM roles, trust policies and service-account annotations are present before workloads rely on AWS APIs.
 
 ## Validation
-
-### IRSA verification
-
-```bash
-kubectl -n external-secrets get serviceaccount external-secrets -o yaml
-kubectl -n karpenter get serviceaccount karpenter -o yaml
-kubectl -n external-secrets get pod -l app.kubernetes.io/name=external-secrets \
-  -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
-kubectl -n karpenter get pod -l app.kubernetes.io/name=karpenter \
-  -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
-```
-
-Verify each service account contains the expected annotation:
-
-```text
-eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<role-name>
-```
-
-Inspect the role trust policy and permissions:
-
-```bash
-aws iam get-role --role-name <role-name>
-aws iam list-attached-role-policies --role-name <role-name>
-aws iam list-role-policies --role-name <role-name>
-```
 
 Pass criteria:
 

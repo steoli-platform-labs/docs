@@ -131,32 +131,29 @@ Review the observability desired-state files and update any environment-specific
    kubectl -n argocd get application prometheus -o wide
    ```
 
-4. Verify that Prometheus, Grafana and the monitoring CRDs become healthy.
-5. Validate metrics ingestion through Prometheus and Grafana.
+4. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
+
+   ```bash
+   kubectl -n argocd get application prometheus -o wide
+   kubectl -n monitoring get pods
+   kubectl -n monitoring get servicemonitors,podmonitors,prometheusrules
+   kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
+   ```
+
+5. Validate metrics ingestion through Prometheus and Grafana. In another terminal, query Prometheus:
+
+   ```bash
+   curl -fsS http://localhost:9090/-/ready
+   curl -fsS 'http://localhost:9090/api/v1/query?query=up' | python3 -m json.tool
+   ```
+
+   For Grafana, port-forward the Grafana service, log in using the chart-generated credentials and verify that Kubernetes dashboards display current data.
 
 ## Expected Results
 
 The `prometheus` Argo CD Application reconciles successfully and creates the monitoring stack in the configured namespace.
 
 ## Validation
-
-### Prometheus and Grafana verification
-
-```bash
-kubectl -n argocd get application prometheus -o wide
-kubectl -n monitoring get pods
-kubectl -n monitoring get servicemonitors,podmonitors,prometheusrules
-kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
-```
-
-In another terminal:
-
-```bash
-curl -fsS http://localhost:9090/-/ready
-curl -fsS 'http://localhost:9090/api/v1/query?query=up' | python3 -m json.tool
-```
-
-For Grafana, port-forward the Grafana service, log in using the chart-generated credentials and verify that Kubernetes dashboards display current data.
 
 Pass criteria:
 

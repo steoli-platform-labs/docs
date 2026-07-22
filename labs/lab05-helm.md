@@ -79,18 +79,18 @@ This is a dry run only. Do not deploy the application with `helm install`, `helm
 
 The chart can render an Argo Rollout when `rollout.enabled=true`, but the Argo Rollouts CRD is introduced later. This lab disables Rollout rendering during client-side schema validation so only built-in Kubernetes APIs are checked.
 
-## Expected Results
-
-`helm lint` succeeds, rendered manifests include the expected built-in Kubernetes resources, and the client-side dry run validates without deploying anything.
-
-## Validation
-
 Inspect the rendered resources:
 
 ```bash
 grep '^kind:' /tmp/sample-api-rendered.yaml
 grep -nE 'readinessProbe|livenessProbe|startupProbe|resources:|NetworkPolicy|PodDisruptionBudget' /tmp/sample-api-rendered.yaml
 ```
+
+## Expected Results
+
+`helm lint` succeeds, rendered manifests include the expected built-in Kubernetes resources, and the client-side dry run validates without deploying anything.
+
+## Validation
 
 Pass criteria:
 

@@ -520,12 +520,6 @@ Return to the workspace:
 cd "$WORKSPACE"
 ```
 
-## Expected Results
-
-The workstation has the required tools installed, AWS CLI authentication works, all seven repositories exist locally and remotely, and each implementation repository contains an initial `README.md` and `.gitignore`.
-
-## Validation
-
 Run the complete local validation:
 
 ```bash
@@ -549,8 +543,14 @@ for repo in docs platform-bootstrap platform-modules platform-live platform-conf
 do
   echo "--- $repo ---"
   git -C "$WORKSPACE/$repo" status --short
- done
+done
 ```
+
+## Expected Results
+
+The workstation has the required tools installed, AWS CLI authentication works, all seven repositories exist locally and remotely, and each implementation repository contains an initial `README.md` and `.gitignore`.
+
+## Validation
 
 Passing result:
 

@@ -44,46 +44,38 @@ Review the chaos experiment manifests and update any environment-specific values
    kubectl -n argocd get applications.argoproj.io -o wide
    ```
 
-4. Run the one-off chaos Job and watch Kubernetes replace the deleted pod.
-5. Validate recovery through pod status, metrics, logs and traces, then remove the Job.
+4. Verify the chaos identity before execution:
+
+   ```bash
+   kubectl -n sample-api-dev get serviceaccount chaos-runner
+   kubectl -n sample-api-dev auth can-i delete pods \
+     --as=system:serviceaccount:sample-api-dev:chaos-runner
+   kubectl -n sample-api-dev auth can-i delete deployments \
+     --as=system:serviceaccount:sample-api-dev:chaos-runner
+   ```
+
+   The first answer should be `yes`; the second should be `no`.
+
+5. Run the one-off chaos Job and watch Kubernetes replace the deleted pod:
+
+   ```bash
+   kubectl create -f platform-config/chaos/delete-pod.yaml
+   kubectl -n sample-api-dev logs -f job/delete-sample-api-pod
+   kubectl -n sample-api-dev get pods -w
+   kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
+   ```
+
+6. Validate recovery through pod status, metrics, logs and traces. At the same time, continuously call the API and observe Prometheus/Grafana, Loki and Tempo.
+7. Remove the one-off chaos Job after validation:
+
+   ```bash
+   kubectl -n sample-api-dev delete job delete-sample-api-pod
+   ```
 
 ## Expected Results
 The chaos manifest is valid, the sample API starts from a healthy steady state, and the platform recovers after a controlled pod deletion.
 
 ## Validation
-### Chaos experiment and platform validation
-
-Before running chaos, confirm the steady state:
-
-```bash
-kubectl -n sample-api-dev get rollout,pod,pdb
-kubectl -n argocd get applications.argoproj.io
-kubectl get nodes
-```
-
-Verify the chaos identity before execution:
-
-```bash
-kubectl -n sample-api-dev get serviceaccount chaos-runner
-kubectl -n sample-api-dev auth can-i delete pods \
-  --as=system:serviceaccount:sample-api-dev:chaos-runner
-kubectl -n sample-api-dev auth can-i delete deployments \
-  --as=system:serviceaccount:sample-api-dev:chaos-runner
-```
-
-The first answer should be `yes`; the second should be `no`.
-
-Run the experiment while watching recovery:
-
-```bash
-kubectl create -f platform-config/chaos/delete-pod.yaml
-kubectl -n sample-api-dev logs -f job/delete-sample-api-pod
-kubectl -n sample-api-dev get pods -w
-kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
-```
-
-At the same time, continuously call the API and observe Prometheus/Grafana, Loki and Tempo.
-
 Pass criteria:
 
 - The experiment deletes only a matching sample-api pod.
@@ -97,12 +89,6 @@ Pass criteria:
 - The chaos Job and its RBAC are removed or reset after the test.
 
 A Job that references `chaos-runner` without a ServiceAccount, Role and RoleBinding cannot run and is a repository blocker, not a successful chaos test.
-
-Remove the one-off chaos Job after validation:
-
-```bash
-kubectl -n sample-api-dev delete job delete-sample-api-pod
-```
 
 ## Troubleshooting
 Start with the chaos Job, RBAC and workload events:

@@ -50,24 +50,22 @@ Review the progressive delivery desired-state files and update any environment-s
    kubectl -n argocd get application argo-rollouts sample-api -o wide
    ```
 
-6. Change the sample API image tag through Git and observe the canary rollout.
+6. Change the sample API image tag through Git and observe the canary rollout:
+
+   ```bash
+   kubectl -n argocd get application argo-rollouts sample-api -o wide
+   kubectl -n argo-rollouts get pods
+   kubectl -n sample-api-dev get rollout,replicaset,pod
+   kubectl -n sample-api-dev describe rollout sample-api
+   kubectl argo rollouts get rollout sample-api -n sample-api-dev --watch
+   ```
+
+   Change the image tag in Git to a known new immutable tag, merge it and observe the rollout steps.
 
 ## Expected Results
 Argo Rollouts is installed and the sample API is managed as a Rollout when progressive delivery is enabled.
 
 ## Validation
-### Progressive delivery verification
-
-```bash
-kubectl -n argocd get application argo-rollouts sample-api -o wide
-kubectl -n argo-rollouts get pods
-kubectl -n sample-api-dev get rollout,replicaset,pod
-kubectl -n sample-api-dev describe rollout sample-api
-kubectl argo rollouts get rollout sample-api -n sample-api-dev --watch
-```
-
-Change the image tag in Git to a known new immutable tag, merge it and observe the rollout steps.
-
 Pass criteria:
 
 - Argo CD detects and syncs the Git change.

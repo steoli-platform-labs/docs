@@ -39,6 +39,7 @@ List the important files and explain why each one matters.
 
 Use lab-specific steps. Each step should include the relevant context and commands needed to complete that step.
 Do not add a separate top-level `Commands` section; commands belong inside the step they support.
+Include verification actions as explicit steps instead of hiding the procedure in `Validation`.
 
 ```bash
 cd "$WORKSPACE"
@@ -50,7 +51,7 @@ Describe what should be true after the commands complete.
 
 ## Validation
 
-Include concrete commands, expected outputs, negative tests where useful, and explicit pass/fail criteria. Never expose secret values during validation.
+List concise pass/fail criteria only. Detailed validation commands and negative tests belong in `Step-by-Step Implementation`.
 
 ## Troubleshooting
 

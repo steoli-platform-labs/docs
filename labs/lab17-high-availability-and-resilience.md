@@ -50,37 +50,38 @@ Review the high-availability and resilience configuration files and update any e
    kubectl -n argocd get application sample-api -o wide
    ```
 
-5. Run controlled pod deletion and optional node-drain tests to measure recovery.
+5. Inspect the deployed workload before testing recovery:
+
+   ```bash
+   kubectl -n sample-api-dev get rollout,pod,pdb -o wide
+   kubectl -n sample-api-dev describe pdb sample-api
+   kubectl -n sample-api-dev get pods \
+     -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,READY:.status.containerStatuses[0].ready
+   kubectl get nodes -L topology.kubernetes.io/zone
+   ```
+
+6. Run controlled pod deletion and optional node-drain tests to measure recovery:
+
+   ```bash
+   POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
+   kubectl -n sample-api-dev delete pod "$POD"
+   kubectl -n sample-api-dev get pods -w
+   ```
+
+   Drain one worker only when the lab environment has enough spare capacity:
+
+   ```bash
+   kubectl drain <test-node> --ignore-daemonsets --delete-emptydir-data
+   kubectl -n sample-api-dev get pods -w
+   kubectl uncordon <test-node>
+   ```
+
+   Run repeated requests during each test and record error rate and recovery time.
 
 ## Expected Results
 The sample API has health probes, disruption protection and scheduling rules that keep it available during controlled failures.
 
 ## Validation
-### high-availability and resilience verification
-
-```bash
-kubectl -n sample-api-dev get rollout,pod,pdb -o wide
-kubectl -n sample-api-dev describe pdb sample-api
-kubectl -n sample-api-dev get pods   -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,READY:.status.containerStatuses[0].ready
-kubectl get nodes -L topology.kubernetes.io/zone
-```
-
-Controlled tests:
-
-```bash
-POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
-kubectl -n sample-api-dev delete pod "$POD"
-kubectl -n sample-api-dev get pods -w
-```
-
-Drain one worker only when the lab environment has enough spare capacity:
-
-```bash
-kubectl drain <test-node> --ignore-daemonsets --delete-emptydir-data
-kubectl -n sample-api-dev get pods -w
-kubectl uncordon <test-node>
-```
-
 Pass criteria:
 
 - At least the documented number of replicas are available.
@@ -90,8 +91,6 @@ Pass criteria:
 - PDB blocks voluntary disruption that would violate `minAvailable`.
 - Graceful termination completes within the configured grace period.
 - HPA and scheduling constraints do not conflict with the PDB or available capacity.
-
-Run repeated requests during each test and record error rate and recovery time.
 
 ## Troubleshooting
 Start with workload status, events and scheduling placement:
