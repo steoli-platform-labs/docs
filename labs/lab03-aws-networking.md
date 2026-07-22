@@ -234,7 +234,7 @@ platform-live/
 
 Follow the sections below to configure the remote backend, review the network design, initialize Terraform, apply the plan and validate the deployed AWS resources.
 
-## Configure the Remote Backend
+### Configure the Remote Backend
 
 Retrieve the state bucket created in Lab 02:
 
@@ -263,7 +263,7 @@ region = "<your-aws-region>"
 
 `TF_VAR_workspace_path` records the local checkout path as a `Workspace` tag on supported AWS resources.
 
-## Review the Network Design
+### Review the Network Design
 
 The default network uses:
 
@@ -288,7 +288,7 @@ The stack dynamically selects the first two standard Availability Zones returned
 
 The lab uses one NAT Gateway by default to keep recurring cost lower. This provides multi-AZ subnet placement but does not make outbound connectivity fully Availability-Zone independent. Setting `single_nat_gateway = false` creates one NAT Gateway per Availability Zone for a more production-oriented design at higher cost.
 
-## Initialize the Live Stack
+### Initialize the Live Stack
 
 ```bash
 terraform init -backend-config=backend.hcl
@@ -298,7 +298,7 @@ Terraform should initialize the S3 backend and download the AWS provider and the
 
 Commit `.terraform.lock.hcl` after successful initialization. It records the selected provider versions and checksums.
 
-## Format and Validate
+### Format and Validate
 
 ```bash
 terraform fmt
@@ -311,7 +311,7 @@ Expected result:
 Success! The configuration is valid.
 ```
 
-## Review the Plan
+### Review the Plan
 
 ```bash
 terraform plan -out=tfplan
@@ -329,7 +329,7 @@ Review all resources before applying. Confirm that:
 
 The exact resource count can change between module releases. Validate the intended architecture rather than relying only on a fixed count.
 
-## Apply the Network
+### Apply the Network
 
 ```bash
 terraform apply tfplan
