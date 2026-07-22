@@ -19,12 +19,6 @@ This lab enables Amazon EKS in the Development Terraform root module.
 
 The EKS cluster uses the VPC and EKS-ready private subnets created in Lab 03.
 
-## Objectives
-
-- Enable EKS in `platform-live/environments/dev`.
-- Deploy the EKS control plane and managed node group.
-- Verify node readiness and Kubernetes API health.
-
 ## Outcome
 
 After this lab, the Development Terraform root module manages an active Amazon EKS cluster with at least one managed node group in private subnets.

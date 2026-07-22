@@ -25,31 +25,6 @@ The purpose of this lab is to establish secure workload authentication between K
 
 By replacing static credentials with IAM roles and temporary credentials, the platform follows AWS security best practices while reducing operational risk.
 
-## Learning Objectives
-
-After completing this lab you should understand:
-
-- IAM Roles for Service Accounts
-- EKS OIDC Provider
-- AWS STS
-- Kubernetes Service Accounts
-- Least Privilege Access
-- IAM Trust Policies
-- Temporary Credentials
-- Secure AWS Authentication
-
-## Objectives
-
-At the end of this lab you will have:
-
-- Enabled IAM Roles for Service Accounts
-- Created IAM roles for Kubernetes workloads
-- Configured trust policies
-- Updated External Secrets Operator
-- Updated Karpenter
-- Verified temporary AWS credentials
-- Removed static AWS credentials from the platform
-
 ## Prerequisites
 
 Before starting this lab:

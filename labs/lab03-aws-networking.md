@@ -27,35 +27,6 @@ The purpose of this lab is to establish a secure, scalable and highly available 
 
 Rather than using the default AWS VPC, a dedicated networking environment is created following AWS networking best practices.
 
-## Learning Objectives
-
-After completing this lab you should understand:
-
-- Amazon VPC fundamentals
-- CIDR block planning
-- Public and private subnets
-- Availability Zones
-- Internet Gateway
-- NAT Gateway
-- Route Tables
-- Elastic IP addresses
-- High Availability networking design
-- Networking requirements for Amazon EKS
-
-## Objectives
-
-At the end of this lab you will have:
-
-- Created a custom Amazon VPC
-- Created two public subnets
-- Created two platform private subnets from the primary CIDR
-- Created two EKS-ready private subnets from the secondary CIDR
-- Attached an Internet Gateway
-- Provisioned a NAT Gateway
-- Allocated an Elastic IP
-- Configured public and private Route Tables
-- Verified internet connectivity
-
 ## Prerequisites
 
 Before starting this lab:

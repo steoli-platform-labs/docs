@@ -16,6 +16,7 @@
 ## Outcome
 
 State what the lab produces in one or two sentences.
+Do not add separate `Objectives` or `Learning Objectives` sections; use `Outcome`, `Expected Results` and `Validation` instead.
 
 ## Prerequisites
 
@@ -36,7 +37,7 @@ Use lab-specific steps. Do not copy generic workflow text from another lab.
 ## Commands
 
 Commands must include the working directory and must not deploy workloads outside the intended lab mechanism.
-Detailed foundation labs may replace this section with named implementation sections such as `Configure the Remote Backend`, `Review the Plan` or `Apply the Network` when that is clearer.
+Detailed labs may omit this standalone section when commands are already embedded in named implementation sections such as `Configure the Remote Backend`, `Review the Plan` or `Apply the Network`.
 
 ```bash
 cd "$WORKSPACE"
@@ -74,13 +75,21 @@ Link to the next lab.
 
 Use these only when they add clarity:
 
+- `## Introduction`
 - `## Summary`
 - `## Purpose`
-- `## Learning Objectives`
+- `## Required Software`
+- `## Project Repository Structure`
+- `## Local Workspace`
 - `## Architecture`
 - `## AWS Resources`
 - `## Design Decisions`
+- `## Network Layout`
+- `## Deliverables`
+- `## Implementation Overview`
+- `## Values Used in This Guide`
 - `## Success Criteria`
 - `## Best Practices`
+- `## Completion Checklist`
 - `## Lessons Learned`
 - `## References`

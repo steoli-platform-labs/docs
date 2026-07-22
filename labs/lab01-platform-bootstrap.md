@@ -27,32 +27,6 @@ The purpose of this lab is to establish a consistent and repeatable development 
 
 By the end of this lab, both the AWS environment and the local workstation will be ready for Infrastructure as Code deployments.
 
-## Learning Objectives
-
-After completing this lab you should understand:
-
-- The purpose of a platform bootstrap phase
-- The overall project structure
-- How AWS authentication works
-- How the AWS CLI communicates with AWS APIs
-- The role of Git repositories within a Platform Engineering project
-- Why a consistent local development environment is important
-
-## Objectives
-
-At the end of this lab you will have:
-
-- Access to an AWS account
-- AWS CLI configured
-- Git installed
-- Visual Studio Code installed
-- Terraform installed
-- Docker Desktop installed
-- kubectl installed
-- Helm installed
-- GitHub repositories created
-- Local repositories cloned
-
 ## Prerequisites
 
 Before starting this lab, ensure you have:

@@ -25,31 +25,6 @@ The purpose of this lab is to implement distributed tracing across the Kubernete
 
 Distributed tracing provides visibility into application requests as they traverse multiple services, making it easier to diagnose latency issues, identify bottlenecks and troubleshoot complex distributed systems.
 
-## Learning Objectives
-
-After completing this lab you should understand:
-
-- Distributed tracing
-- Grafana Tempo architecture
-- OpenTelemetry
-- Trace collection
-- Context propagation
-- Trace visualization
-- Grafana integration
-- GitOps deployment of tracing components
-
-## Objectives
-
-At the end of this lab you will have:
-
-- Deployed Tempo using ArgoCD
-- Deployed OpenTelemetry Collector
-- Configured trace collection
-- Integrated Tempo with Grafana
-- Generated distributed traces
-- Explored traces in Grafana
-- Correlated metrics, logs and traces
-
 ## Prerequisites
 
 Before starting this lab:

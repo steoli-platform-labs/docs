@@ -23,14 +23,6 @@ This lab introduces repository-local GitHub Actions workflows.
 
 The workflows validate changes and publish build artifacts. They do not deploy infrastructure or Kubernetes workloads. Deployment remains manual Terraform for infrastructure until GitOps is introduced, and Kubernetes workload deployment is handled by Argo CD in later labs.
 
-## Objectives
-
-- Review the workflow files in each implementation repository.
-- Run equivalent validation commands locally.
-- Verify pull request and push workflows in GitHub Actions.
-- Confirm the sample API image is published with a commit-SHA tag.
-- Confirm CI does not deploy directly to Kubernetes.
-
 ## Prerequisites
 
 Complete Labs 01 - 05 first.

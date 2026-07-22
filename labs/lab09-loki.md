@@ -25,31 +25,6 @@ The purpose of this lab is to implement centralized log collection for the Kuber
 
 Centralized logging enables efficient troubleshooting, operational visibility and incident investigation by aggregating logs from platform services and applications into a single location.
 
-## Learning Objectives
-
-After completing this lab you should understand:
-
-- Centralized logging
-- Grafana Loki architecture
-- Grafana Alloy
-- Log aggregation
-- Log querying
-- Kubernetes logging
-- Grafana data sources
-- GitOps deployment of logging components
-
-## Objectives
-
-At the end of this lab you will have:
-
-- Deployed Loki using ArgoCD
-- Deployed Grafana Alloy
-- Configured log collection
-- Integrated Loki with Grafana
-- Verified Kubernetes log collection
-- Queried logs using Grafana
-- Validated end-to-end logging
-
 ## Prerequisites
 
 Before starting this lab:

@@ -27,32 +27,6 @@ The purpose of this lab is to implement a production-inspired monitoring platfor
 
 Monitoring is a fundamental capability of every Platform Engineering team and forms the basis for alerting, troubleshooting and capacity planning.
 
-## Learning Objectives
-
-After completing this lab you should understand:
-
-- Kubernetes observability
-- Prometheus architecture
-- Metrics collection
-- Prometheus Operator
-- ServiceMonitor resources
-- Grafana dashboards
-- Data sources
-- Alerting concepts
-- GitOps deployment of observability components
-
-## Objectives
-
-At the end of this lab you will have:
-
-- Deployed the kube-prometheus-stack using ArgoCD
-- Installed Prometheus
-- Installed Grafana
-- Configured Prometheus as a Grafana data source
-- Imported Kubernetes dashboards
-- Collected Kubernetes metrics
-- Verified platform monitoring
-
 ## Prerequisites
 
 Before starting this lab:

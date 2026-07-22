@@ -25,34 +25,6 @@ The purpose of this lab is to implement a GitOps workflow where Kubernetes deplo
 
 By introducing ArgoCD, deployments become automated, auditable, repeatable and consistent across environments.
 
-## Learning Objectives
-
-After completing this lab you should understand:
-
-- GitOps principles
-- ArgoCD architecture
-- Desired state reconciliation
-- Continuous synchronization
-- Application resources
-- Sync policies
-- Health checks
-- Self-healing
-- Drift detection
-- GitOps deployment workflows
-
-## Objectives
-
-At the end of this lab you will have:
-
-- Installed ArgoCD using Helm
-- Configured ArgoCD on Amazon EKS
-- Connected ArgoCD to a Git repository
-- Created an ArgoCD Application
-- Enabled automatic synchronization
-- Verified automatic deployments
-- Verified drift detection
-- Verified self-healing behavior
-
 ## Prerequisites
 
 Before starting this lab:

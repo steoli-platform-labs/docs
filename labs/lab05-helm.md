@@ -19,12 +19,6 @@ This lab validates the reusable `sample-api` Helm chart.
 
 Application deployment remains GitOps-driven in later labs. This lab only lints and renders the chart locally.
 
-## Objectives
-
-- Validate the Helm chart structure.
-- Render Kubernetes manifests from chart values.
-- Confirm probes, resources and optional objects render as expected.
-
 ## Outcome
 
 After this lab, the reusable `sample-api` Helm chart has been linted and rendered locally without deploying any workload to the cluster.
