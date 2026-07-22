@@ -167,382 +167,382 @@ Do not commit account IDs, credentials or profile files to Git.
 
 Complete the setup steps below in order. This is the only lab that requires manual workstation and repository bootstrapping.
 
-### Step 1 - Install and Verify Git
+1. Install and verify Git.
 
-Install Git using the package manager for your operating system, then verify it:
+   Install Git using the package manager for your operating system, then verify it:
 
-```bash
-git --version
-```
+   ```bash
+   git --version
+   ```
 
-Configure the identity that will appear in commits:
+   Configure the identity that will appear in commits:
 
-```bash
-git config --global user.name "<your-name>"
-git config --global user.email "<your-email>"
-git config --global init.defaultBranch main
-```
+   ```bash
+   git config --global user.name "<your-name>"
+   git config --global user.email "<your-email>"
+   git config --global init.defaultBranch main
+   ```
 
-Validate:
+   Validate:
 
-```bash
-git config --global --get user.name
-git config --global --get user.email
-git config --global --get init.defaultBranch
-```
+   ```bash
+   git config --global --get user.name
+   git config --global --get user.email
+   git config --global --get init.defaultBranch
+   ```
 
-Expected result: all three commands return the values you configured.
+   Expected result: all three commands return the values you configured.
 
-### Step 2 - Install Visual Studio Code
+2. Install Visual Studio Code.
 
-Install Visual Studio Code from its official distribution channel.
+   Install Visual Studio Code from its official distribution channel.
 
-Recommended extensions:
+   Recommended extensions:
 
-- HashiCorp Terraform
-- YAML
-- Docker
-- Kubernetes
-- GitHub Pull Requests
-- Markdown All in One
+   - HashiCorp Terraform
+   - YAML
+   - Docker
+   - Kubernetes
+   - GitHub Pull Requests
+   - Markdown All in One
 
-Verify the command-line launcher when available:
+   Verify the command-line launcher when available:
 
-```bash
-code --version
-```
+   ```bash
+   code --version
+   ```
 
-If `code` is unavailable but the editor starts normally, enable the shell command from Visual Studio Code or continue using the graphical application.
+   If `code` is unavailable but the editor starts normally, enable the shell command from Visual Studio Code or continue using the graphical application.
 
-### Step 3 - Install AWS CLI v2
+3. Install AWS CLI v2.
 
-Install AWS CLI v2 using the official installer for your operating system.
+   Install AWS CLI v2 using the official installer for your operating system.
 
-Verify:
+   Verify:
 
-```bash
-aws --version
-```
+   ```bash
+   aws --version
+   ```
 
-Expected result: the output starts with `aws-cli/2`.
+   Expected result: the output starts with `aws-cli/2`.
 
-### Step 4 - Configure AWS Authentication
+4. Configure AWS authentication.
 
-### Preferred Method - AWS IAM Identity Center
+   Preferred method: AWS IAM Identity Center.
 
-Configure a named profile:
+   Configure a named profile:
 
-```bash
-aws configure sso --profile "$AWS_PROFILE"
-```
+   ```bash
+   aws configure sso --profile "$AWS_PROFILE"
+   ```
 
-Provide the Start URL, SSO region, AWS account and role supplied by your AWS configuration.
+   Provide the Start URL, SSO region, AWS account and role supplied by your AWS configuration.
 
-Authenticate:
+   Authenticate:
 
-```bash
-aws sso login --profile "$AWS_PROFILE"
-```
+   ```bash
+   aws sso login --profile "$AWS_PROFILE"
+   ```
 
-Set the default region for the profile:
+   Set the default region for the profile:
 
-```bash
-aws configure set region "$AWS_REGION" --profile "$AWS_PROFILE"
-aws configure set output json --profile "$AWS_PROFILE"
-```
+   ```bash
+   aws configure set region "$AWS_REGION" --profile "$AWS_PROFILE"
+   aws configure set output json --profile "$AWS_PROFILE"
+   ```
 
-### Alternative - Existing Short-Lived Credentials
+   Alternative: existing short-lived credentials.
 
-When an approved mechanism already exports temporary credentials, keep the named profile and follow your organization's authentication process. Avoid creating long-lived access keys solely for this project.
+   When an approved mechanism already exports temporary credentials, keep the named profile and follow your organization's authentication process. Avoid creating long-lived access keys solely for this project.
 
-### Step 5 - Verify AWS Identity
+5. Verify AWS identity.
 
-Run:
+   Run:
 
-```bash
-aws sts get-caller-identity --profile "$AWS_PROFILE"
-```
+   ```bash
+   aws sts get-caller-identity --profile "$AWS_PROFILE"
+   ```
 
-Expected result:
+   Expected result:
 
-```json
-{
-  "UserId": "...",
-  "Account": "<your-aws-account-id>",
-  "Arn": "arn:aws:..."
-}
-```
+   ```json
+   {
+     "UserId": "...",
+     "Account": "<your-aws-account-id>",
+     "Arn": "arn:aws:..."
+   }
+   ```
 
-Record the account ID privately for later configuration, but do not add it to public documentation unless it is intentionally anonymized.
+   Record the account ID privately for later configuration, but do not add it to public documentation unless it is intentionally anonymized.
 
-Confirm the selected region:
+   Confirm the selected region:
 
-```bash
-aws configure get region --profile "$AWS_PROFILE"
-```
+   ```bash
+   aws configure get region --profile "$AWS_PROFILE"
+   ```
 
-### Step 6 - Install Terraform
+6. Install Terraform.
 
-Install Terraform using the official HashiCorp package repository or a version manager.
+   Install Terraform using the official HashiCorp package repository or a version manager.
 
-Verify:
+   Verify:
 
-```bash
-terraform version
-```
+   ```bash
+   terraform version
+   ```
 
-Expected result: Terraform prints its installed version and platform.
+   Expected result: Terraform prints its installed version and platform.
 
-The project will introduce explicit version constraints when Terraform code is added. Do not assume that an arbitrary old Terraform release is compatible.
+   The project will introduce explicit version constraints when Terraform code is added. Do not assume that an arbitrary old Terraform release is compatible.
 
-### Step 7 - Install Docker
+7. Install Docker.
 
-Install Docker Desktop or a compatible local Docker Engine.
+   Install Docker Desktop or a compatible local Docker Engine.
 
-Start Docker and verify:
+   Start Docker and verify:
 
-```bash
-docker version
-docker run --rm hello-world
-```
+   ```bash
+   docker version
+   docker run --rm hello-world
+   ```
 
-Expected result: both the client and server are reported and the test container completes successfully.
+   Expected result: both the client and server are reported and the test container completes successfully.
 
-### Step 8 - Install kubectl
+8. Install `kubectl`.
 
-Install `kubectl` using the official Kubernetes installation method for your operating system.
+   Install `kubectl` using the official Kubernetes installation method for your operating system.
 
-Verify:
+   Verify:
 
-```bash
-kubectl version --client
-```
+   ```bash
+   kubectl version --client
+   ```
 
-No cluster connection is expected in this lab.
+   No cluster connection is expected in this lab.
 
-### Step 9 - Install Helm
+9. Install Helm.
 
-Install Helm 3 using its official package or installation method.
+   Install Helm 3 using its official package or installation method.
 
-Verify:
+   Verify:
 
-```bash
-helm version
-```
+   ```bash
+   helm version
+   ```
 
-Expected result: the version output reports Helm 3.
+   Expected result: the version output reports Helm 3.
 
-### Step 10 - Install GitHub CLI
+10. Install GitHub CLI.
 
-GitHub CLI is strongly recommended because it makes repository creation and validation repeatable.
+   GitHub CLI is strongly recommended because it makes repository creation and validation repeatable.
 
-Verify:
+   Verify:
 
-```bash
-gh --version
-```
+   ```bash
+   gh --version
+   ```
 
-Authenticate:
+   Authenticate:
 
-```bash
-gh auth login
-```
+   ```bash
+   gh auth login
+   ```
 
-Choose GitHub.com, HTTPS and browser-based authentication unless your environment requires a different approved method.
+   Choose GitHub.com, HTTPS and browser-based authentication unless your environment requires a different approved method.
 
-Validate:
+   Validate:
 
-```bash
-gh auth status
-```
+   ```bash
+   gh auth status
+   ```
 
-### Step 11 - Create the GitHub Organization
+11. Create the GitHub organization.
 
-Create or choose a GitHub organization for your lab repositories. The organization name must be globally unique on GitHub.
+   Create or choose a GitHub organization for your lab repositories. The organization name must be globally unique on GitHub.
 
-When using another name, update the shell variable:
+   When using another name, update the shell variable:
 
-```bash
-export GITHUB_ORG="<your-github-organization>"
-```
+   ```bash
+   export GITHUB_ORG="<your-github-organization>"
+   ```
 
-Recommended initial settings:
+   Recommended initial settings:
 
-- Base permissions: Read
-- Repository creation: restricted to organization owners during bootstrap
-- Two-factor authentication: required when practical
-- Discussions and projects: optional
+   - Base permissions: Read
+   - Repository creation: restricted to organization owners during bootstrap
+   - Two-factor authentication: required when practical
+   - Discussions and projects: optional
 
-### Step 12 - Create the Repositories
+12. Create the repositories.
 
-Create seven public repositories. Omit `--public` and use `--private` during development when you are not ready to publish.
+   Create seven public repositories. Omit `--public` and use `--private` during development when you are not ready to publish.
 
-```bash
-for repo in \
-  docs \
-  platform-bootstrap \
-  platform-modules \
-  platform-live \
-  platform-config \
-  helm-charts \
-  sample-api
-do
-  gh repo create "$GITHUB_ORG/$repo" \
+   ```bash
+   for repo in \
+     docs \
+     platform-bootstrap \
+     platform-modules \
+     platform-live \
+     platform-config \
+     helm-charts \
+     sample-api
+   do
+     gh repo create "$GITHUB_ORG/$repo" \
     --public \
     --description "AWS Platform Engineering project - $repo" \
     --add-readme
- done
-```
+    done
+   ```
 
-If the `docs` repository already exists, remove it from the loop or accept the expected error for that one repository.
+   If the `docs` repository already exists, remove it from the loop or accept the expected error for that one repository.
 
-Validate:
+   Validate:
 
-```bash
-gh repo list "$GITHUB_ORG" --limit 20
-```
+   ```bash
+   gh repo list "$GITHUB_ORG" --limit 20
+   ```
 
-Expected result: all seven repository names are listed.
+   Expected result: all seven repository names are listed.
 
-### Step 13 - Create the Local Workspace
+13. Create the local workspace.
 
-```bash
-mkdir -p "$WORKSPACE"
-cd "$WORKSPACE"
-```
+   ```bash
+   mkdir -p "$WORKSPACE"
+   cd "$WORKSPACE"
+   ```
 
-Clone each repository:
+   Clone each repository:
 
-```bash
-for repo in \
-  docs \
-  platform-bootstrap \
-  platform-modules \
-  platform-live \
-  platform-config \
-  helm-charts \
-  sample-api
-do
-  gh repo clone "$GITHUB_ORG/$repo"
-done
-```
+   ```bash
+   for repo in \
+     docs \
+     platform-bootstrap \
+     platform-modules \
+     platform-live \
+     platform-config \
+     helm-charts \
+     sample-api
+   do
+     gh repo clone "$GITHUB_ORG/$repo"
+   done
+   ```
 
-Validate the directory structure:
+   Validate the directory structure:
 
-```bash
-find "$WORKSPACE" -maxdepth 1 -mindepth 1 -type d -print | sort
-```
+   ```bash
+   find "$WORKSPACE" -maxdepth 1 -mindepth 1 -type d -print | sort
+   ```
 
-Expected state:
+   Expected state:
 
-```text
-platform-labs/
-├── docs/
-├── helm-charts/
-├── platform-bootstrap/
-├── platform-config/
-├── platform-live/
-├── platform-modules/
-└── sample-api/
-```
+   ```text
+   platform-labs/
+   ├── docs/
+   ├── helm-charts/
+   ├── platform-bootstrap/
+   ├── platform-config/
+   ├── platform-live/
+   ├── platform-modules/
+   └── sample-api/
+   ```
 
-### Step 14 - Add Common Repository Files
+14. Add common repository files.
 
-For each new implementation repository, create a minimal `.gitignore` that prevents accidental commits of local secrets and generated files.
+   For each new implementation repository, create a minimal `.gitignore` that prevents accidental commits of local secrets and generated files.
 
-```bash
-for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
-do
-  cat > "$WORKSPACE/$repo/.gitignore" <<'IGNORE'
-.DS_Store
-.vscode/
-.idea/
-.env
-.env.*
-*.local
-*.log
+   ```bash
+   for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
+   do
+     cat > "$WORKSPACE/$repo/.gitignore" <<'IGNORE'
+   .DS_Store
+   .vscode/
+   .idea/
+   .env
+   .env.*
+   *.local
+   *.log
 
-# Terraform
-.terraform/
-*.tfstate
-*.tfstate.*
-crash.log
-crash.*.log
-*.tfplan
+   # Terraform
+   .terraform/
+   *.tfstate
+   *.tfstate.*
+   crash.log
+   crash.*.log
+   *.tfplan
 
-# Kubernetes and credentials
-kubeconfig
-*.kubeconfig
+   # Kubernetes and credentials
+   kubeconfig
+   *.kubeconfig
 
-# Keys and certificates
-*.pem
-*.key
-*.p12
-IGNORE
-done
-```
+   # Keys and certificates
+   *.pem
+   *.key
+   *.p12
+   IGNORE
+   done
+   ```
 
-The ignore file is intentionally broad at bootstrap. Repositories may refine it when their implementation is introduced.
+   The ignore file is intentionally broad at bootstrap. Repositories may refine it when their implementation is introduced.
 
-### Step 15 - Add Initial Repository READMEs
+15. Add initial repository READMEs.
 
-Create a simple purpose statement in each empty repository. Example for `platform-bootstrap`:
+   Create a simple purpose statement in each empty repository. Example for `platform-bootstrap`:
 
-```bash
-cat > "$WORKSPACE/platform-bootstrap/README.md" <<'EOF_BOOTSTRAP'
-# Platform Bootstrap
+   ```bash
+   cat > "$WORKSPACE/platform-bootstrap/README.md" <<'EOF_BOOTSTRAP'
+   # Platform Bootstrap
 
-This repository contains the Terraform configuration used to create the remote state foundation for the AWS Platform Engineering project.
+   This repository contains the Terraform configuration used to create the remote state foundation for the AWS Platform Engineering project.
 
-Implementation begins in Lab 02.
-EOF_BOOTSTRAP
-```
+   Implementation begins in Lab 02.
+   EOF_BOOTSTRAP
+   ```
 
-Use equivalent purpose statements for the remaining repositories based on [`../architecture/repository-strategy.md`](../architecture/repository-strategy.md).
+   Use equivalent purpose statements for the remaining repositories based on [`../architecture/repository-strategy.md`](../architecture/repository-strategy.md).
 
-Commit and push the initial files in each implementation repository:
+   Commit and push the initial files in each implementation repository:
 
-```bash
-for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
-do
-  cd "$WORKSPACE/$repo"
-  git add README.md .gitignore
-  git commit -m "bootstrap repository structure"
-  git push origin main
-done
-```
+   ```bash
+   for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
+   do
+     cd "$WORKSPACE/$repo"
+     git add README.md .gitignore
+     git commit -m "bootstrap repository structure"
+     git push origin main
+   done
+   ```
 
-Return to the workspace:
+   Return to the workspace:
 
-```bash
-cd "$WORKSPACE"
-```
+   ```bash
+   cd "$WORKSPACE"
+   ```
 
-Run the complete local validation:
+   Run the complete local validation:
 
-```bash
-set -e
+   ```bash
+   set -e
 
-git --version
-aws --version
-terraform version
-docker version
-kubectl version --client
-helm version
-gh auth status
-aws sts get-caller-identity --profile "$AWS_PROFILE"
-gh repo list "$GITHUB_ORG" --limit 20
-```
+   git --version
+   aws --version
+   terraform version
+   docker version
+   kubectl version --client
+   helm version
+   gh auth status
+   aws sts get-caller-identity --profile "$AWS_PROFILE"
+   gh repo list "$GITHUB_ORG" --limit 20
+   ```
 
-Validate that every local repository has a clean working tree:
+   Validate that every local repository has a clean working tree:
 
-```bash
-for repo in docs platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
-do
-  echo "--- $repo ---"
-  git -C "$WORKSPACE/$repo" status --short
-done
-```
+   ```bash
+   for repo in docs platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
+   do
+     echo "--- $repo ---"
+     git -C "$WORKSPACE/$repo" status --short
+   done
+   ```
 
 ## Expected Results
 

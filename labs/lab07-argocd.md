@@ -189,7 +189,7 @@ Key files:
 
 7. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
 
-The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
+   The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
 
 ## Expected Results
 

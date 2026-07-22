@@ -64,104 +64,104 @@ later labs
 
 ## Step-by-Step Implementation
 
-Set your shell values:
+1. Set your shell values:
 
-```bash
-export WORKSPACE="$HOME/dev/platform-labs"
-export AWS_PROFILE="<your-aws-profile>"
-export AWS_REGION="<your-aws-region>"
-export PROJECT_NAME="<project-name>"
-export AWS_DEFAULT_REGION="$AWS_REGION"
-```
+   ```bash
+   export WORKSPACE="$HOME/dev/platform-labs"
+   export AWS_PROFILE="<your-aws-profile>"
+   export AWS_REGION="<your-aws-region>"
+   export PROJECT_NAME="<project-name>"
+   export AWS_DEFAULT_REGION="$AWS_REGION"
+   ```
 
-Confirm AWS access:
+2. Confirm AWS access:
 
-```bash
-aws sts get-caller-identity --profile "$AWS_PROFILE"
-```
+   ```bash
+   aws sts get-caller-identity --profile "$AWS_PROFILE"
+   ```
 
-Open the bootstrap repository:
+3. Open the bootstrap repository:
 
-```bash
-cd "$WORKSPACE/platform-bootstrap"
-```
+   ```bash
+   cd "$WORKSPACE/platform-bootstrap"
+   ```
 
-Create local variables:
+4. Create local variables:
 
-```bash
-cp terraform.tfvars.example terraform.tfvars
-```
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-Edit `terraform.tfvars`:
+   Edit `terraform.tfvars`:
 
-```hcl
-aws_region          = "<your-aws-region>"
-allowed_account_ids = "<your-aws-account-id>"
-project_name        = "<project-name>"
+   ```hcl
+   aws_region          = "<your-aws-region>"
+   allowed_account_ids = "<your-aws-account-id>"
+   project_name        = "<project-name>"
 
-additional_tags = {
-  Owner      = "<owner-or-team>"
-  CostCenter = "<cost-center>"
-}
-```
+   additional_tags = {
+     Owner      = "<owner-or-team>"
+     CostCenter = "<cost-center>"
+   }
+   ```
 
-Set `allowed_account_ids` to the AWS account ID returned by `aws sts get-caller-identity`.
+   Set `allowed_account_ids` to the AWS account ID returned by `aws sts get-caller-identity`.
 
-Create the backend bucket using local state:
+5. Create the backend bucket using local state:
 
-```bash
-terraform init
-terraform fmt -recursive
-terraform validate
-terraform plan -out=tfplan
-terraform apply tfplan
-```
+   ```bash
+   terraform init
+   terraform fmt -recursive
+   terraform validate
+   terraform plan -out=tfplan
+   terraform apply tfplan
+   ```
 
-Migrate the bootstrap state to S3:
+6. Migrate the bootstrap state to S3:
 
-```bash
-./scripts/migrate-state.sh
-```
+   ```bash
+   ./scripts/migrate-state.sh
+   ```
 
-Validate the backend:
+7. Validate the backend:
 
-```bash
-./scripts/validate.sh
-terraform plan -detailed-exitcode
-```
+   ```bash
+   ./scripts/validate.sh
+   terraform plan -detailed-exitcode
+   ```
 
-Expected result:
+   Expected result:
 
-```text
-Validation passed.
-Remote state: s3://<bucket>/bootstrap/terraform.tfstate
-```
+   ```text
+   Validation passed.
+   Remote state: s3://<bucket>/bootstrap/terraform.tfstate
+   ```
 
-`terraform plan -detailed-exitcode` should exit with code `0` when there are no pending changes.
+   `terraform plan -detailed-exitcode` should exit with code `0` when there are no pending changes.
 
-Commit only source files and scripts. Do not commit local backend, state, variable or plan files:
+8. Commit only source files and scripts. Do not commit local backend, state, variable or plan files:
 
-```bash
-git status
-git diff --check
-git add \
-  .editorconfig \
-  .gitignore \
-  .terraform.lock.hcl \
-  Makefile \
-  README.md \
-  data.tf \
-  locals.tf \
-  main.tf \
-  outputs.tf \
-  providers.tf \
-  variables.tf \
-  versions.tf \
-  scripts/ \
-  terraform.tfvars.example
-git commit -m "complete lab 02 terraform backend"
-git push
-```
+   ```bash
+   git status
+   git diff --check
+   git add \
+     .editorconfig \
+     .gitignore \
+     .terraform.lock.hcl \
+     Makefile \
+     README.md \
+     data.tf \
+     locals.tf \
+     main.tf \
+     outputs.tf \
+     providers.tf \
+     variables.tf \
+     versions.tf \
+     scripts/ \
+     terraform.tfvars.example
+   git commit -m "complete lab 02 terraform backend"
+   git push
+   ```
 
 ## Expected Results
 

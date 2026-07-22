@@ -51,53 +51,53 @@ After this lab, the reusable `sample-api` Helm chart has been linted and rendere
 
 Lint the chart, render manifests with validation values and run a Kubernetes client-side dry run.
 
-Open the Helm charts repository:
+1. Open the Helm charts repository:
 
-```bash
-cd "$WORKSPACE/helm-charts"
-```
+   ```bash
+   cd "$WORKSPACE/helm-charts"
+   ```
 
-Lint and render the chart:
+2. Lint and render the chart:
 
-```bash
-helm lint charts/sample-api
-helm template sample-api charts/sample-api \
-  --namespace sample-api-dev \
-  --set image.repository=example.invalid/sample-api \
-  --set image.tag=validation \
-  --set rollout.enabled=false \
-  > /tmp/sample-api-rendered.yaml
-```
+   ```bash
+   helm lint charts/sample-api
+   helm template sample-api charts/sample-api \
+     --namespace sample-api-dev \
+     --set image.repository=example.invalid/sample-api \
+     --set image.tag=validation \
+     --set rollout.enabled=false \
+     > /tmp/sample-api-rendered.yaml
+   ```
 
-Validate the rendered manifests client-side:
+3. Validate the rendered manifests client-side:
 
-```bash
-kubectl apply --dry-run=client -f /tmp/sample-api-rendered.yaml
-```
+   ```bash
+   kubectl apply --dry-run=client -f /tmp/sample-api-rendered.yaml
+   ```
 
-This is a dry run only. Do not deploy the application with `helm install`, `helm upgrade`, or `kubectl apply`.
+   This is a dry run only. Do not deploy the application with `helm install`, `helm upgrade`, or `kubectl apply`.
 
-The chart can render an Argo Rollout when `rollout.enabled=true`, but the Argo Rollouts CRD is introduced later. This lab disables Rollout rendering during client-side schema validation so only built-in Kubernetes APIs are checked.
+   The chart can render an Argo Rollout when `rollout.enabled=true`, but the Argo Rollouts CRD is introduced later. This lab disables Rollout rendering during client-side schema validation so only built-in Kubernetes APIs are checked.
 
-Inspect the rendered resources:
+4. Inspect the rendered resources:
 
-```bash
-grep '^kind:' /tmp/sample-api-rendered.yaml
-grep -nE 'readinessProbe|livenessProbe|startupProbe|resources:|NetworkPolicy|PodDisruptionBudget' /tmp/sample-api-rendered.yaml
-```
+   ```bash
+   grep '^kind:' /tmp/sample-api-rendered.yaml
+   grep -nE 'readinessProbe|livenessProbe|startupProbe|resources:|NetworkPolicy|PodDisruptionBudget' /tmp/sample-api-rendered.yaml
+   ```
 
-Commit the Helm chart changes only. Do not commit temporary rendered manifests.
+5. Commit the Helm chart changes only. Do not commit temporary rendered manifests.
 
-In `helm-charts`:
+   In `helm-charts`:
 
-```bash
-cd "$WORKSPACE/helm-charts"
-git status
-git diff --check
-git add charts/sample-api/
-git commit -m "add sample api helm chart"
-git push
-```
+   ```bash
+   cd "$WORKSPACE/helm-charts"
+   git status
+   git diff --check
+   git add charts/sample-api/
+   git commit -m "add sample api helm chart"
+   git push
+   ```
 
 ## Expected Results
 

@@ -232,175 +232,171 @@ platform-live/
 
 ## Step-by-Step Implementation
 
-Follow the sections below to configure the remote backend, review the network design, initialize Terraform, apply the plan and validate the deployed AWS resources.
+Follow the steps below to configure the remote backend, review the network design, initialize Terraform, apply the plan and validate the deployed AWS resources.
 
-### Configure the Remote Backend
+1. Configure the remote backend. Retrieve the state bucket created in Lab 02:
 
-Retrieve the state bucket created in Lab 02:
+   ```bash
+   cd ../platform-bootstrap
+   terraform output
+   ```
 
-```bash
-cd ../platform-bootstrap
-terraform output
-```
+   Move to the Development root module:
 
-Move to the Development root module:
+   ```bash
+   cd ../platform-live/environments/dev
+   cp backend.hcl.example backend.hcl
+   cp terraform.tfvars.example terraform.tfvars
+   export TF_VAR_workspace_path="$WORKSPACE"
+   ```
 
-```bash
-cd ../platform-live/environments/dev
-cp backend.hcl.example backend.hcl
-cp terraform.tfvars.example terraform.tfvars
-export TF_VAR_workspace_path="$WORKSPACE"
-```
+   Edit `backend.hcl`:
 
-Edit `backend.hcl`:
+   ```hcl
+   bucket = "your-lab02-state-bucket"
+   region = "<your-aws-region>"
+   ```
 
-```hcl
-bucket = "your-lab02-state-bucket"
-region = "<your-aws-region>"
-```
+   `backend.hcl` is intentionally ignored by Git because it contains account-specific configuration.
 
-`backend.hcl` is intentionally ignored by Git because it contains account-specific configuration.
+   `TF_VAR_workspace_path` records the local checkout path as a `Workspace` tag on supported AWS resources.
 
-`TF_VAR_workspace_path` records the local checkout path as a `Workspace` tag on supported AWS resources.
+2. Review the network design. The default network uses:
 
-### Review the Network Design
+   | Resource | CIDR |
+   |---|---|
+   | VPC primary CIDR | `10.100.0.0/24` |
+   | Optional VPC secondary CIDR for EKS | `100.64.0.0/18` |
+   | Public subnet A | `10.100.0.0/27` |
+   | Public subnet B | `10.100.0.32/27` |
+   | Private platform subnet A | `10.100.0.64/27` |
+   | Private platform subnet B | `10.100.0.96/27` |
+   | Optional private EKS subnet A | `100.64.0.0/19` |
+   | Optional private EKS subnet B | `100.64.32.0/19` |
 
-The default network uses:
+   The primary CIDR should be agreed and documented in the IP plan. The secondary CIDR is optional and is used only when `secondary_cidr_blocks` and `eks_private_subnet_cidrs` are set. If used, it must still be non-overlapping and planned. `100.64.0.0/18` is carved from RFC 6598 shared address space.
 
-| Resource | CIDR |
-|---|---|
-| VPC primary CIDR | `10.100.0.0/24` |
-| Optional VPC secondary CIDR for EKS | `100.64.0.0/18` |
-| Public subnet A | `10.100.0.0/27` |
-| Public subnet B | `10.100.0.32/27` |
-| Private platform subnet A | `10.100.0.64/27` |
-| Private platform subnet B | `10.100.0.96/27` |
-| Optional private EKS subnet A | `100.64.0.0/19` |
-| Optional private EKS subnet B | `100.64.32.0/19` |
+   The network stack exports `platform_private_subnet_ids` and `eks_private_subnet_ids` separately. Later EKS labs use `eks_private_subnet_ids` when the optional EKS subnets exist, otherwise they fall back to `platform_private_subnet_ids`.
 
-The primary CIDR should be agreed and documented in the IP plan. The secondary CIDR is optional and is used only when `secondary_cidr_blocks` and `eks_private_subnet_cidrs` are set. If used, it must still be non-overlapping and planned. `100.64.0.0/18` is carved from RFC 6598 shared address space.
+   Private subnet names also identify their purpose: `<project-name>-dev-platform-private-<az>` for primary-CIDR private subnets and `<project-name>-dev-eks-private-<az>` for EKS private subnets.
 
-The network stack exports `platform_private_subnet_ids` and `eks_private_subnet_ids` separately. Later EKS labs use `eks_private_subnet_ids` when the optional EKS subnets exist, otherwise they fall back to `platform_private_subnet_ids`.
+   The stack dynamically selects the first two standard Availability Zones returned in the configured Region. This avoids hard-coding zone letters whose physical mapping differs between AWS accounts.
 
-Private subnet names also identify their purpose: `<project-name>-dev-platform-private-<az>` for primary-CIDR private subnets and `<project-name>-dev-eks-private-<az>` for EKS private subnets.
+   The lab uses one NAT Gateway by default to keep recurring cost lower. This provides multi-AZ subnet placement but does not make outbound connectivity fully Availability-Zone independent. Setting `single_nat_gateway = false` creates one NAT Gateway per Availability Zone for a more production-oriented design at higher cost.
 
-The stack dynamically selects the first two standard Availability Zones returned in the configured Region. This avoids hard-coding zone letters whose physical mapping differs between AWS accounts.
+3. Initialize the live stack:
 
-The lab uses one NAT Gateway by default to keep recurring cost lower. This provides multi-AZ subnet placement but does not make outbound connectivity fully Availability-Zone independent. Setting `single_nat_gateway = false` creates one NAT Gateway per Availability Zone for a more production-oriented design at higher cost.
+   ```bash
+   terraform init -backend-config=backend.hcl
+   ```
 
-### Initialize the Live Stack
+   Terraform should initialize the S3 backend and download the AWS provider and the pinned VPC module dependency.
 
-```bash
-terraform init -backend-config=backend.hcl
-```
+   Commit `.terraform.lock.hcl` after successful initialization. It records the selected provider versions and checksums.
 
-Terraform should initialize the S3 backend and download the AWS provider and the pinned VPC module dependency.
+4. Format and validate Terraform:
 
-Commit `.terraform.lock.hcl` after successful initialization. It records the selected provider versions and checksums.
+   ```bash
+   terraform fmt
+   terraform validate
+   ```
 
-### Format and Validate
+   Expected result:
 
-```bash
-terraform fmt
-terraform validate
-```
+   ```text
+   Success! The configuration is valid.
+   ```
 
-Expected result:
+5. Review the plan:
 
-```text
-Success! The configuration is valid.
-```
+   ```bash
+   terraform plan -out=tfplan
+   ```
 
-### Review the Plan
+   Review all resources before applying. Confirm that:
 
-```bash
-terraform plan -out=tfplan
-```
+   - the VPC primary CIDR is `10.100.0.0/24`
+   - the optional secondary EKS CIDR is `100.64.0.0/18` when `secondary_cidr_blocks` is set
+   - four subnets are planned for the primary-CIDR layout, or six subnets when optional EKS subnets are enabled
+   - two Availability Zones are used
+   - private subnets do not map public IPs on launch
+   - a NAT Gateway and Elastic IP are planned
+   - EKS load-balancer subnet tags are present
 
-Review all resources before applying. Confirm that:
+   The exact resource count can change between module releases. Validate the intended architecture rather than relying only on a fixed count.
 
-- the VPC primary CIDR is `10.100.0.0/24`
-- the optional secondary EKS CIDR is `100.64.0.0/18` when `secondary_cidr_blocks` is set
-- four subnets are planned for the primary-CIDR layout, or six subnets when optional EKS subnets are enabled
-- two Availability Zones are used
-- private subnets do not map public IPs on launch
-- a NAT Gateway and Elastic IP are planned
-- EKS load-balancer subnet tags are present
+6. Apply the network:
 
-The exact resource count can change between module releases. Validate the intended architecture rather than relying only on a fixed count.
+   ```bash
+   terraform apply tfplan
+   ```
 
-### Apply the Network
+   NAT Gateway creation can take several minutes.
 
-```bash
-terraform apply tfplan
-```
+   After completion:
 
-NAT Gateway creation can take several minutes.
+   ```bash
+   terraform output
+   ```
 
-After completion:
+7. Validate Terraform state and outputs:
 
-```bash
-terraform output
-```
+   ```bash
+   terraform state list
+   terraform output -raw vpc_id
+   terraform output -json public_subnet_ids
+   terraform output -json private_subnet_ids
+   terraform output -json platform_private_subnet_ids
+   terraform output -json eks_private_subnet_ids
+   ```
 
-Validate Terraform state and outputs:
+8. Verify the remote state object:
 
-```bash
-terraform state list
-terraform output -raw vpc_id
-terraform output -json public_subnet_ids
-terraform output -json private_subnet_ids
-terraform output -json platform_private_subnet_ids
-terraform output -json eks_private_subnet_ids
-```
+   ```bash
+   aws s3api head-object   --bucket "$(awk -F'"' '/bucket/ {print $2}' backend.hcl)"   --key "platform-live/dev/terraform.tfstate"
+   ```
 
-Verify the remote state object:
+9. Inspect the AWS resource configuration:
 
-```bash
-aws s3api head-object   --bucket "$(awk -F'"' '/bucket/ {print $2}' backend.hcl)"   --key "platform-live/dev/terraform.tfstate"
-```
+   ```bash
+   VPC_ID="$(terraform output -raw vpc_id)"
+   aws ec2 describe-vpcs   --vpc-ids "${VPC_ID}"   --query 'Vpcs[0].{VpcId:VpcId,Cidr:CidrBlock,DnsSupport:EnableDnsSupport,DnsHostnames:EnableDnsHostnames}'
+   aws ec2 describe-subnets   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'Subnets[].{SubnetId:SubnetId,AZ:AvailabilityZone,Cidr:CidrBlock,PublicIpOnLaunch:MapPublicIpOnLaunch}'   --output table
+   aws ec2 describe-nat-gateways   --filter "Name=vpc-id,Values=${VPC_ID}"   --query 'NatGateways[].{Id:NatGatewayId,State:State,Subnet:SubnetId}'   --output table
+   aws ec2 describe-route-tables   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'RouteTables[].{RouteTableId:RouteTableId,Routes:Routes[].{Destination:DestinationCidrBlock,Gateway:GatewayId,NatGateway:NatGatewayId}}'
+   ```
 
-Inspect the AWS resource configuration:
+10. Check EKS subnet discovery tags:
 
-```bash
-VPC_ID="$(terraform output -raw vpc_id)"
-aws ec2 describe-vpcs   --vpc-ids "${VPC_ID}"   --query 'Vpcs[0].{VpcId:VpcId,Cidr:CidrBlock,DnsSupport:EnableDnsSupport,DnsHostnames:EnableDnsHostnames}'
-aws ec2 describe-subnets   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'Subnets[].{SubnetId:SubnetId,AZ:AvailabilityZone,Cidr:CidrBlock,PublicIpOnLaunch:MapPublicIpOnLaunch}'   --output table
-aws ec2 describe-nat-gateways   --filter "Name=vpc-id,Values=${VPC_ID}"   --query 'NatGateways[].{Id:NatGatewayId,State:State,Subnet:SubnetId}'   --output table
-aws ec2 describe-route-tables   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'RouteTables[].{RouteTableId:RouteTableId,Routes:Routes[].{Destination:DestinationCidrBlock,Gateway:GatewayId,NatGateway:NatGatewayId}}'
-```
+   ```bash
+   aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json public_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/elb"
 
-Check EKS subnet discovery tags:
+   aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json private_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/internal-elb"
+   ```
 
-```bash
-aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json public_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/elb"
+    The tag commands use `jq`. You may also inspect the subnet tags in the AWS Console.
 
-aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json private_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/internal-elb"
-```
+11. Commit and push the repository changes. Do not commit `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
 
-The tag commands use `jq`. You may also inspect the subnet tags in the AWS Console.
+   In `platform-modules`:
 
-Do not commit `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
+   ```bash
+   git status
+   git diff --check
+   git add README.md Makefile .terraform-version scripts/ modules/core/
+   git commit -m "add reusable vpc module"
+   git push
+   ```
 
-In `platform-modules`:
+   In `platform-live`:
 
-```bash
-git status
-git diff --check
-git add README.md Makefile .terraform-version scripts/ modules/core/
-git commit -m "add reusable vpc module"
-git push
-```
-
-In `platform-live`:
-
-```bash
-git status
-git diff --check
-git add README.md Makefile .terraform-version scripts/ environments/dev/
-git commit -m "provision development network"
-git push
-```
+   ```bash
+   git status
+   git diff --check
+   git add README.md Makefile .terraform-version scripts/ environments/dev/
+   git commit -m "provision development network"
+   git push
+   ```
 
 ## Expected Results
 

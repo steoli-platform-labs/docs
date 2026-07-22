@@ -52,89 +52,89 @@ After this lab, the Development Terraform root module manages an active Amazon E
 
 Enable EKS through Terraform, select a supported Kubernetes version and apply the Development root module.
 
-Open the Development root module:
+1. Open the Development root module:
 
-```bash
-cd "$WORKSPACE/platform-live/environments/dev"
-```
+   ```bash
+   cd "$WORKSPACE/platform-live/environments/dev"
+   ```
 
-Check the EKS versions available in your AWS region:
+2. Check the EKS versions available in your AWS region:
 
-```bash
-aws eks describe-cluster-versions \
-  --region "$AWS_REGION" \
-  --query 'clusterVersions[?status==`STANDARD_SUPPORT`].clusterVersion' \
-  --output table
-```
+   ```bash
+   aws eks describe-cluster-versions \
+     --region "$AWS_REGION" \
+     --query 'clusterVersions[?status==`STANDARD_SUPPORT`].clusterVersion' \
+     --output table
+   ```
 
-Choose a version in standard support unless you intentionally need an older version. EKS versions change over time, so prefer the newest standard-support version that is compatible with the platform components used in these labs.
+   Choose a version in standard support unless you intentionally need an older version. EKS versions change over time, so prefer the newest standard-support version that is compatible with the platform components used in these labs.
 
-If `eks_private_subnet_cidrs` is set, EKS uses those dedicated private subnets from the secondary VPC CIDR. If it is empty, EKS uses the platform private subnets from the primary VPC CIDR instead.
+   If `eks_private_subnet_cidrs` is set, EKS uses those dedicated private subnets from the secondary VPC CIDR. If it is empty, EKS uses the platform private subnets from the primary VPC CIDR instead.
 
-Edit `terraform.tfvars` and enable EKS:
+3. Edit `terraform.tfvars` and enable EKS:
 
-```hcl
-enable_eks = true
+   ```hcl
+   enable_eks = true
 
-kubernetes_version  = "1.36"
-node_instance_types = ["t3.medium"]
-```
+   kubernetes_version  = "1.36"
+   node_instance_types = ["t3.medium"]
+   ```
 
-Plan and apply:
+4. Plan and apply:
 
-```bash
-terraform fmt
-terraform validate
-terraform plan -out=tfplan
-terraform apply tfplan
-```
+   ```bash
+   terraform fmt
+   terraform validate
+   terraform plan -out=tfplan
+   terraform apply tfplan
+   ```
 
-Review the plan before applying. EKS creation can take several minutes.
+   Review the plan before applying. EKS creation can take several minutes.
 
-Configure kubectl:
+5. Configure kubectl:
 
-```bash
-CLUSTER="$(terraform output -raw cluster_name)"
-aws eks update-kubeconfig --name "$CLUSTER" --region "$AWS_REGION"
-```
+   ```bash
+   CLUSTER="$(terraform output -raw cluster_name)"
+   aws eks update-kubeconfig --name "$CLUSTER" --region "$AWS_REGION"
+   ```
 
-Verify the cluster:
+6. Verify the cluster:
 
-```bash
-aws eks describe-cluster \
-  --name "$CLUSTER" \
-  --query 'cluster.{status:status,version:version,endpoint:endpoint,subnets:resourcesVpcConfig.subnetIds}'
+   ```bash
+   aws eks describe-cluster \
+     --name "$CLUSTER" \
+     --query 'cluster.{status:status,version:version,endpoint:endpoint,subnets:resourcesVpcConfig.subnetIds}'
 
-aws eks list-nodegroups --cluster-name "$CLUSTER"
-kubectl cluster-info
-kubectl get nodes -o wide
-kubectl get pods -A
-kubectl get --raw='/readyz?verbose'
-```
+   aws eks list-nodegroups --cluster-name "$CLUSTER"
+   kubectl cluster-info
+   kubectl get nodes -o wide
+   kubectl get pods -A
+   kubectl get --raw='/readyz?verbose'
+   ```
 
-Commit only Terraform source changes and documentation. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
+7. Commit only Terraform source changes and documentation. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
 
-In `platform-modules`:
+   In `platform-modules`:
 
-```bash
-cd "$WORKSPACE/platform-modules"
-git status
-git diff --check
-git add modules/eks/
-git commit -m "add reusable eks module"
-git push
-```
+   ```bash
+   cd "$WORKSPACE/platform-modules"
+   git status
+   git diff --check
+   git add modules/eks/
+   git commit -m "add reusable eks module"
+   git push
+   ```
 
-In `platform-live`:
+   In `platform-live`:
 
-```bash
-cd "$WORKSPACE/platform-live"
-git status
-git diff --check
-git add environments/dev/
-git commit -m "enable development eks cluster"
-git push
-```
+   ```bash
+   cd "$WORKSPACE/platform-live"
+   git status
+   git diff --check
+   git add environments/dev/
+   git commit -m "enable development eks cluster"
+   git push
+   ```
 
 ## Expected Results
 

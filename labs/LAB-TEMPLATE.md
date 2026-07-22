@@ -37,7 +37,7 @@ List the important files and explain why each one matters.
 
 ## Step-by-Step Implementation
 
-Use lab-specific steps. Each step should include the relevant context and commands needed to complete that step.
+Use a top-level numbered list for lab-specific steps. Each step should include the relevant context and commands needed to complete that step.
 Do not add a separate top-level `Commands` section; commands belong inside the step they support.
 Include verification actions as explicit steps instead of hiding the procedure in `Validation`.
 
