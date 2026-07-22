@@ -108,7 +108,7 @@ If rendering fails, inspect `charts/sample-api/values.yaml` and the relevant tem
 
 ## Commit and Push
 
-Commit the Helm chart and documentation changes only. Do not commit temporary rendered manifests.
+Commit the Helm chart changes only. Do not commit temporary rendered manifests.
 
 In `helm-charts`:
 
@@ -118,17 +118,6 @@ git status
 git diff --check
 git add charts/sample-api/
 git commit -m "add sample api helm chart"
-git push
-```
-
-In `docs`:
-
-```bash
-cd "$WORKSPACE/docs"
-git status
-git diff --check
-git add labs/lab05-helm.md
-git commit -m "complete lab 05 helm guide"
 git push
 ```
 

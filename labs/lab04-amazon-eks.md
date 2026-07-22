@@ -166,17 +166,6 @@ git commit -m "enable development eks cluster"
 git push
 ```
 
-In `docs`:
-
-```bash
-cd "$WORKSPACE/docs"
-git status
-git diff --check
-git add labs/lab04-amazon-eks.md
-git commit -m "complete lab 04 amazon eks guide"
-git push
-```
-
 ## Final Repository State
 
 At completion, `platform-live` composes the reusable EKS module for the Development environment and `platform-modules` contains reusable EKS module code. The deployed cluster remains managed by Terraform.

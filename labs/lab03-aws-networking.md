@@ -503,16 +503,6 @@ git commit -m "provision development network"
 git push
 ```
 
-In `docs`:
-
-```bash
-git status
-git diff --check
-git add labs/lab03-aws-networking.md
-git commit -m "complete lab 03 networking guide"
-git push
-```
-
 ## Final Repository State
 
 At completion:
