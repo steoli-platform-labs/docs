@@ -25,18 +25,15 @@ After this lab, the project repositories have GitHub Actions workflows that vali
 
 ## Prerequisites
 
-Complete Labs 01 - 05 first.
-
-Required local tools:
-
+- Lab 01 - Lab 05 completed
 - Git
 - Terraform
 - Helm
 - kubectl
 - Python 3
 - Docker Desktop or another Docker daemon
-
-The GitHub repositories must already exist and be connected to the local workspace. The `sample-api` repository must have permission to publish packages to GitHub Container Registry using `GITHUB_TOKEN`.
+- GitHub repositories connected to the local workspace
+- `sample-api` repository allowed to publish packages to GitHub Container Registry using `GITHUB_TOKEN`
 
 ## Repository Changes
 
