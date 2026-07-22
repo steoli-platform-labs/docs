@@ -14,20 +14,54 @@
 | **GitOps** | No |
 
 ## Outcome
-Implement and validate GitHub Actions in the complete platform reference implementation.
+
+After this lab, the project repositories have GitHub Actions workflows that validate Terraform, lint Helm charts, test the sample API and publish an immutable sample API image to GHCR on pushes to `main`.
+
+## Introduction
+
+This lab introduces repository-local GitHub Actions workflows.
+
+The workflows validate changes and publish build artifacts. They do not deploy infrastructure or Kubernetes workloads. Deployment remains manual Terraform for infrastructure until GitOps is introduced, and Kubernetes workload deployment is handled by Argo CD in later labs.
+
+## Objectives
+
+- Review the workflow files in each implementation repository.
+- Run equivalent validation commands locally.
+- Verify pull request and push workflows in GitHub Actions.
+- Confirm the sample API image is published with a commit-SHA tag.
+- Confirm CI does not deploy directly to Kubernetes.
 
 ## Before You Begin
-Complete Lab 01 - Lab 05, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+
+Complete Labs 01 - 05 first.
+
+Required local tools:
+
+- Git
+- Terraform
+- Helm
+- kubectl
+- Python 3
+- Docker Desktop or another Docker daemon
+
+The GitHub repositories must already exist and be connected to the local workspace. The `sample-api` repository must have permission to publish packages to GitHub Container Registry using `GITHUB_TOKEN`.
 
 ## Repository Changes
-Primary implementation: `repository .github/workflows files`.
+
+| Repository | Responsibility |
+|------------|----------------|
+| `sample-api` | Runs application tests, builds the container image and publishes to GHCR |
+| `helm-charts` | Lints the reusable Helm chart |
+| `platform-modules` | Checks Terraform formatting for reusable modules |
+| `platform-live` | Checks Terraform formatting for live environments |
+| `platform-config` | Provides namespace manifests used for a client-side dry run |
+| `docs` | Documents the lab workflow |
 
 ## Files to Review
-Review the workflow files in each repository and update any repository-specific values before validation.
 
-GitHub Actions are defined inside a `.github/workflows` directory at the root of each repository. Each YAML file in that directory becomes a workflow in the repository's **Actions** tab.
+GitHub Actions are defined inside a `.github/workflows` directory at the root of each repository. Each YAML file in that directory becomes a workflow in that repository's **Actions** tab.
 
-In this lab, review these workflow files:
+Review these files:
 
 | Repository | Workflow file | Purpose |
 |------------|---------------|---------|
@@ -35,10 +69,12 @@ In this lab, review these workflow files:
 | `helm-charts` | `.github/workflows/helm.yaml` | Installs Helm and lints the reusable `sample-api` chart |
 | `platform-modules` | `.github/workflows/terraform.yaml` | Checks Terraform formatting for reusable modules |
 | `platform-live` | `.github/workflows/terraform.yaml` | Checks Terraform formatting for deployable live environments |
+| `platform-config` | `environments/namespaces.yaml` | Provides a built-in Kubernetes manifest for client-side dry-run validation |
 
 These workflows are repository-local. For example, `helm-charts/.github/workflows/helm.yaml` appears only in the `helm-charts` repository Actions tab, not in `sample-api` or `platform-live`.
 
 ## Step-by-Step Implementation
+
 1. Review the `.github/workflows` files in each repository listed above.
 2. Run the local validation commands from this lab.
 3. Commit and push the workflow and validation changes.
@@ -48,6 +84,9 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 This lab does not apply infrastructure or deploy workloads. GitHub Actions validate, test and publish artifacts only; deployment remains a GitOps responsibility in later labs.
 
 ## Commands
+
+Run the repository-level validation commands from the workspace root:
+
 ```bash
 cd "$WORKSPACE"
 terraform -chdir=platform-modules fmt -recursive
@@ -59,9 +98,11 @@ kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
 Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
 
 ## Expected Results
-Local validation commands pass, GitHub Actions workflows run successfully, and the sample API image is published to GHCR on pushes to `main`.
+
+Local validation commands pass, GitHub Actions workflows run successfully, pull requests validate without publishing images and pushes to `main` publish an immutable `sample-api` image tag to GHCR.
 
 ## Validation
+
 ### GitHub Actions verification
 
 Validate both the GitHub-hosted workflow run and the equivalent local commands. Do this per repository because each repository owns a separate workflow.
@@ -171,13 +212,82 @@ Common issues:
 | GHCR pull returns `unauthorized` | Docker is not logged in to GHCR or token lacks `read:packages` | Run `docker login ghcr.io` with a token that has `read:packages` |
 
 ## Commit and Push
-Use a focused conventional commit such as `feat: complete lab 06`.
+
+Commit the workflow and documentation changes in the repositories that changed. Do not commit virtual environments, local Docker artifacts, tokens or generated files.
+
+In `sample-api`:
+
+```bash
+cd "$WORKSPACE/sample-api"
+git status
+git diff --check
+git add .github/workflows/ci.yaml
+git commit -m "add sample api ci workflow"
+git push
+```
+
+In `helm-charts`:
+
+```bash
+cd "$WORKSPACE/helm-charts"
+git status
+git diff --check
+git add .github/workflows/helm.yaml
+git commit -m "add helm chart validation workflow"
+git push
+```
+
+In `platform-modules`:
+
+```bash
+cd "$WORKSPACE/platform-modules"
+git status
+git diff --check
+git add .github/workflows/terraform.yaml
+git commit -m "add terraform module validation workflow"
+git push
+```
+
+In `platform-live`:
+
+```bash
+cd "$WORKSPACE/platform-live"
+git status
+git diff --check
+git add .github/workflows/terraform.yaml
+git commit -m "add terraform live validation workflow"
+git push
+```
+
+In `docs`:
+
+```bash
+cd "$WORKSPACE/docs"
+git status
+git diff --check
+git add labs/lab06-github-actions.md
+git commit -m "complete lab 06 github actions guide"
+git push
+```
 
 ## Final Repository State
-The implementation remains GitOps-driven and mergeable to `main`.
+
+At completion, the implementation repositories have validation workflows, `sample-api` publishes commit-SHA image tags to GHCR on pushes to `main`, and no workflow deploys directly to Kubernetes.
 
 ## Cleanup
-No cleanup is required.
+
+Remove the local Python virtual environment created during validation if you no longer need it:
+
+```bash
+rm -rf "$WORKSPACE/sample-api/.venv"
+```
+
+Remove the local Docker image if desired:
+
+```bash
+docker image rm sample-api:lab06
+```
 
 ## Next Steps
+
 Continue with [Lab 07 - Argo CD](./lab07-argocd.md).
