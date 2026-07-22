@@ -139,6 +139,30 @@ Remote state: s3://<bucket>/bootstrap/terraform.tfstate
 
 `terraform plan -detailed-exitcode` should exit with code `0` when there are no pending changes.
 
+Commit only source files and scripts. Do not commit local backend, state, variable or plan files:
+
+```bash
+git status
+git diff --check
+git add \
+  .editorconfig \
+  .gitignore \
+  .terraform.lock.hcl \
+  Makefile \
+  README.md \
+  data.tf \
+  locals.tf \
+  main.tf \
+  outputs.tf \
+  providers.tf \
+  variables.tf \
+  versions.tf \
+  scripts/ \
+  terraform.tfvars.example
+git commit -m "complete lab 02 terraform backend"
+git push
+```
+
 ## Expected Results
 
 The backend bucket exists with versioning, encryption and Block Public Access enabled. Terraform state for `platform-bootstrap` is stored remotely at `bootstrap/terraform.tfstate`, while local generated files remain ignored.
@@ -199,32 +223,6 @@ For native S3 lock issues, confirm no active Terraform process owns the lock bef
 
 ```bash
 terraform force-unlock <LOCK_ID>
-```
-
-## Commit and Push
-
-Commit only source files and scripts. Do not commit local backend, state, variable or plan files.
-
-```bash
-git status
-git diff --check
-git add \
-  .editorconfig \
-  .gitignore \
-  .terraform.lock.hcl \
-  Makefile \
-  README.md \
-  data.tf \
-  locals.tf \
-  main.tf \
-  outputs.tf \
-  providers.tf \
-  variables.tf \
-  versions.tf \
-  scripts/ \
-  terraform.tfvars.example
-git commit -m "complete lab 02 terraform backend"
-git push
 ```
 
 ## Final Repository State

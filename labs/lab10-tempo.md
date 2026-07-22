@@ -171,10 +171,6 @@ kubectl -n monitoring get pods -o wide
 kubectl -n monitoring logs -l app.kubernetes.io/name=opentelemetry-collector --since=10m --tail=200
 ```
 
-## Commit and Push
-
-Use a focused conventional commit such as `feat: complete lab 10`.
-
 ## Final Repository State
 
 The implementation remains GitOps-driven and mergeable to `main`.

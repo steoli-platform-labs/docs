@@ -195,10 +195,6 @@ kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=
 kubectl -n karpenter logs deployment/karpenter --since=10m --tail=200
 ```
 
-## Commit and Push
-
-Use a focused conventional commit such as `feat: complete lab 13`.
-
 ## Final Repository State
 
 The implementation remains GitOps-driven and mergeable to `main`.

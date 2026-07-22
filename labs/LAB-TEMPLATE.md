@@ -57,10 +57,6 @@ List concise pass/fail criteria only. Detailed validation commands and negative 
 
 Use troubleshooting that matches this lab's component. Avoid generic Kubernetes text unless the lab actually deploys Kubernetes resources.
 
-## Commit and Push
-
-Use a focused conventional commit such as `feat: complete lab XX`.
-
 ## Final Repository State
 
 Describe what should be committed and what must remain local or ignored.

@@ -231,10 +231,6 @@ Common issues:
 | Application is `OutOfSync` | Desired state differs from cluster state | Review the diff in Argo CD or describe the Application |
 | Application is `Degraded` | Rendered manifests failed or workloads are unhealthy | Inspect the Application events and affected Kubernetes resources |
 
-## Commit and Push
-
-Use a focused conventional commit such as `feat: complete lab 07`.
-
 ## Final Repository State
 
 The implementation remains GitOps-driven and mergeable to `main`.

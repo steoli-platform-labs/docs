@@ -84,9 +84,6 @@ kubectl -n argocd get applications.argoproj.io -o wide
 kubectl get events -A --sort-by=.lastTimestamp
 ```
 
-## Commit and Push
-Use a focused conventional commit such as `feat: complete lab 15`.
-
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 

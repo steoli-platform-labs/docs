@@ -86,6 +86,19 @@ grep '^kind:' /tmp/sample-api-rendered.yaml
 grep -nE 'readinessProbe|livenessProbe|startupProbe|resources:|NetworkPolicy|PodDisruptionBudget' /tmp/sample-api-rendered.yaml
 ```
 
+Commit the Helm chart changes only. Do not commit temporary rendered manifests.
+
+In `helm-charts`:
+
+```bash
+cd "$WORKSPACE/helm-charts"
+git status
+git diff --check
+git add charts/sample-api/
+git commit -m "add sample api helm chart"
+git push
+```
+
 ## Expected Results
 
 `helm lint` succeeds, rendered manifests include the expected built-in Kubernetes resources, and the client-side dry run validates without deploying anything.
@@ -105,21 +118,6 @@ Pass criteria:
 ## Troubleshooting
 
 If rendering fails, inspect `charts/sample-api/values.yaml` and the relevant template under `charts/sample-api/templates/`.
-
-## Commit and Push
-
-Commit the Helm chart changes only. Do not commit temporary rendered manifests.
-
-In `helm-charts`:
-
-```bash
-cd "$WORKSPACE/helm-charts"
-git status
-git diff --check
-git add charts/sample-api/
-git commit -m "add sample api helm chart"
-git push
-```
 
 ## Final Repository State
 

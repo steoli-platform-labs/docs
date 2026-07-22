@@ -98,9 +98,6 @@ kubectl -n sample-api-dev get pods,svc,endpoints -o wide
 kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
 ```
 
-## Commit and Push
-Use a focused conventional commit such as `feat: complete lab 14`.
-
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 

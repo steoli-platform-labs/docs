@@ -76,7 +76,54 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    ```
 
    Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
-3. Commit and push workflow changes only if you changed a workflow file.
+3. Commit and push workflow changes only if you changed a workflow file. No commit is required if the workflow files already exist and the validation commands pass.
+
+   If you changed a workflow file while completing this lab, commit only the changed workflow file in the repository that owns it. Do not commit virtual environments, local Docker artifacts, tokens or generated files.
+
+   In `sample-api`:
+
+   ```bash
+   cd "$WORKSPACE/sample-api"
+   git status
+   git diff --check
+   git add .github/workflows/ci.yaml
+   git commit -m "add sample api ci workflow"
+   git push
+   ```
+
+   In `helm-charts`:
+
+   ```bash
+   cd "$WORKSPACE/helm-charts"
+   git status
+   git diff --check
+   git add .github/workflows/helm.yaml
+   git commit -m "add helm chart validation workflow"
+   git push
+   ```
+
+   In `platform-modules`:
+
+   ```bash
+   cd "$WORKSPACE/platform-modules"
+   git status
+   git diff --check
+   git add .github/workflows/terraform.yaml
+   git commit -m "add terraform module validation workflow"
+   git push
+   ```
+
+   In `platform-live`:
+
+   ```bash
+   cd "$WORKSPACE/platform-live"
+   git status
+   git diff --check
+   git add .github/workflows/terraform.yaml
+   git commit -m "add terraform live validation workflow"
+   git push
+   ```
+
 4. Open each repository in GitHub and inspect the workflow run triggered by the push:
 
    1. Open the repository, for example `helm-charts`.
@@ -178,56 +225,6 @@ Common issues:
 | Python tests fail | Application dependency or test failure | Run the local `sample-api` virtualenv commands and fix the failing test |
 | Docker build fails | Dockerfile or dependency issue | Run `docker build -t sample-api:lab06 .` locally with Docker running |
 | GHCR pull returns `unauthorized` | Docker is not logged in to GHCR or token lacks `read:packages` | Run `docker login ghcr.io` with a token that has `read:packages` |
-
-## Commit and Push
-
-No commit is required if the workflow files already exist and the validation commands pass.
-
-If you changed a workflow file while completing this lab, commit only the changed workflow file in the repository that owns it. Do not commit virtual environments, local Docker artifacts, tokens or generated files.
-
-In `sample-api`:
-
-```bash
-cd "$WORKSPACE/sample-api"
-git status
-git diff --check
-git add .github/workflows/ci.yaml
-git commit -m "add sample api ci workflow"
-git push
-```
-
-In `helm-charts`:
-
-```bash
-cd "$WORKSPACE/helm-charts"
-git status
-git diff --check
-git add .github/workflows/helm.yaml
-git commit -m "add helm chart validation workflow"
-git push
-```
-
-In `platform-modules`:
-
-```bash
-cd "$WORKSPACE/platform-modules"
-git status
-git diff --check
-git add .github/workflows/terraform.yaml
-git commit -m "add terraform module validation workflow"
-git push
-```
-
-In `platform-live`:
-
-```bash
-cd "$WORKSPACE/platform-live"
-git status
-git diff --check
-git add .github/workflows/terraform.yaml
-git commit -m "add terraform live validation workflow"
-git push
-```
 
 ## Final Repository State
 

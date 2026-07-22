@@ -102,9 +102,6 @@ kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
 kubectl get nodes -L topology.kubernetes.io/zone
 ```
 
-## Commit and Push
-Use a focused conventional commit such as `feat: complete lab 17`.
-
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 

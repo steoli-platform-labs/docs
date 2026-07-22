@@ -112,6 +112,30 @@ kubectl get pods -A
 kubectl get --raw='/readyz?verbose'
 ```
 
+Commit only Terraform source changes and documentation. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
+
+In `platform-modules`:
+
+```bash
+cd "$WORKSPACE/platform-modules"
+git status
+git diff --check
+git add modules/eks/
+git commit -m "add reusable eks module"
+git push
+```
+
+In `platform-live`:
+
+```bash
+cd "$WORKSPACE/platform-live"
+git status
+git diff --check
+git add environments/dev/
+git commit -m "enable development eks cluster"
+git push
+```
+
 ## Expected Results
 
 Terraform creates an active EKS control plane, a managed node group and access entries configured by the live environment. `kubectl` can connect to the cluster after kubeconfig is updated.
@@ -139,32 +163,6 @@ kubectl get pods -A
 ```
 
 If nodes do not join, verify that EKS is using the expected private subnet IDs and that private subnet routing through NAT is working.
-
-## Commit and Push
-
-Commit only Terraform source changes and documentation. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
-
-In `platform-modules`:
-
-```bash
-cd "$WORKSPACE/platform-modules"
-git status
-git diff --check
-git add modules/eks/
-git commit -m "add reusable eks module"
-git push
-```
-
-In `platform-live`:
-
-```bash
-cd "$WORKSPACE/platform-live"
-git status
-git diff --check
-git add environments/dev/
-git commit -m "enable development eks cluster"
-git push
-```
 
 ## Final Repository State
 

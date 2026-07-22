@@ -94,9 +94,6 @@ kubectl get nodepool,ec2nodeclass,nodeclaim
 kubectl -n karpenter logs deployment/karpenter --since=15m --tail=300
 ```
 
-## Commit and Push
-Use a focused conventional commit such as `feat: complete lab 11`.
-
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 

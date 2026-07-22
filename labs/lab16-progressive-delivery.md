@@ -89,9 +89,6 @@ kubectl -n sample-api-dev describe rollout sample-api
 kubectl -n argo-rollouts get pods -o wide
 ```
 
-## Commit and Push
-Use a focused conventional commit such as `feat: complete lab 16`.
-
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 

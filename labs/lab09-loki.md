@@ -177,10 +177,6 @@ kubectl -n monitoring get pods -o wide
 kubectl -n monitoring get events --sort-by=.lastTimestamp
 ```
 
-## Commit and Push
-
-Use a focused conventional commit such as `feat: complete lab 09`.
-
 ## Final Repository State
 
 The implementation remains GitOps-driven and mergeable to `main`.

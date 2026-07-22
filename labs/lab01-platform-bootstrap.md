@@ -500,9 +500,7 @@ EOF_BOOTSTRAP
 
 Use equivalent purpose statements for the remaining repositories based on [`../architecture/repository-strategy.md`](../architecture/repository-strategy.md).
 
-## Commit and Push
-
-Run the following in each implementation repository:
+Commit and push the initial files in each implementation repository:
 
 ```bash
 for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api

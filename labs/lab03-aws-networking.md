@@ -380,6 +380,28 @@ aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform outpu
 
 The tag commands use `jq`. You may also inspect the subnet tags in the AWS Console.
 
+Do not commit `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
+
+In `platform-modules`:
+
+```bash
+git status
+git diff --check
+git add README.md Makefile .terraform-version scripts/ modules/core/
+git commit -m "add reusable vpc module"
+git push
+```
+
+In `platform-live`:
+
+```bash
+git status
+git diff --check
+git add README.md Makefile .terraform-version scripts/ environments/dev/
+git commit -m "provision development network"
+git push
+```
+
 ## Expected Results
 
 Terraform provisions the Development VPC, public subnets, private platform subnets, optional EKS private subnets, Internet Gateway, NAT Gateway, route tables and subnet discovery tags. State is stored in the S3 backend created in Lab 02.
@@ -443,30 +465,6 @@ Verify that `platform-live` and `platform-modules` are sibling directories. The 
 
 ```text
 ../../../platform-modules/modules/core
-```
-
-## Commit and Push
-
-Do not commit `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
-
-In `platform-modules`:
-
-```bash
-git status
-git diff --check
-git add README.md Makefile .terraform-version scripts/ modules/core/
-git commit -m "add reusable vpc module"
-git push
-```
-
-In `platform-live`:
-
-```bash
-git status
-git diff --check
-git add README.md Makefile .terraform-version scripts/ environments/dev/
-git commit -m "provision development network"
-git push
 ```
 
 ## Final Repository State
