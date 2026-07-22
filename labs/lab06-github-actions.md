@@ -261,19 +261,6 @@ git commit -m "add terraform live validation workflow"
 git push
 ```
 
-In `docs`:
-
-```bash
-cd "$WORKSPACE/docs"
-git status
-git diff --check
-git add labs/lab06-github-actions.md
-git commit -m "complete lab 06 github actions guide"
-git push
-```
-
-Skip the `docs` commit unless you changed this guide.
-
 ## Final Repository State
 
 At completion, the implementation repositories have validation workflows, `sample-api` publishes commit-SHA image tags to GHCR on pushes to `main`, and no workflow deploys directly to Kubernetes.
