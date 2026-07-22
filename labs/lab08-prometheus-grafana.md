@@ -122,18 +122,17 @@ Review the observability desired-state files and update any environment-specific
 
 1. Review `platform-config/clusters/dev/prometheus.yaml` and confirm the chart, namespace and values match the lab environment.
 2. Commit and push any required `platform-config` changes.
-3. Let Argo CD reconcile the `prometheus` Application from Git.
+3. Let Argo CD reconcile the `prometheus` Application from Git:
+
+   ```bash
+   cd "$WORKSPACE"
+   kubectl -n argocd get application prometheus -o wide
+   kubectl -n argocd annotate application prometheus argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application prometheus -o wide
+   ```
+
 4. Verify that Prometheus, Grafana and the monitoring CRDs become healthy.
 5. Validate metrics ingestion through Prometheus and Grafana.
-
-## Commands
-
-```bash
-cd "$WORKSPACE"
-kubectl -n argocd get application prometheus -o wide
-kubectl -n argocd annotate application prometheus argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd get application prometheus -o wide
-```
 
 ## Expected Results
 

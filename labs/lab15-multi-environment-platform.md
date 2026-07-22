@@ -32,19 +32,20 @@ Primary implementation: `platform-config/environments/namespaces.yaml`.
 Review the multi-environment configuration files and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
+
 1. Review `platform-config/environments/namespaces.yaml` and the environment-specific sample API desired state.
 2. Confirm dev, staging and production have explicit namespace, values and promotion boundaries.
 3. Commit and push any environment configuration changes.
-4. Let Argo CD reconcile the environment Applications from Git.
-5. Validate that each namespace has isolated workloads, policies and configuration.
+4. Let Argo CD reconcile the environment Applications from Git after running local checks:
 
-## Commands
-```bash
-cd "$WORKSPACE"
-helm lint helm-charts/charts/sample-api
-kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
-kubectl -n argocd get applications.argoproj.io -o wide
-```
+   ```bash
+   cd "$WORKSPACE"
+   helm lint helm-charts/charts/sample-api
+   kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
+   kubectl -n argocd get applications.argoproj.io -o wide
+   ```
+
+5. Validate that each namespace has isolated workloads, policies and configuration.
 
 ## Expected Results
 The environment namespaces exist and each environment is represented by explicit GitOps desired state rather than ad hoc manual deployment.

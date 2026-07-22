@@ -37,12 +37,8 @@ List the important files and explain why each one matters.
 
 ## Step-by-Step Implementation
 
-Use lab-specific steps. Do not copy generic workflow text from another lab.
-
-## Commands
-
-Commands must include the working directory and must not deploy workloads outside the intended lab mechanism.
-Detailed labs may omit this standalone section when commands are already embedded in named implementation sections such as `Configure the Remote Backend`, `Review the Plan` or `Apply the Network`.
+Use lab-specific steps. Each step should include the relevant context and commands needed to complete that step.
+Do not add a separate top-level `Commands` section; commands belong inside the step they support.
 
 ```bash
 cd "$WORKSPACE"

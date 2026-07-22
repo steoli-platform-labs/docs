@@ -152,31 +152,33 @@ Key files:
 1. Review `platform-config/bootstrap/root-application.yaml` and confirm the `repoURL`, `targetRevision` and `path` match your repositories and branch.
 2. Review the current child Applications in `platform-config/clusters/dev` so you understand what Argo CD will reconcile.
 3. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
-4. Install Argo CD into the existing EKS cluster.
-5. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`.
+4. Confirm kubectl points at the intended EKS cluster and install Argo CD:
+
+   ```bash
+   cd "$WORKSPACE"
+
+   kubectl config current-context
+   kubectl get nodes
+
+   helm repo add argo https://argoproj.github.io/argo-helm
+   helm repo update
+   helm upgrade --install argocd argo/argo-cd \
+     --namespace argocd \
+     --create-namespace \
+     --wait
+   ```
+
+5. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`:
+
+   ```bash
+   kubectl -n argocd wait --for=condition=available deployment/argocd-server --timeout=300s
+   kubectl apply -f platform-config/bootstrap/root-application.yaml
+   ```
+
 6. Verify that Argo CD creates child Applications and reports them as synced or progressing.
 7. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
 
-The direct install/bootstrap commands below are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
-
-## Commands
-
-```bash
-cd "$WORKSPACE"
-
-kubectl config current-context
-kubectl get nodes
-
-helm repo add argo https://argoproj.github.io/argo-helm
-helm repo update
-helm upgrade --install argocd argo/argo-cd \
-  --namespace argocd \
-  --create-namespace \
-  --wait
-
-kubectl -n argocd wait --for=condition=available deployment/argocd-server --timeout=300s
-kubectl apply -f platform-config/bootstrap/root-application.yaml
-```
+The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
 
 ## Expected Results
 

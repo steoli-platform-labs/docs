@@ -32,19 +32,25 @@ Primary implementation: `sample-api Rollout chart template`.
 Review the progressive delivery desired-state files and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
+
 1. Review the `sample-api` Rollout template and the `rollout.enabled` chart value.
 2. Review `platform-config/clusters/dev/argo-rollouts.yaml` and `sample-api.yaml`.
-3. Commit and push any chart or GitOps value changes.
-4. Let Argo CD reconcile Argo Rollouts and the sample API from Git.
-5. Change the sample API image tag through Git and observe the canary rollout.
+3. Render the chart locally with Rollout enabled before committing changes:
 
-## Commands
-```bash
-cd "$WORKSPACE"
-helm lint helm-charts/charts/sample-api
-helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=true | grep -A30 '^kind: Rollout'
-kubectl -n argocd get application argo-rollouts sample-api -o wide
-```
+   ```bash
+   cd "$WORKSPACE"
+   helm lint helm-charts/charts/sample-api
+   helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=true | grep -A30 '^kind: Rollout'
+   ```
+
+4. Commit and push any chart or GitOps value changes.
+5. Let Argo CD reconcile Argo Rollouts and the sample API from Git:
+
+   ```bash
+   kubectl -n argocd get application argo-rollouts sample-api -o wide
+   ```
+
+6. Change the sample API image tag through Git and observe the canary rollout.
 
 ## Expected Results
 Argo Rollouts is installed and the sample API is managed as a Rollout when progressive delivery is enabled.

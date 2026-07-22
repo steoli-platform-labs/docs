@@ -32,19 +32,20 @@ Primary implementation: `platform-config/addons/karpenter`.
 Review the Karpenter desired-state files and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
+
 1. Review `platform-config/clusters/dev/karpenter.yaml` and the manifests under `platform-config/addons/karpenter`.
 2. Confirm the Karpenter chart, NodePool and EC2NodeClass values match the EKS cluster.
 3. Commit and push any required `platform-config` changes.
-4. Let Argo CD reconcile the `karpenter` Application from Git.
-5. Validate Karpenter by creating a temporary unschedulable workload and observing node provisioning.
+4. Let Argo CD reconcile the `karpenter` Application from Git:
 
-## Commands
-```bash
-cd "$WORKSPACE"
-kubectl -n argocd get application karpenter -o wide
-kubectl -n argocd annotate application karpenter argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd get application karpenter -o wide
-```
+   ```bash
+   cd "$WORKSPACE"
+   kubectl -n argocd get application karpenter -o wide
+   kubectl -n argocd annotate application karpenter argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application karpenter -o wide
+   ```
+
+5. Validate Karpenter by creating a temporary unschedulable workload and observing node provisioning.
 
 ## Expected Results
 The `karpenter` Argo CD Application reconciles successfully and Karpenter can provision capacity for pending pods.

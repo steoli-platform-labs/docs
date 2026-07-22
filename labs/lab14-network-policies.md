@@ -32,19 +32,23 @@ Primary implementation: `helm-charts/charts/sample-api/templates/networkpolicy.y
 Review the NetworkPolicy desired-state files and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
+
 1. Review `helm-charts/charts/sample-api/templates/networkpolicy.yaml` and the chart values controlling NetworkPolicy rendering.
 2. Confirm the cluster CNI enforces Kubernetes NetworkPolicy before relying on traffic-denial results.
-3. Run `helm lint` and render the chart with NetworkPolicy enabled.
-4. Commit and push any chart or value changes.
-5. Let Argo CD reconcile `sample-api`, then run positive and negative connectivity tests.
+3. Run `helm lint` and render the chart with NetworkPolicy enabled:
 
-## Commands
-```bash
-cd "$WORKSPACE"
-helm lint helm-charts/charts/sample-api
-helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=false | grep -A20 '^kind: NetworkPolicy'
-kubectl -n argocd get application sample-api -o wide
-```
+   ```bash
+   cd "$WORKSPACE"
+   helm lint helm-charts/charts/sample-api
+   helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=false | grep -A20 '^kind: NetworkPolicy'
+   ```
+
+4. Commit and push any chart or value changes.
+5. Let Argo CD reconcile `sample-api`, then run positive and negative connectivity tests:
+
+   ```bash
+   kubectl -n argocd get application sample-api -o wide
+   ```
 
 ## Expected Results
 The `sample-api` chart renders a NetworkPolicy and the deployed application still passes health checks while unintended traffic is denied.

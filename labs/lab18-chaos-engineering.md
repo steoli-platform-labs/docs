@@ -32,19 +32,20 @@ Primary implementation: `platform-config/chaos/delete-pod.yaml`.
 Review the chaos experiment manifests and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
+
 1. Review `platform-config/chaos/delete-pod.yaml` and confirm it targets only the sample API test workload.
 2. Confirm the chaos ServiceAccount, Role and RoleBinding grant only the permissions needed for this experiment.
-3. Establish the steady state before injecting failure.
+3. Validate the chaos manifest and establish the steady state before injecting failure:
+
+   ```bash
+   cd "$WORKSPACE"
+   kubectl apply --dry-run=client -f platform-config/chaos/delete-pod.yaml
+   kubectl -n sample-api-dev get rollout,pod,pdb
+   kubectl -n argocd get applications.argoproj.io -o wide
+   ```
+
 4. Run the one-off chaos Job and watch Kubernetes replace the deleted pod.
 5. Validate recovery through pod status, metrics, logs and traces, then remove the Job.
-
-## Commands
-```bash
-cd "$WORKSPACE"
-kubectl apply --dry-run=client -f platform-config/chaos/delete-pod.yaml
-kubectl -n sample-api-dev get rollout,pod,pdb
-kubectl -n argocd get applications.argoproj.io -o wide
-```
 
 ## Expected Results
 The chaos manifest is valid, the sample API starts from a healthy steady state, and the platform recovers after a controlled pod deletion.

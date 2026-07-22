@@ -116,18 +116,17 @@ Review the Tempo and tracing desired-state files and update any environment-spec
 1. Review `platform-config/clusters/dev/tempo.yaml` and `platform-config/clusters/dev/opentelemetry.yaml`.
 2. Confirm the Tempo and OpenTelemetry chart settings match the lab environment.
 3. Commit and push any required `platform-config` changes.
-4. Let Argo CD reconcile Tempo and OpenTelemetry from Git.
+4. Let Argo CD reconcile Tempo and OpenTelemetry from Git:
+
+   ```bash
+   cd "$WORKSPACE"
+   kubectl -n argocd get application tempo opentelemetry -o wide
+   kubectl -n argocd annotate application tempo argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd annotate application opentelemetry argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application tempo opentelemetry -o wide
+   ```
+
 5. Validate Tempo readiness and confirm traces can be queried through Grafana.
-
-## Commands
-
-```bash
-cd "$WORKSPACE"
-kubectl -n argocd get application tempo opentelemetry -o wide
-kubectl -n argocd annotate application tempo argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd annotate application opentelemetry argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd get application tempo opentelemetry -o wide
-```
 
 ## Expected Results
 

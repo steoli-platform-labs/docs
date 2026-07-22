@@ -32,19 +32,20 @@ Primary implementation: `platform-config/addons/external-secrets`.
 Review the External Secrets desired-state files and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
+
 1. Review `platform-config/clusters/dev/external-secrets.yaml` and `platform-config/addons/external-secrets/cluster-secret-store.yaml`.
 2. Confirm the SecretStore settings match the AWS region and authentication model from the lab environment.
 3. Commit and push any required `platform-config` changes.
-4. Let Argo CD reconcile the `external-secrets` Application from Git.
-5. Validate the operator, `ClusterSecretStore` readiness and a test `ExternalSecret` reconciliation.
+4. Let Argo CD reconcile the `external-secrets` Application from Git:
 
-## Commands
-```bash
-cd "$WORKSPACE"
-kubectl -n argocd get application external-secrets -o wide
-kubectl -n argocd annotate application external-secrets argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd get application external-secrets -o wide
-```
+   ```bash
+   cd "$WORKSPACE"
+   kubectl -n argocd get application external-secrets -o wide
+   kubectl -n argocd annotate application external-secrets argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application external-secrets -o wide
+   ```
+
+5. Validate the operator, `ClusterSecretStore` readiness and a test `ExternalSecret` reconciliation.
 
 ## Expected Results
 The `external-secrets` Argo CD Application reconciles successfully and the operator can read from the configured AWS Secrets Manager store.

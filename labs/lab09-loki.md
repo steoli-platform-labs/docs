@@ -115,18 +115,17 @@ Review the Loki and log collection desired-state files and update any environmen
 1. Review `platform-config/clusters/dev/loki.yaml` and `platform-config/clusters/dev/alloy.yaml`.
 2. Confirm both Applications target the expected namespace and chart repositories.
 3. Commit and push any required `platform-config` changes.
-4. Let Argo CD reconcile Loki and Alloy from Git.
+4. Let Argo CD reconcile Loki and Alloy from Git:
+
+   ```bash
+   cd "$WORKSPACE"
+   kubectl -n argocd get application loki alloy -o wide
+   kubectl -n argocd annotate application loki argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd annotate application alloy argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application loki alloy -o wide
+   ```
+
 5. Validate Loki readiness and confirm Alloy is forwarding Kubernetes logs.
-
-## Commands
-
-```bash
-cd "$WORKSPACE"
-kubectl -n argocd get application loki alloy -o wide
-kubectl -n argocd annotate application loki argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd annotate application alloy argocd.argoproj.io/refresh=hard --overwrite
-kubectl -n argocd get application loki alloy -o wide
-```
 
 ## Expected Results
 

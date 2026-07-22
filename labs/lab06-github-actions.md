@@ -64,27 +64,23 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 ## Step-by-Step Implementation
 
-1. Review the `.github/workflows` files in each repository listed above.
-2. Run the local validation commands from this lab.
-3. Commit and push the workflow and validation changes.
+1. Review the `.github/workflows` files in each repository listed above. Confirm the workflow triggers, permissions and commands match the repository responsibility.
+2. Run the repository-level validation commands from the workspace root:
+
+   ```bash
+   cd "$WORKSPACE"
+   terraform -chdir=platform-modules fmt -recursive
+   terraform -chdir=platform-live fmt -recursive
+   helm lint helm-charts/charts/sample-api
+   kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
+   ```
+
+   Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
+3. Commit and push workflow changes only if you changed a workflow file.
 4. Open each repository in GitHub and inspect the workflow run triggered by the push.
 5. Verify that the `sample-api` image is published to GHCR after a successful push to `main`.
 
 This lab does not apply infrastructure or deploy workloads. GitHub Actions validate, test and publish artifacts only; deployment remains a GitOps responsibility in later labs.
-
-## Commands
-
-Run the repository-level validation commands from the workspace root:
-
-```bash
-cd "$WORKSPACE"
-terraform -chdir=platform-modules fmt -recursive
-terraform -chdir=platform-live fmt -recursive
-helm lint helm-charts/charts/sample-api
-kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
-```
-
-Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
 
 ## Expected Results
 

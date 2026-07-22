@@ -32,20 +32,25 @@ Primary implementation: `sample-api probes, PDB, anti-affinity and topology spre
 Review the high-availability and resilience configuration files and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
-1. Review the sample API chart templates for probes, PDB, anti-affinity and topology spread constraints.
-2. Render the chart locally and confirm the HA settings are present.
-3. Commit and push any chart changes.
-4. Let Argo CD reconcile `sample-api` from Git.
-5. Run controlled pod deletion and optional node-drain tests to measure recovery.
 
-## Commands
-```bash
-cd "$WORKSPACE"
-helm lint helm-charts/charts/sample-api
-helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=false > /tmp/sample-api-ha.yaml
-grep -nE 'readinessProbe|livenessProbe|startupProbe|PodDisruptionBudget|topologySpreadConstraints|podAntiAffinity' /tmp/sample-api-ha.yaml
-kubectl -n argocd get application sample-api -o wide
-```
+1. Review the sample API chart templates for probes, PDB, anti-affinity and topology spread constraints.
+2. Render the chart locally and confirm the HA settings are present:
+
+   ```bash
+   cd "$WORKSPACE"
+   helm lint helm-charts/charts/sample-api
+   helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=false > /tmp/sample-api-ha.yaml
+   grep -nE 'readinessProbe|livenessProbe|startupProbe|PodDisruptionBudget|topologySpreadConstraints|podAntiAffinity' /tmp/sample-api-ha.yaml
+   ```
+
+3. Commit and push any chart changes.
+4. Let Argo CD reconcile `sample-api` from Git:
+
+   ```bash
+   kubectl -n argocd get application sample-api -o wide
+   ```
+
+5. Run controlled pod deletion and optional node-drain tests to measure recovery.
 
 ## Expected Results
 The sample API has health probes, disruption protection and scheduling rules that keep it available during controlled failures.

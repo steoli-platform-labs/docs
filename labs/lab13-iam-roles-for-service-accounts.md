@@ -125,19 +125,21 @@ Review the IRSA Terraform and GitOps files and update any environment-specific v
 
 1. Review the Terraform outputs for the EKS OIDC provider and any workload IAM roles used by platform controllers.
 2. Review the service-account annotations in GitOps-managed manifests.
-3. Apply Terraform changes first if IAM roles or trust policies changed.
+3. Apply Terraform changes first if IAM roles or trust policies changed. Before applying, run the Terraform validation checks:
+
+   ```bash
+   cd "$WORKSPACE"
+   terraform -chdir=platform-modules fmt -recursive
+   terraform -chdir=platform-live fmt -recursive
+   terraform -chdir=platform-live/environments/dev validate
+   ```
+
 4. Commit and push GitOps annotation changes after the IAM roles exist.
-5. Let Argo CD reconcile affected Applications and validate that pods use the annotated service accounts.
+5. Let Argo CD reconcile affected Applications and validate that pods use the annotated service accounts:
 
-## Commands
-
-```bash
-cd "$WORKSPACE"
-terraform -chdir=platform-modules fmt -recursive
-terraform -chdir=platform-live fmt -recursive
-terraform -chdir=platform-live/environments/dev validate
-kubectl -n argocd get applications.argoproj.io -o wide
-```
+   ```bash
+   kubectl -n argocd get applications.argoproj.io -o wide
+   ```
 
 ## Expected Results
 
