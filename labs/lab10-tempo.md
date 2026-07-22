@@ -31,7 +31,7 @@ Before starting this lab:
 - Prometheus operational
 - Grafana operational
 - Loki operational
-- AWS CLI, Terraform, kubectl, Helm and repository URLs configured
+- AWS CLI, Terraform, kubectl and Helm installed, with repository URLs configured
 
 ## Architecture
 

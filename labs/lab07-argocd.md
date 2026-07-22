@@ -30,7 +30,7 @@ Before starting this lab:
 - Lab 01 - Lab 06 completed
 - Amazon EKS operational
 - GitHub Actions operational
-- Helm operational
+- Helm installed and operational
 - GitHub Container Registry operational
 - `kubectl` points at the Development EKS cluster created in Lab 04
 

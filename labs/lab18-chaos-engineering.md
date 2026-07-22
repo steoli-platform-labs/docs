@@ -23,7 +23,7 @@ The goal is to run controlled failure tests against the sample application and v
 Implement and validate Chaos Engineering in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 17, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+Complete Lab 01 - Lab 17. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
 Primary implementation: `platform-config/chaos/delete-pod.yaml`.

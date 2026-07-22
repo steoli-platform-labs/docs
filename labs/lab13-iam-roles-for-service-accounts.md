@@ -31,7 +31,7 @@ Before starting this lab:
 - Amazon EKS operational
 - OIDC provider configured
 - AWS Secrets Manager operational
-- AWS CLI, Terraform, kubectl, Helm and repository URLs configured
+- AWS CLI, Terraform, kubectl and Helm installed, with repository URLs configured
 
 ## Architecture
 

@@ -23,7 +23,7 @@ Karpenter watches unschedulable pods and provisions right-sized compute capacity
 Implement and validate Karpenter in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 10, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+Complete Lab 01 - Lab 10. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
 Primary implementation: `platform-config/addons/karpenter`.

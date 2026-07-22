@@ -23,7 +23,7 @@ The goal is to keep real secret values outside Git while still managing the secr
 Implement and validate External Secrets Operator in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 11, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+Complete Lab 01 - Lab 11. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
 Primary implementation: `platform-config/addons/external-secrets`.

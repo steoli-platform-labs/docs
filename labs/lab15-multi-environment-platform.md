@@ -23,7 +23,7 @@ The platform starts separating environment-specific desired state so development
 Implement and validate Multi-Environment Platform in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 14, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+Complete Lab 01 - Lab 14. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
 Primary implementation: `platform-config/environments/namespaces.yaml`.

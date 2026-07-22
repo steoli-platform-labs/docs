@@ -23,7 +23,7 @@ The lab validates probes, disruption handling and scheduling rules so the worklo
 Implement and validate High Availability and Resilience in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 16, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+Complete Lab 01 - Lab 16. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
 Primary implementation: `sample-api probes, PDB, anti-affinity and topology spread`.

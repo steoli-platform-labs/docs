@@ -29,7 +29,7 @@ Before starting this lab:
 
 - Lab 01 - Lab 08 completed
 - Prometheus and Grafana operational
-- AWS CLI, Terraform, kubectl, Helm and repository URLs configured
+- AWS CLI, Terraform, kubectl and Helm installed, with repository URLs configured
 
 ## Architecture
 

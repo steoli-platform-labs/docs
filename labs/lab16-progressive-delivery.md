@@ -23,7 +23,7 @@ Progressive delivery makes releases safer by shifting traffic gradually and keep
 Implement and validate Progressive Delivery in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 15, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+Complete Lab 01 - Lab 15. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
 Primary implementation: `sample-api Rollout chart template`.

@@ -23,7 +23,7 @@ Network policies provide workload isolation inside the cluster and make applicat
 Implement and validate Network Policies in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 13, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
+Complete Lab 01 - Lab 13. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
 Primary implementation: `helm-charts/charts/sample-api/templates/networkpolicy.yaml`.
