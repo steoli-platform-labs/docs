@@ -16,7 +16,7 @@
 ## Outcome
 Implement and validate High Availability and Resilience in the complete platform reference implementation.
 
-## Before You Begin
+## Prerequisites
 Complete Lab 01 - Lab 16, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
 
 ## Repository Changes

@@ -16,7 +16,7 @@
 ## Outcome
 Implement and validate Multi-Environment Platform in the complete platform reference implementation.
 
-## Before You Begin
+## Prerequisites
 Complete Lab 01 - Lab 14, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
 
 ## Repository Changes

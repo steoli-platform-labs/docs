@@ -60,6 +60,11 @@ Before starting this lab, ensure you have:
 - An AWS account
 - A GitHub account
 - Administrator permissions within the AWS account
+- Permission to create a GitHub organization and repositories
+- A workstation with administrative rights for software installation
+- A terminal using Bash, Zsh or a compatible shell
+
+Use short-lived AWS credentials where possible. AWS IAM Identity Center is preferred over long-lived IAM user access keys.
 
 ## Required Software
 
@@ -163,18 +168,6 @@ This lab consists of the following high-level tasks.
 After completing this guide, you will have a verified local toolchain, authenticated AWS CLI access, a GitHub organization with seven repositories and a local workspace containing all repository clones.
 
 This guide does not provision AWS infrastructure.
-
-## Before You Begin
-
-You need:
-
-- An AWS account that you are authorized to use
-- A GitHub account
-- Permission to create a GitHub organization and repositories
-- A workstation with administrative rights for software installation
-- A terminal using Bash, Zsh or a compatible shell
-
-Use short-lived AWS credentials where possible. AWS IAM Identity Center is preferred over long-lived IAM user access keys.
 
 ## Repository Changes
 

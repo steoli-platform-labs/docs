@@ -62,6 +62,9 @@ Before starting this lab:
 
 - Lab 01 - Lab 02 completed
 - Remote Terraform backend operational
+- Terraform, AWS CLI and Git installed
+- AWS CLI authenticated to the intended account
+- `platform-live` and `platform-modules` checked out as sibling directories
 
 ## Architecture
 
@@ -210,24 +213,6 @@ The completed implementation provisions:
 - public and private route tables
 - subnet discovery tags required by future EKS load balancers
 - remote Terraform state in the S3 backend created during Lab 02
-
-## Before You Begin
-
-Complete Labs 01 and 02 first.
-
-Required local tools:
-
-```bash
-terraform version
-aws --version
-git --version
-```
-
-Confirm AWS access:
-
-```bash
-aws sts get-caller-identity
-```
 
 The expected repository layout is:
 

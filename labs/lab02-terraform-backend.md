@@ -36,10 +36,7 @@ After this lab, `platform-bootstrap` manages the permanent S3 Terraform backend 
 - AWS CLI authenticated.
 - Terraform 1.10 or later installed.
 - Access to create S3 resources in the target AWS account.
-
-## Before You Begin
-
-Complete Lab 01 first and confirm you are using the intended AWS account, AWS profile and Region before creating the backend bucket.
+- Confirm you are using the intended AWS account, AWS profile and Region before creating the backend bucket.
 
 ## Architecture
 

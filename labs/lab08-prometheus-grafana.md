@@ -60,6 +60,7 @@ Before starting this lab:
 - Lab 01 - Lab 07 completed
 - ArgoCD operational
 - Amazon EKS operational
+- AWS CLI, Terraform, kubectl, Helm and repository URLs configured
 
 ## Architecture
 
@@ -140,10 +141,6 @@ This lab consists of the following high-level tasks.
 ## Outcome
 
 Implement and validate Prometheus and Grafana in the complete platform reference implementation.
-
-## Before You Begin
-
-Complete Lab 01 - Lab 07, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
 
 ## Repository Changes
 

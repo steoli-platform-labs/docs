@@ -58,6 +58,7 @@ Before starting this lab:
 - Amazon EKS operational
 - OIDC provider configured
 - AWS Secrets Manager operational
+- AWS CLI, Terraform, kubectl, Helm and repository URLs configured
 
 ## Architecture
 
@@ -142,10 +143,6 @@ This lab consists of the following high-level tasks.
 ## Outcome
 
 Implement and validate IRSA in the complete platform reference implementation.
-
-## Before You Begin
-
-Complete Lab 01 - Lab 12, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
 
 ## Repository Changes
 

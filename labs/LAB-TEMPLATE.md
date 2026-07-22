@@ -17,7 +17,7 @@
 
 State what the lab produces in one or two sentences.
 
-## Before You Begin
+## Prerequisites
 
 List the previous lab range, required tools and required platform state.
 

@@ -16,7 +16,7 @@
 ## Outcome
 Implement and validate External Secrets Operator in the complete platform reference implementation.
 
-## Before You Begin
+## Prerequisites
 Complete Lab 01 - Lab 11, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
 
 ## Repository Changes

@@ -58,6 +58,7 @@ Before starting this lab:
 - Prometheus operational
 - Grafana operational
 - Loki operational
+- AWS CLI, Terraform, kubectl, Helm and repository URLs configured
 
 ## Architecture
 
@@ -132,10 +133,6 @@ This lab consists of the following high-level tasks.
 ## Outcome
 
 Implement and validate Tempo and OpenTelemetry in the complete platform reference implementation.
-
-## Before You Begin
-
-Complete Lab 01 - Lab 09, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
 
 ## Repository Changes
 

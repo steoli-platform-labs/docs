@@ -31,7 +31,7 @@ The workflows validate changes and publish build artifacts. They do not deploy i
 - Confirm the sample API image is published with a commit-SHA tag.
 - Confirm CI does not deploy directly to Kubernetes.
 
-## Before You Begin
+## Prerequisites
 
 Complete Labs 01 - 05 first.
 

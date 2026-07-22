@@ -34,10 +34,7 @@ After this lab, the Development Terraform root module manages an active Amazon E
 - Lab 01 - Lab 03 completed.
 - AWS CLI, Terraform and kubectl installed.
 - The Development root module is already applied with networking enabled.
-
-## Before You Begin
-
-Complete Labs 01 - 03 first. Confirm the network stack is applied and that you can run Terraform from `platform-live/environments/dev`.
+- Terraform can run from `platform-live/environments/dev`.
 
 ## Repository Changes
 

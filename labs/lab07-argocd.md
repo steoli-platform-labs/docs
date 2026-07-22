@@ -62,6 +62,7 @@ Before starting this lab:
 - GitHub Actions operational
 - Helm operational
 - GitHub Container Registry operational
+- `kubectl` points at the Development EKS cluster created in Lab 04
 
 ## Architecture
 
@@ -162,10 +163,6 @@ This lab consists of the following high-level tasks.
 ## Outcome
 
 Bootstrap Argo CD on the existing EKS cluster and let it reconcile the platform GitOps root application.
-
-## Before You Begin
-
-Complete Labs 01-06 and confirm `kubectl` points at the Development EKS cluster created in Lab 04.
 
 ## Repository Changes
 

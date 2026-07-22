@@ -56,6 +56,7 @@ Before starting this lab:
 
 - Lab 01 - Lab 08 completed
 - Prometheus and Grafana operational
+- AWS CLI, Terraform, kubectl, Helm and repository URLs configured
 
 ## Architecture
 
@@ -131,10 +132,6 @@ This lab consists of the following high-level tasks.
 ## Outcome
 
 Implement and validate Loki and Alloy in the complete platform reference implementation.
-
-## Before You Begin
-
-Complete Lab 01 - Lab 08, configure AWS CLI, Terraform, kubectl, Helm and repository URLs.
 
 ## Repository Changes
 

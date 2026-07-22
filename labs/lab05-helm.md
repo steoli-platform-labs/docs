@@ -34,10 +34,7 @@ After this lab, the reusable `sample-api` Helm chart has been linted and rendere
 - Lab 01 - Lab 04 completed.
 - Helm installed.
 - kubectl installed for client-side schema validation.
-
-## Before You Begin
-
-Complete Labs 01 - 04 first. This lab uses local Helm rendering only and does not install the chart into Kubernetes.
+- This lab uses local Helm rendering only and does not install the chart into Kubernetes.
 
 ## Repository Changes
 
