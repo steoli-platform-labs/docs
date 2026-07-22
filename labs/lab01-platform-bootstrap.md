@@ -116,16 +116,6 @@ GitHub
 AWS Account
 ```
 
-## Deliverables
-
-At the end of this lab the following should exist:
-
-- Local development environment
-- GitHub organization
-- Project repositories
-- Local repository clones
-- AWS CLI authentication
-
 ## Implementation Overview
 
 This lab consists of the following high-level tasks.

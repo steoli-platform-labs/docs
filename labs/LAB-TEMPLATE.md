@@ -87,7 +87,6 @@ Use these only when they add clarity:
 - `## AWS Resources`
 - `## Design Decisions`
 - `## Network Layout`
-- `## Deliverables`
 - `## Implementation Overview`
 - `## Values Used in This Guide`
 - `## Success Criteria`
