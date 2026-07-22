@@ -63,8 +63,6 @@ Review the multi-environment configuration files and update any environment-spec
 The environment namespaces exist and each environment is represented by explicit GitOps desired state rather than ad hoc manual deployment.
 
 ## Validation
-Pass criteria:
-
 - Dev, staging and production namespaces exist with correct labels.
 - Each environment has an independently managed Argo CD application or equivalent GitOps source.
 - Environment-specific values are visible in workload configuration.
@@ -72,8 +70,7 @@ Pass criteria:
 - Secrets, service accounts and NetworkPolicies are namespace-scoped as intended.
 - Resource requests, quotas and disruption policies are appropriate for each environment.
 - Promotion is traceable to Git history.
-
-Namespaces alone do not constitute a multi-environment platform; workloads and environment-specific desired state must also be present.
+- Namespaces alone do not constitute a multi-environment platform; workloads and environment-specific desired state must also be present.
 
 ## Troubleshooting
 Start with namespace labels and Argo CD Applications:

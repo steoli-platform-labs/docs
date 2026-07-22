@@ -75,8 +75,6 @@ Review the Karpenter desired-state files and update any environment-specific val
 The `karpenter` Argo CD Application reconciles successfully and Karpenter can provision capacity for pending pods.
 
 ## Validation
-Pass criteria:
-
 - Controller pods are ready and authenticated to AWS.
 - NodePool and EC2NodeClass conditions report ready.
 - Pending test pods cause a new node claim and EC2 instance to be created.

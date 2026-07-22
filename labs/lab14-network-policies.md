@@ -78,16 +78,13 @@ Review the NetworkPolicy desired-state files and update any environment-specific
 The `sample-api` chart renders a NetworkPolicy and the deployed application still passes health checks while unintended traffic is denied.
 
 ## Validation
-Pass criteria:
-
 - The intended ingress source can reach the API.
 - An unintended namespace cannot reach the API.
 - DNS resolution still works.
 - Only documented outbound destinations/ports work.
 - Existing probes and monitoring traffic continue to function.
 - Denials are reproducible and disappear when the policy is removed in a controlled test.
-
-If the installed AWS VPC CNI configuration does not have NetworkPolicy enforcement enabled, the manifest may exist while traffic remains unrestricted; that is a failed validation.
+- If the installed AWS VPC CNI configuration does not have NetworkPolicy enforcement enabled, the manifest may exist while traffic remains unrestricted; that is a failed validation.
 
 ## Troubleshooting
 Start with the rendered policy and namespace events:

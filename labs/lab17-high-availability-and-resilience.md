@@ -82,8 +82,6 @@ Review the high-availability and resilience configuration files and update any e
 The sample API has health probes, disruption protection and scheduling rules that keep it available during controlled failures.
 
 ## Validation
-Pass criteria:
-
 - At least the documented number of replicas are available.
 - Pods are spread across more than one node and, when capacity exists, more than one zone.
 - Readiness, liveness and startup probes behave as intended.

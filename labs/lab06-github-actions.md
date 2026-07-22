@@ -190,15 +190,12 @@ Local validation commands pass, GitHub Actions workflows run successfully, pull 
 
 ## Validation
 
-Pass criteria:
-
 - Pull requests run tests and validation without publishing an image.
 - A push to `main` publishes an immutable commit-SHA image tag to GHCR.
 - The image can be pulled using the expected package permissions.
 - CI does not deploy directly to Kubernetes.
 - Workflow permissions are limited to what each job requires.
-
-A published image alone does not update GitOps desired state; verify that the documented image-update process exists before calling end-to-end delivery complete.
+- A published image alone does not update GitOps desired state; verify that the documented image-update process exists before calling end-to-end delivery complete.
 
 ## Troubleshooting
 

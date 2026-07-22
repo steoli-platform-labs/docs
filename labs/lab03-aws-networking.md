@@ -363,64 +363,52 @@ Terraform provisions the Development VPC, public subnets, private platform subne
 
 ## Validation
 
-Public subnets must carry `kubernetes.io/role/elb = 1`.
-
-Private subnets must carry `kubernetes.io/role/internal-elb = 1`.
-
-No EC2 instance is launched solely for connectivity testing because it would add temporary infrastructure and cost. Routing is validated through Terraform state, route-table inspection and later by the EKS worker nodes deployed in Lab 04.
-
-A public subnet is considered public when its route table sends `0.0.0.0/0` to the Internet Gateway. A private subnet in this lab sends `0.0.0.0/0` to the NAT Gateway.
+- Public subnets carry `kubernetes.io/role/elb = 1`.
+- Private subnets carry `kubernetes.io/role/internal-elb = 1`.
+- Routing is validated through Terraform state, route-table inspection and later by the EKS worker nodes deployed in Lab 04.
+- A public subnet routes `0.0.0.0/0` to the Internet Gateway.
+- A private subnet routes `0.0.0.0/0` to the NAT Gateway.
+- No EC2 instance is launched solely for connectivity testing because it would add temporary infrastructure and cost.
 
 ## Troubleshooting
 
-### Backend initialization fails
+- **Backend initialization fails:** Confirm the bucket name, Region and AWS profile in `backend.hcl`:
 
-Confirm the bucket name, Region and AWS profile in `backend.hcl`:
+   ```bash
+   aws s3api head-bucket --bucket "your-state-bucket"
+   ```
 
-```bash
-aws s3api head-bucket --bucket "your-state-bucket"
-```
+   Then retry:
 
-Then retry:
+   ```bash
+   terraform init -reconfigure -backend-config=backend.hcl
+   ```
 
-```bash
-terraform init -reconfigure -backend-config=backend.hcl
-```
+- **Fewer than two Availability Zones are available:** Use an AWS Region with at least two standard Availability Zones available to your account.
 
-### Fewer than two Availability Zones are available
+- **NAT Gateway remains pending:** Wait several minutes and inspect it:
 
-Use an AWS Region with at least two standard Availability Zones available to your account.
+   ```bash
+   aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=${VPC_ID}"
+   ```
 
-### NAT Gateway remains pending
+   The expected state is `available`. If private workloads cannot reach AWS APIs or the internet, inspect route tables and subnet associations before changing resources:
 
-Wait several minutes and inspect it:
+   ```bash
+   aws ec2 describe-route-tables \
+     --filters "Name=vpc-id,Values=${VPC_ID}" \
+     --query 'RouteTables[].{RouteTable:RouteTableId,Associations:Associations[].SubnetId,Routes:Routes}'
+   ```
 
-```bash
-aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=${VPC_ID}"
-```
+   Expected default routes are `0.0.0.0/0` to the Internet Gateway for public subnets and `0.0.0.0/0` to a NAT Gateway for private subnets.
 
-The expected state is `available`. If private workloads cannot reach AWS APIs or the internet, inspect route tables and subnet associations before changing resources:
+   Run `terraform plan` and investigate unexpected drift before applying any remediation.
 
-```bash
-aws ec2 describe-route-tables \
-  --filters "Name=vpc-id,Values=${VPC_ID}" \
-  --query 'RouteTables[].{RouteTable:RouteTableId,Associations:Associations[].SubnetId,Routes:Routes}'
-```
+- **Module path cannot be found:** Verify that `platform-live` and `platform-modules` are sibling directories. The source path is:
 
-Expected default routes:
-
-- public subnets route `0.0.0.0/0` to the Internet Gateway
-- private subnets route `0.0.0.0/0` to a NAT Gateway
-
-Run `terraform plan` and investigate unexpected drift before applying any remediation.
-
-### Module path cannot be found
-
-Verify that `platform-live` and `platform-modules` are sibling directories. The source path is:
-
-```text
-../../../platform-modules/modules/core
-```
+   ```text
+   ../../../platform-modules/modules/core
+   ```
 
 ## Final Repository State
 

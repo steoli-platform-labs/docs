@@ -139,8 +139,6 @@ The `loki` and `alloy` Argo CD Applications reconcile successfully and log data 
 
 ## Validation
 
-Pass criteria:
-
 - Both Argo CD applications are healthy.
 - Loki reports ready.
 - Alloy runs on every intended node or as the configured workload mode.

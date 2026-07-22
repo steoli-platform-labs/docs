@@ -135,8 +135,6 @@ The `prometheus` Argo CD Application reconciles successfully and creates the mon
 
 ## Validation
 
-Pass criteria:
-
 - The Argo CD application is `Synced / Healthy`.
 - Prometheus and Grafana pods are ready.
 - Prometheus `/-/ready` returns success.

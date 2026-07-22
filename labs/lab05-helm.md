@@ -104,8 +104,6 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 
 ## Validation
 
-Pass criteria:
-
 - `helm lint` succeeds.
 - Rendering produces either a Deployment or Rollout, never both.
 - Service selectors match workload pod labels.

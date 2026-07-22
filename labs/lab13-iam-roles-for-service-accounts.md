@@ -151,8 +151,6 @@ IAM roles, trust policies and service-account annotations are present before wor
 
 ## Validation
 
-Pass criteria:
-
 - The EKS cluster has an IAM OIDC provider.
 - Each controller pod uses the annotated service account.
 - Trust policies restrict `sub` to the exact namespace and service-account name and restrict `aud` to `sts.amazonaws.com`.
@@ -160,8 +158,7 @@ Pass criteria:
 - Karpenter has only the permissions required for node provisioning.
 - Controller logs show no `AccessDenied`, credential-provider or web-identity errors.
 - Removing the annotation from a temporary test deployment causes AWS access to fail, proving credentials are not inherited from node roles.
-
-An OIDC output alone is not an IRSA implementation; IAM roles, trust policies and service-account annotations must all exist.
+- An OIDC output alone is not an IRSA implementation; IAM roles, trust policies and service-account annotations must all exist.
 
 ## Troubleshooting
 

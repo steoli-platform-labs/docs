@@ -76,8 +76,6 @@ Review the chaos experiment manifests and update any environment-specific values
 The chaos manifest is valid, the sample API starts from a healthy steady state, and the platform recovers after a controlled pod deletion.
 
 ## Validation
-Pass criteria:
-
 - The experiment deletes only a matching sample-api pod.
 - Kubernetes creates a replacement automatically.
 - Available replicas remain within the PDB/SLO expectation.
@@ -87,8 +85,7 @@ Pass criteria:
 - Traces show whether user requests failed or slowed.
 - The API recovers within the documented recovery objective.
 - The chaos Job and its RBAC are removed or reset after the test.
-
-A Job that references `chaos-runner` without a ServiceAccount, Role and RoleBinding cannot run and is a repository blocker, not a successful chaos test.
+- A Job that references `chaos-runner` without a ServiceAccount, Role and RoleBinding cannot run and is a repository blocker, not a successful chaos test.
 
 ## Troubleshooting
 Start with the chaos Job, RBAC and workload events:

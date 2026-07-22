@@ -70,8 +70,6 @@ Review the External Secrets desired-state files and update any environment-speci
 The `external-secrets` Argo CD Application reconciles successfully and the operator can read from the configured AWS Secrets Manager store.
 
 ## Validation
-Pass criteria:
-
 - The operator application is `Synced / Healthy`.
 - Operator pods are ready.
 - `ClusterSecretStore` has a `Ready=True` condition.
@@ -79,8 +77,7 @@ Pass criteria:
 - The target Kubernetes Secret exists with the expected key names.
 - Updating the AWS test secret is reflected after the refresh interval or a forced refresh.
 - Removing AWS access causes a controlled reconciliation error, not silent success.
-
-The current repository must include both the `ClusterSecretStore` resource and a GitOps path that actually applies it; merely storing the file outside the root application's path is not sufficient.
+- The current repository must include both the `ClusterSecretStore` resource and a GitOps path that actually applies it; merely storing the file outside the root application's path is not sufficient.
 
 ## Troubleshooting
 Start with the Argo CD Application, operator pods and store status:

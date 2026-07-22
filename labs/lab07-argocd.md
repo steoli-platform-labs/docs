@@ -166,8 +166,6 @@ Argo CD is installed in the `argocd` namespace, the `platform-root` Application 
 
 ## Validation
 
-Pass criteria:
-
 - Argo CD controller, repo-server and API server pods are ready.
 - `platform-root` exists and can read the `platform-config` repository.
 - Child Applications are created from `platform-config/clusters/dev`.
@@ -176,8 +174,7 @@ Pass criteria:
 - Manually changing that annotation in-cluster is reverted by self-heal.
 - Removing a Git-managed test resource removes it from the cluster when pruning is enabled.
 - Controller logs contain no repository authentication, manifest-generation or comparison errors.
-
-Do not test self-heal or pruning on production workloads; use a temporary test object.
+- Do not test self-heal or pruning on production workloads; use a temporary test object.
 
 ## Troubleshooting
 

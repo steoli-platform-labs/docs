@@ -133,16 +133,13 @@ The `tempo` and `opentelemetry` Argo CD Applications reconcile successfully and 
 
 ## Validation
 
-Pass criteria:
-
 - Tempo and OpenTelemetry applications are `Synced / Healthy`.
 - Tempo reports ready.
 - Collector logs show successful receiver startup and successful export to Tempo.
 - A request creates a trace containing the expected service name and spans.
 - Trace timestamps and durations are plausible.
 - Grafana can open the trace from the configured Tempo data source.
-
-If the sample API is not instrumented and no collector receiver/exporter pipeline is configured, this lab cannot pass end-to-end validation; deployment health alone is insufficient.
+- If the sample API is not instrumented and no collector receiver/exporter pipeline is configured, this lab cannot pass end-to-end validation; deployment health alone is insufficient.
 
 ## Troubleshooting
 

@@ -179,51 +179,45 @@ The backend bucket exists with versioning, encryption and Block Public Access en
 
 ## Troubleshooting
 
-### Backend Initialization Required
+- **Backend initialization required:** If Terraform reports `Backend initialization required` before the bucket exists, remove any old local backend file and initialize again:
 
-If Terraform reports `Backend initialization required` before the bucket exists, remove any old local backend file and initialize again:
+   ```bash
+   rm -f backend.tf
+   terraform init
+   ```
 
-```bash
-rm -f backend.tf
-terraform init
-```
+   `backend.tf` should only exist locally after `./scripts/migrate-state.sh` has run.
 
-`backend.tf` should only exist locally after `./scripts/migrate-state.sh` has run.
+- **Bucket name already exists:** S3 bucket names are globally unique. Set a custom name in `terraform.tfvars`:
 
-### Bucket Name Already Exists
+   ```hcl
+   state_bucket_name = "<project-name>-<unique-suffix>-tfstate"
+   ```
 
-S3 bucket names are globally unique. Set a custom name in `terraform.tfvars`:
+   Then rerun:
 
-```hcl
-state_bucket_name = "<project-name>-<unique-suffix>-tfstate"
-```
+   ```bash
+   terraform plan -out=tfplan
+   terraform apply tfplan
+   ```
 
-Then rerun:
+- **State migration was interrupted:** Do not delete either state copy.
 
-```bash
-terraform plan -out=tfplan
-terraform apply tfplan
-```
+   Use this recovery flow:
 
-### State Migration Was Interrupted
+   1. Stop all Terraform runs and confirm no other operator is using the backend.
+   2. Back up the local `terraform.tfstate` and the remote S3 object before changing anything.
+   3. Compare state `lineage` and `serial` values to identify the latest valid state.
+   4. Reinitialize Terraform with the intended backend using `terraform init -reconfigure`.
+   5. Use `terraform state push <verified-file>` only as a final controlled recovery step after reviewing `terraform state push -dry-run <verified-file>`.
 
-Do not delete either state copy.
+   Never use `-lock=false` during recovery and never delete a state object before a verified backup exists.
 
-Use this recovery flow:
+   For native S3 lock issues, confirm no active Terraform process owns the lock before running:
 
-1. Stop all Terraform runs and confirm no other operator is using the backend.
-2. Back up the local `terraform.tfstate` and the remote S3 object before changing anything.
-3. Compare state `lineage` and `serial` values to identify the latest valid state.
-4. Reinitialize Terraform with the intended backend using `terraform init -reconfigure`.
-5. Use `terraform state push <verified-file>` only as a final controlled recovery step after reviewing `terraform state push -dry-run <verified-file>`.
-
-Never use `-lock=false` during recovery and never delete a state object before a verified backup exists.
-
-For native S3 lock issues, confirm no active Terraform process owns the lock before running:
-
-```bash
-terraform force-unlock <LOCK_ID>
-```
+   ```bash
+   terraform force-unlock <LOCK_ID>
+   ```
 
 ## Final Repository State
 

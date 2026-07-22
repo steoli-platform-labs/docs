@@ -142,8 +142,6 @@ Terraform creates an active EKS control plane, a managed node group and access e
 
 ## Validation
 
-Pass criteria:
-
 - EKS cluster status is `ACTIVE`.
 - The configured Kubernetes version is returned.
 - At least one managed node group exists.

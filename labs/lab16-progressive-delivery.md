@@ -66,8 +66,6 @@ Review the progressive delivery desired-state files and update any environment-s
 Argo Rollouts is installed and the sample API is managed as a Rollout when progressive delivery is enabled.
 
 ## Validation
-Pass criteria:
-
 - Argo CD detects and syncs the Git change.
 - Argo Rollouts creates a new ReplicaSet.
 - Canary traffic/replica weight progresses through the documented steps.
@@ -76,8 +74,7 @@ Pass criteria:
 - A deliberately bad image can be aborted and rolled back to the stable ReplicaSet.
 - The stable service remains available during progression.
 - Metrics-based analysis is present if the lab claims automated health-based promotion.
-
-Also verify the CI-to-GitOps handoff: publishing a GHCR image must result in an explicit, reviewable Git update. A chart fixed at `latest` or an unchanged tag does not provide traceable progressive delivery.
+- The CI-to-GitOps handoff is explicit: publishing a GHCR image must result in a reviewable Git update. A chart fixed at `latest` or an unchanged tag does not provide traceable progressive delivery.
 
 ## Troubleshooting
 Start with the Rollout object and controller status:

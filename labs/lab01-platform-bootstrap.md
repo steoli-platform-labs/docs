@@ -550,8 +550,6 @@ The workstation has the required tools installed, AWS CLI authentication works, 
 
 ## Validation
 
-Passing result:
-
 - Every required tool returns a version.
 - Docker can communicate with its engine.
 - AWS STS returns the intended account and principal.
