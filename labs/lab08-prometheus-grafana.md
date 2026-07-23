@@ -169,7 +169,11 @@ Review the observability desired-state files and update any environment-specific
 
 10. Review the preloaded Kubernetes dashboards in Grafana.
 
-    Open **Dashboards** and inspect dashboards such as **Kubernetes / Compute Resources / Cluster**, **Kubernetes / Compute Resources / Namespace (Pods)** and **Node Exporter / Nodes**.
+    Open **Dashboards** and inspect dashboards such as:
+
+    - **Kubernetes / Compute Resources / Cluster**
+    - **Kubernetes / Compute Resources / Namespace (Pods)**
+    - **Node Exporter / Nodes**
 
     Confirm that the dashboards show current cluster, namespace, pod, CPU, memory and node data. If a dashboard has empty panels, check the time range first, then confirm the Prometheus `up` query and target status.
 
