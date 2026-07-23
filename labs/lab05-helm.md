@@ -109,6 +109,7 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 - Service selectors match workload pod labels.
 - Probes point to endpoints implemented by the application.
 - CPU and memory requests are present.
+- `imagePullSecrets` can be configured when the image registry requires authentication.
 - Optional ExternalSecret resources render only when enabled.
 - Rendered resources pass Kubernetes client-side schema validation.
 

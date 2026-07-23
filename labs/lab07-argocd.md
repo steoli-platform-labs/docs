@@ -170,6 +170,8 @@ Key files:
    ```
 
    The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:latest` so the first GitOps deployment can follow the newest successful `main` build without editing the image tag manually. Before bootstrapping Argo CD, confirm that Lab 06 has published the `latest` tag and that the GHCR package is public or otherwise pullable by the cluster.
+
+   If the package must remain private, create a Kubernetes image pull secret in `sample-api-dev` and set `imagePullSecrets` in the chart values before syncing `sample-api`. Do not commit the token value to Git.
 3. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
 4. Confirm kubectl points at the intended EKS cluster and install Argo CD:
 
@@ -225,6 +227,7 @@ Argo CD is installed in the `argocd` namespace, the `platform-root` Application 
 - Child Applications are created from `platform-config/clusters/dev`.
 - `platform-root` and `argocd` are `Synced / Healthy`.
 - `sample-api` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and pullable by the cluster.
+- If `sample-api` shows `ImagePullBackOff`, the image tag is missing or GHCR is not readable by the cluster.
 - Later-lab Applications may be `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs complete the required configuration.
 - Changing a harmless Git-managed annotation is reconciled into the cluster.
 - Manually changing that annotation in-cluster is reverted by self-heal.
@@ -252,6 +255,7 @@ Common issues:
 | Child Applications are missing | Root Application did not sync or points at the wrong path | Confirm `path: clusters/dev` and inspect `platform-root` events |
 | Application is `OutOfSync` | Desired state differs from cluster state | Review the diff in Argo CD or describe the Application |
 | Application is `Degraded` | Rendered manifests failed or workloads are unhealthy | Inspect the Application events and affected Kubernetes resources |
+| `sample-api` pods show `ImagePullBackOff` | `latest` was not published or the GHCR package is private | Confirm Lab 06 CI published `latest`, then make the package public or configure an image pull secret |
 
 ## Final Repository State
 

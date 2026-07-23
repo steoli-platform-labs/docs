@@ -248,7 +248,7 @@ Avoid:
 - Define resource requests and limits
 - Configure health probes
 - Use standard labels
-- Never use latest image tags
+- Prefer immutable image tags. Use `latest` only when a lab explicitly defines it as a Development convenience tag and the CI workflow also publishes it.
 
 ---
 

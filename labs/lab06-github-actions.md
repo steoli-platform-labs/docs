@@ -158,6 +158,8 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:latest` in Lab 07. Make the GHCR package public for this lab path, or configure Kubernetes image pull credentials before deploying the sample API. A public package is the simpler lab default.
 
+   To make the package public in GitHub, open the `sample-api` package page in the organization, go to **Package settings**, then change **Danger Zone > Change package visibility** to **Public**. Do this only for non-sensitive lab images.
+
    If the package is private, authenticate Docker to GHCR first. Prefer a short-lived, least-privilege GitHub token with `read:packages` permission:
 
    > **Info:** Store the token only in your shell session or a local password manager. Do not write it to repository files, shell history snippets, screenshots or CI logs. Revoke it when local package access is no longer required.
@@ -196,6 +198,7 @@ Local validation commands pass, GitHub Actions workflows run successfully, pull 
 - Pull requests run tests and validation without publishing an image.
 - A push to `main` publishes immutable commit-SHA and `latest` image tags to GHCR.
 - The image tags can be pulled using the expected package permissions.
+- The `sample-api` package is public for the lab path, or Kubernetes image pull credentials are configured before Lab 07.
 - CI does not deploy directly to Kubernetes.
 - Workflow permissions are limited to what each job requires.
 - A published image alone does not update GitOps desired state; verify that the documented image-update process exists before calling end-to-end delivery complete.
