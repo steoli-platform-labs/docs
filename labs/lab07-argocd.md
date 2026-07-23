@@ -172,6 +172,15 @@ Key files:
    The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:latest` so the first GitOps deployment can follow the newest successful `main` build without editing the image tag manually. Before bootstrapping Argo CD, confirm that Lab 06 has published the `latest` tag and that the GHCR package is public or otherwise pullable by the cluster.
 
    If the package must remain private, create a Kubernetes image pull secret in `sample-api-dev` and set `imagePullSecrets` in the chart values before syncing `sample-api`. Do not commit the token value to Git.
+
+   You can confirm public pull access from your workstation with:
+
+   ```bash
+   curl -fsS "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_ORG}/sample-api:pull" \
+     | python3 -m json.tool
+   ```
+
+   A `401 Unauthorized` response means the package is private from the cluster's point of view.
 3. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
 4. Confirm kubectl points at the intended EKS cluster and install Argo CD:
 
@@ -245,6 +254,15 @@ kubectl -n argocd get applications.argoproj.io -o wide
 kubectl -n argocd describe application platform-root
 kubectl -n argocd logs statefulset/argocd-application-controller --since=10m
 ```
+
+If `sample-api` is not healthy, inspect the pod image-pull events directly:
+
+```bash
+kubectl -n sample-api-dev get pods
+kubectl -n sample-api-dev describe pod -l app.kubernetes.io/name=sample-api
+```
+
+If the event says `failed to fetch anonymous token` or `401 Unauthorized`, the image tag exists but GHCR is not publicly readable by the node. Make the package public for the lab path, or configure `imagePullSecrets` with a least-privilege `read:packages` token.
 
 Common issues:
 

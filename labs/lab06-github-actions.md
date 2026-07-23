@@ -185,6 +185,22 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    The `docker pull` commands confirm that both the immutable tag and `latest` exist and are readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the commit-SHA tag resolves to a concrete image artifact.
 
+   Validate that the package is readable without your local Docker login before relying on unauthenticated Kubernetes pulls:
+
+   ```bash
+   curl -fsS "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_ORG}/sample-api:pull" \
+     | python3 -m json.tool
+   ```
+
+   A public package returns a token response. A private package returns `401 Unauthorized`, which means Kubernetes nodes also need image pull credentials.
+
+   If you use GitHub CLI to inspect the package, your `gh` token must include package scopes:
+
+   ```bash
+   gh auth refresh --hostname github.com --scopes read:packages,write:packages
+   gh api "/orgs/${GITHUB_ORG}/packages/container/sample-api" --jq '{name,visibility,url}'
+   ```
+
    If `docker pull` returns `unauthorized`, confirm that the token has `read:packages`, that your GitHub user can access the `sample-api` package, and that the package exists under the expected organization.
 
    This lab does not apply infrastructure or deploy workloads. GitHub Actions validate, test and publish artifacts only; deployment remains a GitOps responsibility in later labs.
@@ -223,6 +239,8 @@ Common issues:
 | Python tests fail | Application dependency or test failure | Run the local `sample-api` virtualenv commands and fix the failing test |
 | Docker build fails | Dockerfile or dependency issue | Run `docker build -t sample-api:lab06 .` locally with Docker running |
 | GHCR pull returns `unauthorized` | Docker is not logged in to GHCR or token lacks `read:packages` | Run `docker login ghcr.io` with a token that has `read:packages` |
+| `gh api` package lookup returns `403` | GitHub CLI token lacks package scopes | Run `gh auth refresh --hostname github.com --scopes read:packages,write:packages` and approve the browser/device prompt |
+| Anonymous GHCR token request returns `401` | Package is private | Make the lab package public or configure Kubernetes image pull credentials before Lab 07 |
 
 ## Final Repository State
 
