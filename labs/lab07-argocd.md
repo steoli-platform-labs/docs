@@ -118,8 +118,50 @@ Key files:
 
 ## Step-by-Step Implementation
 
-1. Review `platform-config/bootstrap/root-application.yaml` and confirm the `repoURL`, `targetRevision` and `path` match your repositories and branch.
-2. Review the current child Applications in `platform-config/clusters/dev` so you understand what Argo CD will reconcile.
+1. Review `platform-config/bootstrap/root-application.yaml` and confirm that it points Argo CD at the correct Git source.
+
+   This file is the first Argo CD `Application` you apply manually. It is called the root Application because it tells Argo CD where to find the rest of the platform desired state. After it is applied, Argo CD reads the Git repository and creates the child Applications from the configured path.
+
+   Check these fields before continuing:
+
+   - `metadata.name`: should be `platform-root`, which is the Application you will inspect later.
+   - `metadata.namespace`: should be `argocd`, because the Argo CD controller watches Applications in that namespace.
+   - `spec.source.repoURL`: must point to your `platform-config` repository.
+   - `spec.source.targetRevision`: must point to the branch or tag Argo CD should read, usually `main` for these labs.
+   - `spec.source.path`: must point to `clusters/dev`, where the Development cluster's child Applications live.
+   - `spec.destination.server`: should be `https://kubernetes.default.svc`, which means the same cluster where Argo CD is running.
+   - `spec.syncPolicy.automated.prune`: allows Argo CD to remove resources that were deleted from Git.
+   - `spec.syncPolicy.automated.selfHeal`: allows Argo CD to correct manual in-cluster drift back to the Git-defined state.
+
+   Run this from the workspace root to inspect the root Application:
+
+   ```bash
+   cd "$WORKSPACE"
+   sed -n '1,120p' platform-config/bootstrap/root-application.yaml
+   ```
+
+   If your GitHub organization or branch differs from the committed example, update `repoURL` or `targetRevision`, then commit and push that `platform-config` change before applying the root Application.
+2. Review the child Applications in `platform-config/clusters/dev` so you understand what Argo CD will reconcile after the root Application is created.
+
+   Each YAML file in this directory is intended to become an Argo CD child Application for one platform component or workload. The root Application does not install those components directly; it points Argo CD at this directory, and Argo CD then reconciles each child Application it finds there.
+
+   List the child Application files:
+
+   ```bash
+   find platform-config/clusters/dev -maxdepth 1 -type f -name '*.yaml' -print | sort
+   ```
+
+   Review the names, source paths and destinations:
+
+   ```bash
+   for file in platform-config/clusters/dev/*.yaml
+   do
+     echo "===== $file ====="
+     grep -E 'name:|repoURL:|targetRevision:|path:|namespace:' "$file"
+   done
+   ```
+
+   At this point, it is acceptable if some child Applications point to components introduced in later labs. The goal in this step is to verify that Argo CD will read the expected repository, branch and path, and that you understand which Applications may initially be `Progressing` until their dependencies are installed.
 3. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
 4. Confirm kubectl points at the intended EKS cluster and install Argo CD:
 
