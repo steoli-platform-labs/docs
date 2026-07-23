@@ -102,7 +102,7 @@ Review the observability desired-state files and update any environment-specific
 
 1. Review `platform-config/clusters/dev/prometheus.yaml` and confirm the chart, namespace and values match the lab environment.
 
-   The Application should use `skipCrds: true`, `crds.upgradeJob.enabled: true`, `SkipDryRunOnMissingResource=true` and `ServerSideApply=true`. This lets the chart's CRD upgrade job apply Prometheus Operator CRDs server-side before Argo CD validates Prometheus custom resources, avoiding oversized client-side apply annotations on large CRDs and the CRD bundle ConfigMap.
+   The Application should use `skipCrds: true`, `crds.upgradeJob.enabled: true`, `SkipDryRunOnMissingResource=true`, `ServerSideApply=true` and `Replace=true`. This lets the chart's CRD upgrade job apply Prometheus Operator CRDs server-side before Argo CD validates Prometheus custom resources, avoiding oversized client-side apply annotations on large CRDs and the CRD bundle ConfigMap.
 
 2. Commit and push any required `platform-config` changes.
 3. Let Argo CD reconcile the `prometheus` Application from Git:
@@ -199,7 +199,7 @@ kubectl -n argocd describe application prometheus
 kubectl get crd | grep monitoring.coreos.com
 ```
 
-If the Application events mention `metadata.annotations: Too long`, Argo CD is trying to apply large Prometheus Operator CRDs or the chart's CRD bundle ConfigMap with client-side apply. Configure the Prometheus Application to skip direct Helm CRD rendering, enable the chart's CRD upgrade job and use `ServerSideApply=true`. If Argo CD blocks the sync because the Prometheus or Alertmanager resource types are missing, add `SkipDryRunOnMissingResource=true` so the CRD job can run first.
+If the Application events mention `metadata.annotations: Too long`, Argo CD is trying to apply large Prometheus Operator CRDs or the chart's CRD bundle ConfigMap with client-side apply. Configure the Prometheus Application to skip direct Helm CRD rendering, enable the chart's CRD upgrade job and use `ServerSideApply=true` with `Replace=true`. If Argo CD blocks the sync because the Prometheus or Alertmanager resource types are missing, add `SkipDryRunOnMissingResource=true` so the CRD job can run first.
 
 ## Final Repository State
 
