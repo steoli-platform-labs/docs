@@ -101,6 +101,9 @@ Review the observability desired-state files and update any environment-specific
 ## Step-by-Step Implementation
 
 1. Review `platform-config/clusters/dev/prometheus.yaml` and confirm the chart, namespace and values match the lab environment.
+
+   The Application should use `skipCrds: true` and `crds.upgradeJob.enabled: true`. This lets the chart's CRD upgrade job apply Prometheus Operator CRDs server-side, avoiding oversized client-side apply annotations on large CRDs.
+
 2. Commit and push any required `platform-config` changes.
 3. Let Argo CD reconcile the `prometheus` Application from Git:
 
@@ -196,7 +199,7 @@ kubectl -n argocd describe application prometheus
 kubectl get crd | grep monitoring.coreos.com
 ```
 
-If the Application events mention `metadata.annotations: Too long`, the Prometheus Application needs sync options that avoid client-side apply annotations for large CRDs, such as `ServerSideApply=true` and `Replace=true`.
+If the Application events mention `metadata.annotations: Too long`, Argo CD is trying to apply large Prometheus Operator CRDs directly. Configure the Prometheus Application to skip direct Helm CRD rendering and enable the chart's CRD upgrade job so the CRDs are applied server-side before the Prometheus custom resources are created.
 
 ## Final Repository State
 
