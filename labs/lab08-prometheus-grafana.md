@@ -70,6 +70,8 @@ The observability platform follows cloud-native best practices.
 
 - **Prometheus Operator:** Prometheus Operator manages Prometheus instances and monitoring resources such as ServiceMonitors and PodMonitors.
 
+- **Custom Resource Definitions:** A Custom Resource Definition, or CRD, teaches Kubernetes a new resource type. Kubernetes already understands built-in types such as `Pod`, `Service` and `Deployment`; Prometheus Operator adds monitoring-specific types such as `Prometheus`, `Alertmanager`, `ServiceMonitor`, `PodMonitor`, `PrometheusRule` and `ScrapeConfig`. The CRDs must exist before Kubernetes can accept resources that use those kinds.
+
 - **Grafana as the observability portal:** Grafana serves as the primary interface for platform observability. Additional data sources introduced in later labs will integrate into the existing Grafana instance.
 
 - **Standard dashboards:** Community-maintained Kubernetes dashboards are used as the initial monitoring dashboards. Custom dashboards may be added later as the platform evolves.
@@ -104,6 +106,8 @@ Review the observability desired-state files and update any environment-specific
 
    The Application should use `skipCrds: true`, `crds.upgradeJob.enabled: true`, `SkipDryRunOnMissingResource=true`, `ServerSideApply=true` and `Replace=true`. This lets the chart's CRD upgrade job apply Prometheus Operator CRDs server-side before Argo CD validates Prometheus custom resources, avoiding oversized client-side apply annotations on large CRDs and the CRD bundle ConfigMap.
 
+   In this lab, CRDs are the API extensions that make resources such as `kind: Prometheus` and `kind: ServiceMonitor` valid Kubernetes objects. If those CRDs are missing, Kubernetes cannot create the Prometheus custom resource, the Prometheus Operator cannot create the Prometheus StatefulSet and the Prometheus service will have no endpoints.
+
 2. Commit and push any required `platform-config` changes.
 3. Let Argo CD reconcile the `prometheus` Application from Git:
 
@@ -125,6 +129,8 @@ Review the observability desired-state files and update any environment-specific
    ```
 
    The Prometheus and Grafana services must have endpoints before port-forwarding works. If `prometheus-kube-prometheus-prometheus` shows `<none>`, inspect the Argo CD Application events before continuing because the Prometheus custom resource may not have been created yet.
+
+   A missing Prometheus endpoint usually means one of two things: the Prometheus CRD is missing, so Kubernetes rejected the `Prometheus` resource, or the Prometheus Operator has not reconciled that resource into a running StatefulSet yet.
 
 5. Start a local Prometheus port-forward in a separate terminal:
 
@@ -200,6 +206,8 @@ kubectl get crd | grep monitoring.coreos.com
 ```
 
 If the Application events mention `metadata.annotations: Too long`, Argo CD is trying to apply large Prometheus Operator CRDs or the chart's CRD bundle ConfigMap with client-side apply. Configure the Prometheus Application to skip direct Helm CRD rendering, enable the chart's CRD upgrade job and use `ServerSideApply=true` with `Replace=true`. If Argo CD blocks the sync because the Prometheus or Alertmanager resource types are missing, add `SkipDryRunOnMissingResource=true` so the CRD job can run first.
+
+If the Application events mention `no matches for kind "Prometheus"` or `no matches for kind "Alertmanager"`, Kubernetes has not registered those CRDs yet. Wait for the `prometheus-crds-upgrade` hook Job to complete, confirm the CRDs exist and let Argo CD retry the sync.
 
 ## Final Repository State
 
