@@ -161,7 +161,15 @@ Key files:
    done
    ```
 
-   At this point, it is acceptable if some child Applications point to components introduced in later labs. The goal in this step is to verify that Argo CD will read the expected repository, branch and path, and that you understand which Applications may initially be `Progressing` until their dependencies are installed.
+   At this point, it is acceptable if some child Applications point to components introduced in later labs. The goal in this step is to verify that Argo CD will read the expected repository, branch and path, and that you understand which Applications may initially be `Progressing`, `OutOfSync` or `Unknown` until their lab-specific configuration is completed.
+
+   Confirm the `sample-api` Application uses the image published in Lab 06:
+
+   ```bash
+   grep -A4 'image:' platform-config/clusters/dev/sample-api.yaml
+   ```
+
+   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:latest` so the first GitOps deployment can follow the newest successful `main` build without editing the image tag manually. Before bootstrapping Argo CD, confirm that Lab 06 has published the `latest` tag and that the GHCR package is public or otherwise pullable by the cluster.
 3. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
 4. Confirm kubectl points at the intended EKS cluster and install Argo CD:
 
@@ -186,7 +194,7 @@ Key files:
    kubectl apply -f platform-config/bootstrap/root-application.yaml
    ```
 
-6. Verify that Argo CD creates child Applications and reports them as synced or progressing:
+6. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
 
    ```bash
    kubectl -n argocd get pods
@@ -200,20 +208,24 @@ Key files:
 
    The Argo CD application controller runs as a StatefulSet in the Helm chart used by this lab, so the log command targets `statefulset/argocd-application-controller`.
 
+   For this lab, `platform-root` and `argocd` should be `Synced / Healthy`. Later-lab Applications may appear as `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs provide the required values, CRDs, IAM roles, secrets or chart versions.
+
 7. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
 
    The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
 
 ## Expected Results
 
-Argo CD is installed in the `argocd` namespace, the `platform-root` Application exists, and Argo CD begins reconciling the child Applications from `platform-config/clusters/dev`.
+Argo CD is installed in the `argocd` namespace, the `platform-root` Application exists, Argo CD begins reconciling the child Applications from `platform-config/clusters/dev`, and the Lab 07 bootstrap resources are healthy.
 
 ## Validation
 
 - Argo CD controller, repo-server and API server pods are ready.
 - `platform-root` exists and can read the `platform-config` repository.
 - Child Applications are created from `platform-config/clusters/dev`.
-- Applications are either `Synced / Healthy` or clearly progressing toward the components introduced in later labs.
+- `platform-root` and `argocd` are `Synced / Healthy`.
+- `sample-api` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and pullable by the cluster.
+- Later-lab Applications may be `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs complete the required configuration.
 - Changing a harmless Git-managed annotation is reconciled into the cluster.
 - Manually changing that annotation in-cluster is reverted by self-heal.
 - Removing a Git-managed test resource removes it from the cluster when pruning is enabled.

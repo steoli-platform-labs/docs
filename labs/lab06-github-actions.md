@@ -132,7 +132,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    | Repository | Workflow | Expected check |
    |------------|----------|----------------|
-   | `sample-api` | `ci` | `pytest -q` passes and Docker build succeeds |
+   | `sample-api` | `ci` | `pytest -q` passes, Docker build succeeds and the image is published on pushes to `main` |
    | `helm-charts` | `helm` | `helm lint charts/sample-api` passes |
    | `platform-modules` | `terraform` | `terraform fmt -check -recursive` passes |
    | `platform-live` | `terraform` | `terraform fmt -check -recursive` passes |
@@ -154,7 +154,9 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd ../platform-live && terraform fmt -check -recursive
    ```
 
-6. Verify that the `sample-api` image is published to GHCR after a successful push to `main`. Use the GitHub organization and the commit SHA from the workflow run. The commit SHA is visible at the top of the GitHub Actions run, or locally with `git rev-parse HEAD` after you have pulled the same commit.
+6. Verify that the `sample-api` image is published to GHCR after a successful push to `main`. The workflow publishes two tags: an immutable commit-SHA tag for traceability and `latest` for the simple Development GitOps path used in the next lab. Use the GitHub organization and the commit SHA from the workflow run. The commit SHA is visible at the top of the GitHub Actions run, or locally with `git rev-parse HEAD` after you have pulled the same commit.
+
+   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:latest` in Lab 07. Make the GHCR package public for this lab path, or configure Kubernetes image pull credentials before deploying the sample API. A public package is the simpler lab default.
 
    If the package is private, authenticate Docker to GHCR first. Prefer a short-lived, least-privilege GitHub token with `read:packages` permission:
 
@@ -176,9 +178,10 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    docker pull ghcr.io/${GITHUB_ORG}/sample-api:${COMMIT_SHA}
    docker inspect ghcr.io/${GITHUB_ORG}/sample-api:${COMMIT_SHA} --format '{{.RepoDigests}}'
+   docker pull ghcr.io/${GITHUB_ORG}/sample-api:latest
    ```
 
-   The `docker pull` confirms the image tag exists and is readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the tag resolves to a concrete image artifact.
+   The `docker pull` commands confirm that both the immutable tag and `latest` exist and are readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the commit-SHA tag resolves to a concrete image artifact.
 
    If `docker pull` returns `unauthorized`, confirm that the token has `read:packages`, that your GitHub user can access the `sample-api` package, and that the package exists under the expected organization.
 
@@ -186,13 +189,13 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 ## Expected Results
 
-Local validation commands pass, GitHub Actions workflows run successfully, pull requests validate without publishing images and pushes to `main` publish an immutable `sample-api` image tag to GHCR.
+Local validation commands pass, GitHub Actions workflows run successfully, pull requests validate without publishing images and pushes to `main` publish immutable commit-SHA and `latest` `sample-api` image tags to GHCR.
 
 ## Validation
 
 - Pull requests run tests and validation without publishing an image.
-- A push to `main` publishes an immutable commit-SHA image tag to GHCR.
-- The image can be pulled using the expected package permissions.
+- A push to `main` publishes immutable commit-SHA and `latest` image tags to GHCR.
+- The image tags can be pulled using the expected package permissions.
 - CI does not deploy directly to Kubernetes.
 - Workflow permissions are limited to what each job requires.
 - A published image alone does not update GitOps desired state; verify that the documented image-update process exists before calling end-to-end delivery complete.
@@ -220,7 +223,7 @@ Common issues:
 
 ## Final Repository State
 
-At completion, the implementation repositories have validation workflows, `sample-api` publishes commit-SHA image tags to GHCR on pushes to `main`, and no workflow deploys directly to Kubernetes.
+At completion, the implementation repositories have validation workflows, `sample-api` publishes commit-SHA and `latest` image tags to GHCR on pushes to `main`, and no workflow deploys directly to Kubernetes.
 
 ## Cleanup
 
