@@ -197,9 +197,12 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    If you use GitHub CLI to inspect the package, your `gh` token must include package scopes:
 
    ```bash
+   unset GITHUB_TOKEN
    gh auth refresh --hostname github.com --scopes read:packages,write:packages
    gh api "/orgs/${GITHUB_ORG}/packages/container/sample-api" --jq '{name,visibility,url}'
    ```
+
+   `GITHUB_TOKEN` is a special environment variable for GitHub CLI. If it is set, `gh` uses it instead of the credentials stored by `gh auth login`, so `gh auth refresh` cannot update the stored token until you unset it in the current shell.
 
    If `docker pull` returns `unauthorized`, confirm that the token has `read:packages`, that your GitHub user can access the `sample-api` package, and that the package exists under the expected organization.
 
@@ -239,7 +242,8 @@ Common issues:
 | Python tests fail | Application dependency or test failure | Run the local `sample-api` virtualenv commands and fix the failing test |
 | Docker build fails | Dockerfile or dependency issue | Run `docker build -t sample-api:lab06 .` locally with Docker running |
 | GHCR pull returns `unauthorized` | Docker is not logged in to GHCR or token lacks `read:packages` | Run `docker login ghcr.io` with a token that has `read:packages` |
-| `gh api` package lookup returns `403` | GitHub CLI token lacks package scopes | Run `gh auth refresh --hostname github.com --scopes read:packages,write:packages` and approve the browser/device prompt |
+| `gh auth refresh` says `GITHUB_TOKEN` is being used | `GITHUB_TOKEN` is set in the current shell and overrides stored GitHub CLI credentials | Run `unset GITHUB_TOKEN`, then rerun `gh auth refresh --hostname github.com --scopes read:packages,write:packages` |
+| `gh api` package lookup returns `403` | GitHub CLI token lacks package scopes | Unset `GITHUB_TOKEN`, then run `gh auth refresh --hostname github.com --scopes read:packages,write:packages` and approve the browser/device prompt |
 | Anonymous GHCR token request returns `401` | Package is private | Make the lab package public or configure Kubernetes image pull credentials before Lab 07 |
 
 ## Final Repository State
