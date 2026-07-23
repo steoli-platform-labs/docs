@@ -169,9 +169,13 @@ Key files:
    grep -A4 'image:' platform-config/clusters/dev/sample-api.yaml
    ```
 
-   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:latest` so the first GitOps deployment can follow the newest successful `main` build without editing the image tag manually. Before bootstrapping Argo CD, confirm that Lab 06 has published the `latest` tag and that the GHCR package is public or otherwise pullable by the cluster.
+   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:latest` so the first GitOps deployment can follow the newest successful `main` build without editing the image tag manually. The package should remain private by default, so the Application also references an `imagePullSecrets` entry named `ghcr-pull`.
 
-   If the package must remain private, create a Kubernetes image pull secret in `sample-api-dev` and set `imagePullSecrets` in the chart values before syncing `sample-api`. Do not commit the token value to Git.
+   Confirm the Application values include the pull secret reference:
+
+   ```bash
+   grep -A8 'image:' platform-config/clusters/dev/sample-api.yaml
+   ```
 
    You can confirm public pull access from your workstation with:
 
@@ -180,9 +184,35 @@ Key files:
      | python3 -m json.tool
    ```
 
-   A `401 Unauthorized` response means the package is private from the cluster's point of view.
-3. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
-4. Confirm kubectl points at the intended EKS cluster and install Argo CD:
+   A `401 Unauthorized` response means the package is private from the cluster's point of view. That is expected for this lab if you create the pull secret in the next step.
+3. Create the image pull secret that allows Kubernetes nodes to pull the private GHCR image.
+
+   Use a GitHub token with only the permissions needed to read packages. Do not use a broad personal token unless your environment requires it. Do not commit the token value to Git.
+
+   ```bash
+   kubectl create namespace sample-api-dev --dry-run=client -o yaml | kubectl apply -f -
+
+   export GITHUB_USER="<your-github-username>"
+   read -r -s GHCR_READ_TOKEN
+
+   kubectl -n sample-api-dev create secret docker-registry ghcr-pull \
+     --docker-server=ghcr.io \
+     --docker-username="$GITHUB_USER" \
+     --docker-password="$GHCR_READ_TOKEN" \
+     --dry-run=client -o yaml | kubectl apply -f -
+
+   unset GHCR_READ_TOKEN
+   ```
+
+   Paste the token at the hidden prompt. Validate only the secret metadata, not the token value:
+
+   ```bash
+   kubectl -n sample-api-dev get secret ghcr-pull
+   ```
+
+   This secret is a bootstrap exception for Lab 07. Later labs replace ad hoc secret handling with External Secrets Operator and IRSA patterns.
+4. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
+5. Confirm kubectl points at the intended EKS cluster and install Argo CD:
 
    ```bash
    cd "$WORKSPACE"
@@ -198,14 +228,14 @@ Key files:
      --wait
    ```
 
-5. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`:
+6. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`:
 
    ```bash
    kubectl -n argocd wait --for=condition=available deployment/argocd-server --timeout=300s
    kubectl apply -f platform-config/bootstrap/root-application.yaml
    ```
 
-6. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
+7. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
 
    ```bash
    kubectl -n argocd get pods
@@ -221,7 +251,7 @@ Key files:
 
    For this lab, `platform-root` and `argocd` should be `Synced / Healthy`. Later-lab Applications may appear as `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs provide the required values, CRDs, IAM roles, secrets or chart versions.
 
-7. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
+8. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
 
    The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
 
@@ -235,8 +265,8 @@ Argo CD is installed in the `argocd` namespace, the `platform-root` Application 
 - `platform-root` exists and can read the `platform-config` repository.
 - Child Applications are created from `platform-config/clusters/dev`.
 - `platform-root` and `argocd` are `Synced / Healthy`.
-- `sample-api` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and pullable by the cluster.
-- If `sample-api` shows `ImagePullBackOff`, the image tag is missing or GHCR is not readable by the cluster.
+- `sample-api` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and the `ghcr-pull` image pull secret exists in `sample-api-dev`.
+- If `sample-api` shows `ImagePullBackOff`, the image tag is missing, the `ghcr-pull` secret is missing, or the token cannot read the package.
 - Later-lab Applications may be `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs complete the required configuration.
 - Changing a harmless Git-managed annotation is reconciled into the cluster.
 - Manually changing that annotation in-cluster is reverted by self-heal.
@@ -262,7 +292,14 @@ kubectl -n sample-api-dev get pods
 kubectl -n sample-api-dev describe pod -l app.kubernetes.io/name=sample-api
 ```
 
-If the event says `failed to fetch anonymous token` or `401 Unauthorized`, the image tag exists but GHCR is not publicly readable by the node. Make the package public for the lab path, or configure `imagePullSecrets` with a least-privilege `read:packages` token.
+If the event says `failed to fetch anonymous token` or `401 Unauthorized`, Kubernetes did not use valid pull credentials. Confirm the secret exists and is referenced by the rendered workload:
+
+```bash
+kubectl -n sample-api-dev get secret ghcr-pull
+kubectl -n sample-api-dev get rollout sample-api -o yaml | grep -A3 imagePullSecrets
+```
+
+If the secret is missing, recreate it with a least-privilege `read:packages` token. If the secret exists but pulls still fail, create a new token, update the secret and delete the stuck pods so Kubernetes retries the image pull.
 
 Common issues:
 
@@ -273,7 +310,7 @@ Common issues:
 | Child Applications are missing | Root Application did not sync or points at the wrong path | Confirm `path: clusters/dev` and inspect `platform-root` events |
 | Application is `OutOfSync` | Desired state differs from cluster state | Review the diff in Argo CD or describe the Application |
 | Application is `Degraded` | Rendered manifests failed or workloads are unhealthy | Inspect the Application events and affected Kubernetes resources |
-| `sample-api` pods show `ImagePullBackOff` | `latest` was not published or the GHCR package is private | Confirm Lab 06 CI published `latest`, then make the package public or configure an image pull secret |
+| `sample-api` pods show `ImagePullBackOff` | `latest` was not published, `ghcr-pull` is missing, or the token cannot read the package | Confirm Lab 06 CI published `latest`, recreate `ghcr-pull` with `read:packages`, then delete the stuck pods |
 
 ## Final Repository State
 

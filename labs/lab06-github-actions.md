@@ -156,9 +156,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 6. Verify that the `sample-api` image is published to GHCR after a successful push to `main`. The workflow publishes two tags: an immutable commit-SHA tag for traceability and `latest` for the simple Development GitOps path used in the next lab. Use the GitHub organization and the commit SHA from the workflow run. The commit SHA is visible at the top of the GitHub Actions run, or locally with `git rev-parse HEAD` after you have pulled the same commit.
 
-   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:latest` in Lab 07. Make the GHCR package public for this lab path, or configure Kubernetes image pull credentials before deploying the sample API. A public package is the simpler lab default.
-
-   To make the package public in GitHub, open the `sample-api` package page in the organization, go to **Package settings**, then change **Danger Zone > Change package visibility** to **Public**. Do this only for non-sensitive lab images.
+   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:latest` in Lab 07. Keep the GHCR package private unless you intentionally want public images, and configure Kubernetes image pull credentials before deploying the sample API.
 
    If the package is private, authenticate Docker to GHCR first. Prefer a short-lived, least-privilege GitHub token with `read:packages` permission:
 
@@ -192,7 +190,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
      | python3 -m json.tool
    ```
 
-   A public package returns a token response. A private package returns `401 Unauthorized`, which means Kubernetes nodes also need image pull credentials.
+   A public package returns a token response. A private package returns `401 Unauthorized`, which is acceptable when you plan to create the Kubernetes image pull secret in Lab 07.
 
    If you use GitHub CLI to inspect the package, your `gh` token must include package scopes:
 
@@ -217,7 +215,7 @@ Local validation commands pass, GitHub Actions workflows run successfully, pull 
 - Pull requests run tests and validation without publishing an image.
 - A push to `main` publishes immutable commit-SHA and `latest` image tags to GHCR.
 - The image tags can be pulled using the expected package permissions.
-- The `sample-api` package is public for the lab path, or Kubernetes image pull credentials are configured before Lab 07.
+- The `sample-api` package is private by default, and Kubernetes image pull credentials are planned for Lab 07.
 - CI does not deploy directly to Kubernetes.
 - Workflow permissions are limited to what each job requires.
 - A published image alone does not update GitOps desired state; verify that the documented image-update process exists before calling end-to-end delivery complete.
@@ -244,7 +242,7 @@ Common issues:
 | GHCR pull returns `unauthorized` | Docker is not logged in to GHCR or token lacks `read:packages` | Run `docker login ghcr.io` with a token that has `read:packages` |
 | `gh auth refresh` says `GITHUB_TOKEN` is being used | `GITHUB_TOKEN` is set in the current shell and overrides stored GitHub CLI credentials | Run `unset GITHUB_TOKEN`, then rerun `gh auth refresh --hostname github.com --scopes read:packages,write:packages` |
 | `gh api` package lookup returns `403` | GitHub CLI token lacks package scopes | Unset `GITHUB_TOKEN`, then run `gh auth refresh --hostname github.com --scopes read:packages,write:packages` and approve the browser/device prompt |
-| Anonymous GHCR token request returns `401` | Package is private | Make the lab package public or configure Kubernetes image pull credentials before Lab 07 |
+| Anonymous GHCR token request returns `401` | Package is private | This is expected for the private-package path; configure Kubernetes image pull credentials in Lab 07 |
 
 ## Final Repository State
 
