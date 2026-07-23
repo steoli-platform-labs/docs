@@ -194,9 +194,11 @@ Key files:
    kubectl -n argocd describe application platform-root
    kubectl -n argocd get application platform-root \
      -o jsonpath='{.status.sync.status}{" / "}{.status.health.status}{"\n"}'
-   kubectl -n argocd logs deployment/argocd-application-controller --since=10m
+   kubectl -n argocd logs statefulset/argocd-application-controller --since=10m
    kubectl get events -A --sort-by=.lastTimestamp | tail -50
    ```
+
+   The Argo CD application controller runs as a StatefulSet in the Helm chart used by this lab, so the log command targets `statefulset/argocd-application-controller`.
 
 7. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
 
@@ -226,7 +228,7 @@ Start with Argo CD status:
 kubectl -n argocd get pods
 kubectl -n argocd get applications.argoproj.io -o wide
 kubectl -n argocd describe application platform-root
-kubectl -n argocd logs deployment/argocd-application-controller --since=10m
+kubectl -n argocd logs statefulset/argocd-application-controller --since=10m
 ```
 
 Common issues:
