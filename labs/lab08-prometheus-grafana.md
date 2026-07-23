@@ -196,7 +196,7 @@ kubectl -n argocd describe application prometheus
 kubectl get crd | grep monitoring.coreos.com
 ```
 
-If the Application events mention `metadata.annotations: Too long`, the Prometheus Application needs server-side apply enabled with the `ServerSideApply=true` sync option.
+If the Application events mention `metadata.annotations: Too long`, the Prometheus Application needs sync options that avoid client-side apply annotations for large CRDs, such as `ServerSideApply=true` and `Replace=true`.
 
 ## Final Repository State
 
