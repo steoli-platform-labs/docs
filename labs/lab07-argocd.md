@@ -249,13 +249,32 @@ Key files:
 
    For this lab, `platform-root` and `argocd` should be `Synced / Healthy`. Later-lab Applications may appear as `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs provide the required values, CRDs, IAM roles, secrets or chart versions.
 
-8. Use Argo CD status and controller logs to troubleshoot any repository or manifest errors.
+8. Access the Argo CD UI and inspect the same Applications visually.
+
+   Get the initial admin password:
+
+   ```bash
+   kubectl -n argocd get secret argocd-initial-admin-secret \
+     -o jsonpath='{.data.password}' | base64 --decode; printf '\n'
+   ```
+
+   Start a local port-forward in a separate terminal:
+
+   ```bash
+   kubectl -n argocd port-forward svc/argocd-server 8080:80
+   ```
+
+   Open `http://localhost:8080`, log in with username `admin` and the password from the secret, then inspect `platform-root`, `argocd` and `sample-api`.
+
+   Use the UI to confirm the application tree, sync status, health status, rendered resources and any diffs. This lab uses local port-forwarding only; do not expose the Argo CD server publicly without an approved access pattern such as SSO, VPN or an internal ingress.
+
+9. Use Argo CD status, the UI and controller logs to troubleshoot any repository or manifest errors.
 
    The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
 
 ## Expected Results
 
-Argo CD is installed in the `argocd` namespace, the `platform-root` Application exists, Argo CD begins reconciling the child Applications from `platform-config/clusters/dev`, and the Lab 07 bootstrap resources are healthy.
+Argo CD is installed in the `argocd` namespace, the `platform-root` Application exists, Argo CD begins reconciling the child Applications from `platform-config/clusters/dev`, the Lab 07 bootstrap resources are healthy and the UI is reachable through local port-forwarding.
 
 ## Validation
 
@@ -266,6 +285,7 @@ Argo CD is installed in the `argocd` namespace, the `platform-root` Application 
 - `sample-api` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and the `ghcr-pull` image pull secret exists in `sample-api-dev`.
 - If `sample-api` shows `ImagePullBackOff`, the image tag is missing, the `ghcr-pull` secret is missing, or the token cannot read the package.
 - Later-lab Applications may be `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs complete the required configuration.
+- The Argo CD UI is reachable through local port-forwarding and shows the same Application statuses as `kubectl`.
 - Changing a harmless Git-managed annotation is reconciled into the cluster.
 - Manually changing that annotation in-cluster is reverted by self-heal.
 - Removing a Git-managed test resource removes it from the cluster when pruning is enabled.
