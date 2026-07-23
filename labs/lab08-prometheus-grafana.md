@@ -117,17 +117,52 @@ Review the observability desired-state files and update any environment-specific
    kubectl -n argocd get application prometheus -o wide
    kubectl -n monitoring get pods
    kubectl -n monitoring get servicemonitors,podmonitors,prometheusrules
+   kubectl get crd | grep monitoring.coreos.com
+   kubectl -n monitoring get endpoints prometheus-kube-prometheus-prometheus prometheus-grafana
+   ```
+
+   The Prometheus and Grafana services must have endpoints before port-forwarding works. If `prometheus-kube-prometheus-prometheus` shows `<none>`, inspect the Argo CD Application events before continuing because the Prometheus custom resource may not have been created yet.
+
+5. Start a local Prometheus port-forward in a separate terminal:
+
+   ```bash
    kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
    ```
 
-5. Validate metrics ingestion through Prometheus and Grafana. In another terminal, query Prometheus:
+6. Validate metrics ingestion through Prometheus from another terminal:
 
    ```bash
    curl -fsS http://localhost:9090/-/ready
    curl -fsS 'http://localhost:9090/api/v1/query?query=up' | python3 -m json.tool
+   curl -fsS 'http://localhost:9090/api/v1/query?query=kube_pod_info' | python3 -m json.tool
    ```
 
-   For Grafana, port-forward the Grafana service, log in using the chart-generated credentials and verify that Kubernetes dashboards display current data.
+   Open `http://localhost:9090/targets` and confirm that Kubernetes, kube-state-metrics and node-exporter targets are present. Some managed-control-plane targets may be unavailable on EKS depending on endpoint access, but the node, kubelet and kube-state-metrics targets should be active.
+
+7. Get the chart-generated Grafana credentials:
+
+   ```bash
+   kubectl -n monitoring get secret prometheus-grafana \
+     -o jsonpath='{.data.admin-user}' | base64 --decode; printf '\n'
+   kubectl -n monitoring get secret prometheus-grafana \
+     -o jsonpath='{.data.admin-password}' | base64 --decode; printf '\n'
+   ```
+
+8. Start a local Grafana port-forward in a separate terminal:
+
+   ```bash
+   kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
+   ```
+
+9. Open `http://localhost:3000` and log in with the username and password from the secret.
+
+   Confirm the Prometheus data source is healthy from **Connections** -> **Data sources** -> **Prometheus** -> **Save & test**.
+
+10. Review the preloaded Kubernetes dashboards in Grafana.
+
+    Open **Dashboards** and inspect dashboards such as **Kubernetes / Compute Resources / Cluster**, **Kubernetes / Compute Resources / Namespace (Pods)** and **Node Exporter / Nodes**.
+
+    Confirm that the dashboards show current cluster, namespace, pod, CPU, memory and node data. If a dashboard has empty panels, check the time range first, then confirm the Prometheus `up` query and target status.
 
 ## Expected Results
 
@@ -151,7 +186,17 @@ Start with the Argo CD Application and monitoring pods:
 kubectl -n argocd describe application prometheus
 kubectl -n monitoring get pods -o wide
 kubectl -n monitoring get events --sort-by=.lastTimestamp
+kubectl -n monitoring get endpoints prometheus-kube-prometheus-prometheus prometheus-grafana
 ```
+
+If Prometheus port-forwarding times out, the Prometheus service probably has no ready endpoints. Check whether Argo CD failed to apply the Prometheus Operator CRDs:
+
+```bash
+kubectl -n argocd describe application prometheus
+kubectl get crd | grep monitoring.coreos.com
+```
+
+If the Application events mention `metadata.annotations: Too long`, the Prometheus Application needs server-side apply enabled with the `ServerSideApply=true` sync option.
 
 ## Final Repository State
 
