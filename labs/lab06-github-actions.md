@@ -19,6 +19,8 @@ This lab introduces repository-local GitHub Actions workflows.
 
 The workflows validate changes and publish build artifacts. They do not deploy infrastructure or Kubernetes workloads. Deployment remains manual Terraform for infrastructure until GitOps is introduced, and Kubernetes workload deployment is handled by Argo CD in later labs.
 
+Concepts introduced in this lab include CI, GitHub Actions workflows, container images, image tags, image digests, GHCR and image pull permissions. See the [Concepts Reference](../concepts/README.md) for how these pieces connect to later deployments.
+
 ## Outcome
 
 After this lab, the project repositories have GitHub Actions workflows that validate Terraform, lint Helm charts, test the sample API and publish an immutable sample API image to GHCR on pushes to `main`.

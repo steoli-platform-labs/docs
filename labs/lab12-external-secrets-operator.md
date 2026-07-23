@@ -19,6 +19,8 @@ This lab introduces External Secrets Operator for synchronizing secrets from AWS
 
 The goal is to keep real secret values outside Git while still managing the secret synchronization configuration declaratively through the platform GitOps repository.
 
+Concepts introduced in this lab include External Secrets Operator, ExternalSecrets, ClusterSecretStores, AWS Secrets Manager, Kubernetes Secrets and secret synchronization. See the [Concepts Reference](../concepts/README.md) for how secret values stay outside Git.
+
 ## Outcome
 Implement and validate External Secrets Operator in the complete platform reference implementation.
 

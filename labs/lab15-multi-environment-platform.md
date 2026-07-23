@@ -19,6 +19,8 @@ This lab introduces a multi-environment GitOps layout for the platform.
 
 The platform starts separating environment-specific desired state so development, staging and production-style environments can evolve without mixing namespace, policy or application configuration.
 
+Concepts introduced in this lab include environment separation, namespace boundaries, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
+
 ## Outcome
 Implement and validate Multi-Environment Platform in the complete platform reference implementation.
 

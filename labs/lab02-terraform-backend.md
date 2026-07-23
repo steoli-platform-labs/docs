@@ -19,6 +19,8 @@ This lab creates the S3 bucket used as the Terraform remote backend for later la
 
 `platform-bootstrap` starts with local state because it is responsible for creating the backend bucket. After the bucket exists, the bootstrap state is migrated into that bucket.
 
+Concepts introduced in this lab include Terraform state, remote backends, S3 backend buckets and state locking. See the [Concepts Reference](../concepts/README.md) for the background behind these terms.
+
 ## Outcome
 
 After this lab, `platform-bootstrap` manages the permanent S3 Terraform backend bucket and its own state has been migrated from local state to that backend.

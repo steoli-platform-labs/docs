@@ -19,6 +19,8 @@ This lab enables Amazon EKS in the Development Terraform root module.
 
 The EKS cluster uses the VPC and EKS-ready private subnets created in Lab 03.
 
+Concepts introduced in this lab include Amazon EKS, Kubernetes clusters, control planes, worker nodes, node groups, kubeconfig and `kubectl`. See the [Concepts Reference](../concepts/README.md) for the difference between these components.
+
 ## Outcome
 
 After this lab, the Development Terraform root module manages an active Amazon EKS cluster with at least one managed node group in private subnets.

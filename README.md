@@ -100,6 +100,7 @@ Core technologies:
 docs/
 ├── README.md
 ├── architecture/
+├── concepts/
 ├── labs/
 ├── CONTRIBUTING.md
 ├── SECURITY.md
@@ -184,8 +185,9 @@ Use the documentation in this order:
 
 1. Review the platform overview in this README.
 2. Read the architecture documents in [`architecture/`](./architecture/).
-3. Complete the labs sequentially from [`labs/README.md`](./labs/README.md).
-4. Use each lab's validation and troubleshooting sections as the source of truth for hands-on checks.
-5. Review [`SECURITY.md`](./SECURITY.md) before introducing credentials, secrets or access changes.
+3. Use the shared [`concepts`](./concepts/README.md) reference when a lab introduces an unfamiliar platform, AWS, Kubernetes or observability term.
+4. Complete the labs sequentially from [`labs/README.md`](./labs/README.md).
+5. Use each lab's validation and troubleshooting sections as the source of truth for hands-on checks.
+6. Review [`SECURITY.md`](./SECURITY.md) before introducing credentials, secrets or access changes.
 
 The labs are the implementation path. Architecture documents provide context, while detailed commands live in the labs to keep the repository lightweight.

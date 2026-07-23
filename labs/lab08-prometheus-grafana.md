@@ -21,6 +21,8 @@ Prometheus collects metrics from Kubernetes and platform components, while Grafa
 
 This observability platform will be extended with centralized logging in Lab 09 and distributed tracing in Lab 10.
 
+Concepts introduced in this lab include metrics, Prometheus, Grafana, dashboards, Prometheus Operator, CRDs, ServiceMonitors, PrometheusRules and StatefulSets. See the [Concepts Reference](../concepts/README.md) for deeper explanations.
+
 ## Outcome
 
 Implement and validate Prometheus and Grafana in the complete platform reference implementation.

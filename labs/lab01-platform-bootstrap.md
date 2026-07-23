@@ -21,6 +21,8 @@ No cloud infrastructure is provisioned during this lab. Instead, the required de
 
 This is the only lab that requires manual setup of the local workstation.
 
+Concepts introduced in this lab include the multi-repository platform layout, local toolchain, AWS CLI authentication and GitHub repository ownership. See the [Concepts Reference](../concepts/README.md) for definitions used across the lab series.
+
 ## Outcome
 
 After completing this guide, you will have a verified local toolchain, authenticated AWS CLI access, a GitHub organization with seven repositories and a local workspace containing all repository clones.

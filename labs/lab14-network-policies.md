@@ -19,6 +19,8 @@ This lab introduces Kubernetes NetworkPolicies for controlling pod-to-pod and po
 
 Network policies provide workload isolation inside the cluster and make application connectivity explicit instead of relying on default open namespace networking.
 
+Concepts introduced in this lab include NetworkPolicies, pod selectors, namespace selectors, ingress rules, egress rules, DNS egress and CNI enforcement. See the [Concepts Reference](../concepts/README.md) for the security model behind Kubernetes network isolation.
+
 ## Outcome
 Implement and validate Network Policies in the complete platform reference implementation.
 

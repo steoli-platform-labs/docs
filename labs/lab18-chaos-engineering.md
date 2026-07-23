@@ -19,6 +19,8 @@ This lab introduces lightweight chaos validation for the platform.
 
 The goal is to run controlled failure tests against the sample application and verify that the platform's deployment, observability and resilience settings recover as expected.
 
+Concepts introduced in this lab include chaos engineering, controlled failure injection, steady state, recovery objectives, Kubernetes Jobs and least-privilege RBAC for test automation. See the [Concepts Reference](../concepts/README.md) for how chaos validation fits into platform operations.
+
 ## Outcome
 Implement and validate Chaos Engineering in the complete platform reference implementation.
 

@@ -2,6 +2,8 @@
 
 This directory is the single source of truth for the complete lab series. Each lab combines architecture, design decisions, implementation steps, validation, troubleshooting, and cleanup in one document.
 
+Use the shared [Concepts Reference](../concepts/README.md) for short explanations of platform, AWS, Kubernetes, GitOps and observability terms used across the labs.
+
 ## Labs
 
 1. [Lab 01 - Platform Bootstrap](./lab01-platform-bootstrap.md)

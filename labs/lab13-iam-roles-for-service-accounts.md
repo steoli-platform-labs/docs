@@ -19,6 +19,8 @@ This lab introduces IAM Roles for Service Accounts (IRSA), enabling Kubernetes w
 
 IRSA integrates Kubernetes service accounts with AWS IAM through the Amazon EKS OIDC identity provider, allowing workloads to obtain temporary AWS credentials automatically.
 
+Concepts introduced in this lab include IAM roles, IAM policies, trust policies, Kubernetes service accounts, OIDC federation, AWS STS and temporary credentials. See the [Concepts Reference](../concepts/README.md) for how IRSA avoids static AWS keys in pods.
+
 ## Outcome
 
 Implement and validate IRSA in the complete platform reference implementation.

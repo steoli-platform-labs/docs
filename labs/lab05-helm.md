@@ -19,6 +19,8 @@ This lab validates the reusable `sample-api` Helm chart.
 
 Application deployment remains GitOps-driven in later labs. This lab only lints and renders the chart locally.
 
+Concepts introduced in this lab include Helm charts, values, templates, rendered manifests, Kubernetes Deployments, Services, probes and client-side dry runs. See the [Concepts Reference](../concepts/README.md) for the role each item plays.
+
 ## Outcome
 
 After this lab, the reusable `sample-api` Helm chart has been linted and rendered locally without deploying any workload to the cluster.

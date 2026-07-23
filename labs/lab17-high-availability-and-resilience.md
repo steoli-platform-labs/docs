@@ -19,6 +19,8 @@ This lab improves the sample application's availability and resilience configura
 
 The lab validates probes, disruption handling and scheduling rules so the workload behaves predictably during node maintenance, pod restarts and normal cluster changes.
 
+Concepts introduced in this lab include high availability, resilience, readiness probes, liveness probes, startup probes, PodDisruptionBudgets, anti-affinity and topology spread constraints. See the [Concepts Reference](../concepts/README.md) for why each setting matters.
+
 ## Outcome
 Implement and validate High Availability and Resilience in the complete platform reference implementation.
 

@@ -21,6 +21,8 @@ A production-inspired Virtual Private Cloud (VPC) is created with public and pri
 
 The networking resources created in this lab form the foundation for every subsequent lab in the project.
 
+Concepts introduced in this lab include VPCs, CIDR blocks, public subnets, private subnets, route tables, Internet Gateways, NAT Gateways and Availability Zones. See the [Concepts Reference](../concepts/README.md) for concise definitions.
+
 ## Outcome
 
 In this lab you create the first reusable infrastructure module and the first environment-specific live Terraform stack.

@@ -19,6 +19,8 @@ This lab introduces progressive delivery for the sample application.
 
 Progressive delivery makes releases safer by shifting traffic gradually and keeping image updates explicit, reviewable and traceable through GitOps.
 
+Concepts introduced in this lab include progressive delivery, Argo Rollouts, Rollouts, canary releases, ReplicaSets, image promotion and rollback. See the [Concepts Reference](../concepts/README.md) for how these concepts reduce release risk.
+
 ## Outcome
 Implement and validate Progressive Delivery in the complete platform reference implementation.
 
