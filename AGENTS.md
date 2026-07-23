@@ -72,7 +72,7 @@ Respect repository boundaries. Make changes in the repository that owns the beha
 
 Documentation is part of the implementation. Update docs when behavior, validation, user flow or learning context changes.
 
-Every lab should contain these top-level sections:
+Use this canonical lab section order:
 
 - `## Lab Information`
 - `## Introduction`
@@ -88,29 +88,17 @@ Every lab should contain these top-level sections:
 - `## Cleanup`
 - `## Next Steps`
 
-Lab style rules:
-
-- Use `Introduction`, not `Purpose`.
-- Do not add separate `Objectives`, `Learning Objectives`, `Deliverables`, `Completion Checklist`, `Success Criteria`, `Lessons Learned`, `Commands`, or `Commit and Push` top-level sections.
-- Put required commit and push actions inside `Step-by-Step Implementation` when they are part of completing the lab.
-- Use a top-level numbered list in `Step-by-Step Implementation`.
-- Put implementation commands, validation commands, negative tests and verification procedures inside the relevant numbered implementation step.
-- Keep `Validation` as concise pass/fail bullet criteria only.
-- Do not include command blocks in `Validation`.
-- Use bullet lists for `Design Decisions`; do not use `###` subheadings for individual decisions.
-- Use list formatting for `Troubleshooting` when the section is a set of discrete problem cases; use tables or prose when clearer.
-- Consolidate installed-tool prerequisites into one line, such as `Terraform, AWS CLI and Git installed`.
-- Use generic public placeholders in committed docs, not personal local defaults, account IDs, secrets, tokens or real credentials.
-- Prefer relative links.
-- Avoid duplicated documentation.
-
-Learning-context rules:
+Lab writing rules:
 
 - Keep lab steps practical and concise.
-- Add short concept explanations where they help users understand what they are deploying.
+- Use a top-level numbered list in `Step-by-Step Implementation`.
+- Put commands, validation commands, negative tests and commit/push actions inside the relevant implementation step.
+- Keep `Validation` as concise pass/fail bullet criteria.
+- Use clear `Troubleshooting` entries for common failure modes and explain likely root causes in plain language.
+- Add short concept explanations when they help users understand what they are deploying.
 - Put deeper explanations in `docs/concepts/README.md` and link to it from labs.
-- When a lab introduces important concepts, add a brief `Concepts introduced in this lab...` paragraph in the `Introduction`.
-- Explain troubleshooting errors in plain language when users are likely to hit them, such as missing CRDs, empty Service endpoints or image pull failures.
+- When a lab introduces important concepts, add a brief `Concepts introduced in this lab...` paragraph in `Introduction`.
+- Use generic public placeholders and relative links.
 
 ## Known Lab Decisions
 
