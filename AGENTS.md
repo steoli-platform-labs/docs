@@ -1,483 +1,139 @@
-# AGENTS.md
-
 # AWS Platform Labs AI Instructions
 
----
-
-# AI Boot Instructions
-
-Before doing any work you MUST:
-
-1. Read this entire file.
-2. Inspect the workspace.
-3. Identify every repository.
-4. Determine repository ownership.
-5. Inspect existing implementation patterns.
-6. Review relevant documentation.
-7. Produce an implementation plan.
-8. Implement the smallest correct change.
-9. Validate the implementation.
-10. Update documentation if required.
-11. Summarize what changed.
-
-Never skip these steps.
-
-If repository ownership or architecture is unclear:
-
-STOP.
-
-Explain the uncertainty.
-
-Ask for clarification.
-
-Never guess.
-
----
-
-# Project Overview
-
-AWS Platform Labs is a multi-repository project that incrementally builds a production-inspired Internal Developer Platform on AWS.
-
-The project is implemented through sequential labs.
-
-Every lab must leave the platform in a fully deployable state.
-
-Core technologies include:
-
-- Terraform
-- Amazon EKS
-- Helm
-- Argo CD
-- GitHub Actions
-- GitOps
-- IRSA
-- Karpenter
-- External Secrets
-- Prometheus
-- Grafana
-- Loki
-- Tempo
-
-Architecture should evolve incrementally without unnecessary redesign.
-
----
-
-# Workspace Architecture
-
-```text
-.github
-        |
-        v
-platform-bootstrap
-        |
-        v
-platform-live
-        |
-        v
-platform-modules
-        |
-        v
-AWS Infrastructure
-        |
-        v
-platform-config
-        |
-        v
-Argo CD
-        |
-        v
-helm-charts
-        |
-        v
-sample-api
-        |
-        v
-docs
-```
-
-Every repository has a single responsibility.
-
-Respect repository boundaries.
-
----
-
-# Repository Responsibilities
-
-## platform-bootstrap
-
-Owns bootstrap infrastructure.
-
-Responsible for:
-
-- Terraform backend
-- State bucket
-- State locking
-- Initial IAM
-
-Must NOT contain:
-
-- VPC
-- EKS
-- GitOps
-- Helm
-- Applications
-
----
-
-## platform-modules
-
-Owns reusable Terraform modules.
-
-Modules must:
-
-- be reusable
-- be environment agnostic
-- expose variables
-- expose outputs
-- include README
-
-Must NOT contain:
-
-- backend configuration
-- provider configuration
-- tfvars
-- environment-specific values
-
----
-
-## platform-live
-
-Owns deployable Terraform environments.
-
-Responsible for:
-
-- providers
-- backend
-- tfvars
-- module composition
-
-Must NOT contain reusable Terraform logic.
-
----
-
-## platform-config
-
-Owns Kubernetes desired state.
-
-Responsible for:
-
-- Argo CD
-- platform components
-- namespaces
-- security
-- observability
-
-Must NOT contain:
-
-- Terraform
-- application source code
-
----
-
-## helm-charts
-
-Owns reusable Helm charts.
-
-Charts must be configurable using values.
-
-Must NOT contain:
-
-- Terraform
-- GitHub Actions
-
----
-
-## sample-api
-
-Reference application.
-
-Demonstrates how applications consume the platform.
-
-Must NOT provision infrastructure.
-
----
-
-## docs
-
-Owns project documentation.
-
-Documentation must always reflect implementation.
-
----
-
-# Engineering Principles
-
-Always prefer:
-
-- simplicity
-- consistency
-- reuse
-- readability
-- maintainability
-- incremental delivery
-
-Avoid:
-
-- duplication
-- unnecessary abstraction
-- unnecessary complexity
-- architecture changes without approval
-
----
-
-# Coding Standards
-
-## Terraform
-
-- Run terraform fmt
-- Run terraform validate
-- Avoid hardcoded values
-- Use variables
-- Use outputs
-- Reuse existing modules
-
----
-
-## Kubernetes
-
-- Define resource requests and limits
-- Configure health probes
-- Use standard labels
-- Prefer immutable image tags. Use `latest` only when a lab explicitly defines it as a Development convenience tag and the CI workflow also publishes it.
-
----
-
-## Helm
-
-- Keep charts reusable
-- Configure through values.yaml
-- Extract duplicated templates into helpers
-
----
-
-## GitHub Actions
-
-Responsible for:
-
-- validation
-- testing
-- image builds
-- publishing artifacts
-
-Never deploy workloads directly.
-
-Deployment belongs to GitOps.
-
----
-
-# GitOps Rules
-
-Applications are deployed only by Argo CD.
-
-Never deploy using:
-
-- kubectl apply
-- helm install
-- helm upgrade
-
-Git is the desired state.
-
----
-
-# Security Rules
-
-Never commit:
-
-- passwords
-- secrets
-- tokens
-- certificates
-- kubeconfigs
-- Terraform state
-
-Prefer:
-
-- least privilege
-- private networking
-- encryption
-- IAM roles
-- External Secrets
-
----
-
-# Documentation Rules
-
-Documentation is part of implementation.
-
-Whenever behavior changes, evaluate whether documentation must also change.
-
-Every lab should contain:
-
-- Lab Information
-- Introduction
-- Outcome
-- Prerequisites
-- Repository Changes
-- Files to Review
-- Step-by-Step Implementation
-- Expected Results
-- Validation
-- Troubleshooting
-- Final Repository State
-- Cleanup
-- Next Steps
-
-Lab documentation standards:
+This file is the canonical project instruction file for AI agents working in this workspace. Read it before making changes.
+
+## Work Sequence
+
+Follow this sequence for every task:
+
+1. Read this file.
+2. Inspect the relevant repository or repositories.
+3. Confirm repository ownership and boundaries.
+4. Review existing implementation and documentation patterns.
+5. Make the smallest correct change.
+6. Validate the change.
+7. Update documentation when behavior or learning flow changes.
+8. Summarize what changed and what was validated.
+
+If repository ownership, architecture, or user intent is unclear, stop and ask. Do not guess.
+
+## Project Overview
+
+AWS Platform Labs is a public, multi-repository lab series that incrementally builds a production-inspired Internal Developer Platform on AWS.
+
+Core technologies include Terraform, Amazon EKS, Kubernetes, Helm, GitHub Actions, GitOps, Argo CD, IRSA, Karpenter, External Secrets Operator, Prometheus, Grafana, Loki and Tempo.
+
+Every completed lab should leave the platform in a deployable and understandable state.
+
+## Repository Ownership
+
+Respect repository boundaries. Make changes in the repository that owns the behavior.
+
+| Repository | Owns | Must not own |
+|------------|------|--------------|
+| `platform-bootstrap` | Initial bootstrap resources, Terraform backend bucket, state locking setup | VPC, EKS, GitOps, Helm charts, applications |
+| `platform-modules` | Reusable Terraform modules | Provider config, backend config, tfvars, environment-specific values |
+| `platform-live` | Deployable Terraform environments, providers, backend config examples, tfvars examples, module composition | Reusable Terraform module logic |
+| `platform-config` | Kubernetes desired state, Argo CD Applications, namespaces, platform services, security and observability configuration | Terraform, application source code |
+| `helm-charts` | Reusable Helm charts and chart templates | Terraform, GitHub Actions deployment logic |
+| `sample-api` | Reference application and application CI | Infrastructure provisioning |
+| `docs` | Project documentation, labs, concepts and architecture context | Application or infrastructure implementation |
+
+## Engineering Principles
+
+- Prefer simple, incremental, consistent changes.
+- Preserve existing architecture unless the user explicitly asks for redesign.
+- Reuse existing patterns before introducing new ones.
+- Keep repositories independent and responsibilities clear.
+- Do not add TODO placeholders in committed docs or code.
+- Do not modify unrelated files.
+- Never commit secrets, tokens, kubeconfigs, certificates, Terraform state, plan files, local backend files or personal defaults.
+
+## Terraform Rules
+
+- Run `terraform fmt` for edited Terraform code.
+- Run `terraform validate` where practical for edited root modules or modules.
+- Prefer variables, outputs and reusable modules over hardcoded environment values.
+- Keep backend config and tfvars examples generic; real `backend.hcl` and `terraform.tfvars` remain local and ignored.
+- `platform-bootstrap` may start with local state only to create the backend bucket; later state should use the remote S3 backend.
+
+## Kubernetes, Helm and GitOps Rules
+
+- Kubernetes resources should use standard labels, resource requests and health probes where applicable.
+- Prefer immutable image tags. `latest` is acceptable only when a lab explicitly treats it as a Development convenience tag and CI publishes it.
+- Helm charts must be reusable and configurable through values.
+- GitHub Actions validate, test, build and publish artifacts; they must not deploy workloads directly.
+- Argo CD owns Kubernetes application deployment after Lab 07.
+- Do not use manual `kubectl apply`, `helm install` or `helm upgrade` for GitOps-managed applications, except for documented bootstrap, dry-run validation, temporary test resources or local-only troubleshooting.
+- Lab 07 requires hands-on Argo CD UI access through local port-forwarding so users learn the UI exists; do not require public exposure of Argo CD.
+- Private GHCR pulls are the default for `sample-api`; use a least-privilege `read:packages` token and a Kubernetes image pull secret until later secret-management labs replace that pattern.
+
+## Documentation Rules
+
+Documentation is part of the implementation. Update docs when behavior, validation, user flow or learning context changes.
+
+Every lab should contain these top-level sections:
+
+- `## Lab Information`
+- `## Introduction`
+- `## Outcome`
+- `## Prerequisites`
+- `## Repository Changes`
+- `## Files to Review`
+- `## Step-by-Step Implementation`
+- `## Expected Results`
+- `## Validation`
+- `## Troubleshooting`
+- `## Final Repository State`
+- `## Cleanup`
+- `## Next Steps`
+
+Lab style rules:
 
 - Use `Introduction`, not `Purpose`.
 - Do not add separate `Objectives`, `Learning Objectives`, `Deliverables`, `Completion Checklist`, `Success Criteria`, `Lessons Learned`, `Commands`, or `Commit and Push` top-level sections.
 - Put required commit and push actions inside `Step-by-Step Implementation` when they are part of completing the lab.
 - Use a top-level numbered list in `Step-by-Step Implementation`.
 - Put implementation commands, validation commands, negative tests and verification procedures inside the relevant numbered implementation step.
-- Keep `Validation` as a concise bullet list of pass/fail criteria only.
+- Keep `Validation` as concise pass/fail bullet criteria only.
 - Do not include command blocks in `Validation`.
 - Use bullet lists for `Design Decisions`; do not use `###` subheadings for individual decisions.
-- Use list formatting for `Troubleshooting` when the section is a set of discrete problem cases; keep tables or prose when they are clearer.
+- Use list formatting for `Troubleshooting` when the section is a set of discrete problem cases; use tables or prose when clearer.
 - Consolidate installed-tool prerequisites into one line, such as `Terraform, AWS CLI and Git installed`.
 - Use generic public placeholders in committed docs, not personal local defaults, account IDs, secrets, tokens or real credentials.
+- Prefer relative links.
+- Avoid duplicated documentation.
 
-Prefer relative links.
+Learning-context rules:
 
-Avoid duplicated documentation.
+- Keep lab steps practical and concise.
+- Add short concept explanations where they help users understand what they are deploying.
+- Put deeper explanations in `docs/concepts/README.md` and link to it from labs.
+- When a lab introduces important concepts, add a brief `Concepts introduced in this lab...` paragraph in the `Introduction`.
+- Explain troubleshooting errors in plain language when users are likely to hit them, such as missing CRDs, empty Service endpoints or image pull failures.
 
----
+## Known Lab Decisions
 
-# Workflow
+- Lab 02 should not commit `backend.tf`; migration scripts may create ignored local backend config after the backend bucket exists.
+- Lab 03 network examples use a small primary CIDR plus optional EKS-ready private subnets from `100.64.0.0/18`; this must be treated as planned, non-overlapping shared address space.
+- Lab 06 publishes both commit-SHA and `latest` tags for `sample-api`; `latest` is for Development convenience only.
+- Lab 07 uses private GHCR image pulls through `sample-api-dev/ghcr-pull` until later secret-management labs improve the pattern.
+- Lab 08 deploys kube-prometheus-stack through Argo CD. Large Prometheus Operator CRDs require the chart CRD upgrade job plus sync options that avoid client-side apply annotation limits.
 
-Every task follows this sequence:
+## Validation Expectations
 
-Understand
+- Run the narrowest meaningful validation for the change.
+- For docs-only changes, run `git diff --check` and verify lab heading structure when lab files changed.
+- For Terraform changes, run formatting and validation in the affected module or root when practical.
+- For Helm changes, run `helm lint` and render relevant templates when practical.
+- For Kubernetes manifest changes, run client-side dry-run where CRDs are available or document why not.
+- If validation cannot be completed, state exactly what was not run and why.
 
-->
+## Communication
 
-Inspect
+Respond as a senior Platform Engineer:
 
-->
-
-Plan
-
-->
-
-Implement
-
-->
-
-Validate
-
-->
-
-Document
-
-->
-
-Review
-
-->
-
-Summarize
-
----
-
-# Before Editing Code
-
-Always determine:
-
-- Which repository owns this change?
-- Which repositories are affected?
-- Which documentation must change?
-- How will this be validated?
-
-If unsure:
-
-Stop and ask.
-
----
-
-# During Implementation
-
-Prefer the smallest correct change.
-
-Reuse existing patterns.
-
-Respect repository boundaries.
-
-Do not introduce TODO placeholders.
-
-Do not rewrite architecture.
-
-Do not modify unrelated code.
-
----
-
-# Before Completion
-
-Verify:
-
-- Formatting completed
-- Validation completed
-- Documentation updated
-- Security reviewed
-- Repository ownership respected
-- Architecture preserved
-
----
-
-# Definition of Done
-
-A task is complete only when:
-
-- Implementation is complete.
-- Validation succeeds or limitations are documented.
-- Documentation has been updated when required.
-- Repository responsibilities are respected.
-- Existing patterns are preserved.
-- No unnecessary duplication has been introduced.
-- Another engineer can understand and validate the implementation.
-
----
-
-# Project-Specific Rules
-
-Always build on the existing labs.
-
-Do not redesign previous labs unless explicitly requested.
-
-Keep repositories independent.
-
-Keep modules reusable.
-
-Keep environments composable.
-
-Keep GitOps as the deployment mechanism.
-
-Keep documentation synchronized with implementation.
-
-Every completed lab must leave the platform deployable.
-
----
-
-# Communication Style
-
-Respond as a senior Platform Engineer.
-
-Be concise.
-
-Explain assumptions.
-
-Be honest about uncertainty.
-
-Do not fabricate information.
-
-Do not exaggerate.
-
-Provide implementation summaries before large changes whenever possible.
+- Be concise and factual.
+- Explain assumptions and uncertainty.
+- Do not fabricate results.
+- Summarize changed files, validation and any remaining risk.
