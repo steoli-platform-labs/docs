@@ -156,7 +156,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 6. Verify that the `sample-api` image is published to GHCR after a successful push to `main`. The workflow publishes two tags: an immutable commit-SHA tag for traceability and `latest` for the simple Development GitOps path used in the next lab. Use the GitHub organization and the commit SHA from the workflow run. The commit SHA is visible at the top of the GitHub Actions run, or locally with `git rev-parse HEAD` after you have pulled the same commit.
 
-   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:latest` in Lab 07. Keep the GHCR package private unless you intentionally want public images, and configure Kubernetes image pull credentials before deploying the sample API.
+   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:latest` in Lab 07. Keep the GHCR package private and configure Kubernetes image pull credentials in Lab 07.
 
    If the package is private, authenticate Docker to GHCR first. Prefer a short-lived, least-privilege GitHub token with `read:packages` permission:
 
@@ -183,24 +183,13 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    The `docker pull` commands confirm that both the immutable tag and `latest` exist and are readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the commit-SHA tag resolves to a concrete image artifact.
 
-   Validate that the package is readable without your local Docker login before relying on unauthenticated Kubernetes pulls:
-
-   ```bash
-   curl -fsS "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_ORG}/sample-api:pull" \
-     | python3 -m json.tool
-   ```
-
-   A public package returns a token response. A private package returns `401 Unauthorized`, which is acceptable when you plan to create the Kubernetes image pull secret in Lab 07.
-
-   If you use GitHub CLI to inspect the package, your `gh` token must include package scopes:
+   If you use GitHub CLI to inspect the package, your `gh` token must include package scopes. Unset `GITHUB_TOKEN` first because that environment variable overrides the credentials stored by `gh auth login`:
 
    ```bash
    unset GITHUB_TOKEN
    gh auth refresh --hostname github.com --scopes read:packages,write:packages
    gh api "/orgs/${GITHUB_ORG}/packages/container/sample-api" --jq '{name,visibility,url}'
    ```
-
-   `GITHUB_TOKEN` is a special environment variable for GitHub CLI. If it is set, `gh` uses it instead of the credentials stored by `gh auth login`, so `gh auth refresh` cannot update the stored token until you unset it in the current shell.
 
    If `docker pull` returns `unauthorized`, confirm that the token has `read:packages`, that your GitHub user can access the `sample-api` package, and that the package exists under the expected organization.
 
@@ -242,7 +231,6 @@ Common issues:
 | GHCR pull returns `unauthorized` | Docker is not logged in to GHCR or token lacks `read:packages` | Run `docker login ghcr.io` with a token that has `read:packages` |
 | `gh auth refresh` says `GITHUB_TOKEN` is being used | `GITHUB_TOKEN` is set in the current shell and overrides stored GitHub CLI credentials | Run `unset GITHUB_TOKEN`, then rerun `gh auth refresh --hostname github.com --scopes read:packages,write:packages` |
 | `gh api` package lookup returns `403` | GitHub CLI token lacks package scopes | Unset `GITHUB_TOKEN`, then run `gh auth refresh --hostname github.com --scopes read:packages,write:packages` and approve the browser/device prompt |
-| Anonymous GHCR token request returns `401` | Package is private | This is expected for the private-package path; configure Kubernetes image pull credentials in Lab 07 |
 
 ## Final Repository State
 

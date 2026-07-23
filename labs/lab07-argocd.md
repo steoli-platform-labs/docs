@@ -177,17 +177,9 @@ Key files:
    grep -A8 'image:' platform-config/clusters/dev/sample-api.yaml
    ```
 
-   You can confirm public pull access from your workstation with:
-
-   ```bash
-   curl -fsS "https://ghcr.io/token?service=ghcr.io&scope=repository:${GITHUB_ORG}/sample-api:pull" \
-     | python3 -m json.tool
-   ```
-
-   A `401 Unauthorized` response means the package is private from the cluster's point of view. That is expected for this lab if you create the pull secret in the next step.
 3. Create the image pull secret that allows Kubernetes nodes to pull the private GHCR image.
 
-   Use a GitHub token with only the permissions needed to read packages. Do not use a broad personal token unless your environment requires it. Do not commit the token value to Git.
+   Use a GitHub token with `read:packages` and no broader package permissions than required. Do not commit the token value to Git.
 
    ```bash
    kubectl create namespace sample-api-dev --dry-run=client -o yaml | kubectl apply -f -
@@ -211,6 +203,12 @@ Key files:
    ```
 
    This secret is a bootstrap exception for Lab 07. Later labs replace ad hoc secret handling with External Secrets Operator and IRSA patterns.
+
+   If Argo CD has already created `sample-api` pods before the secret existed, delete the stuck pods after creating the secret so Kubernetes retries the image pull:
+
+   ```bash
+   kubectl -n sample-api-dev delete pod -l app.kubernetes.io/name=sample-api
+   ```
 4. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
 5. Confirm kubectl points at the intended EKS cluster and install Argo CD:
 
