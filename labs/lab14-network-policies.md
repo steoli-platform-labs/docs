@@ -28,49 +28,99 @@ Implement and validate Network Policies in the complete platform reference imple
 Complete Lab 01 - Lab 13. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
-Primary implementation: `helm-charts/charts/sample-api/templates/networkpolicy.yaml`.
+Primary implementation: `helm-charts/charts/sample-api/templates/networkpolicy.yaml` and the sample API chart values that enable or tune policy behavior.
 
 ## Files to Review
-Review the NetworkPolicy desired-state files and update any environment-specific values before validation.
+Review these files before validation:
+
+- `helm-charts/charts/sample-api/templates/networkpolicy.yaml`: rendered Kubernetes NetworkPolicy.
+- `helm-charts/charts/sample-api/values.yaml`: chart values that control service ports, rollout mode and policy-related behavior.
+- `platform-config/clusters/dev/sample-api.yaml`: environment-specific values deployed by Argo CD.
 
 ## Step-by-Step Implementation
 
-1. Review `helm-charts/charts/sample-api/templates/networkpolicy.yaml` and the chart values controlling NetworkPolicy rendering.
-2. Confirm the cluster CNI enforces Kubernetes NetworkPolicy before relying on traffic-denial results.
-3. Run `helm lint` and render the chart with NetworkPolicy enabled:
+1. Review the NetworkPolicy template:
 
    ```bash
    cd "$WORKSPACE"
-   helm lint helm-charts/charts/sample-api
-   helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=false | grep -A20 '^kind: NetworkPolicy'
+   sed -n '1,160p' helm-charts/charts/sample-api/templates/networkpolicy.yaml
    ```
 
-4. Commit and push any chart or value changes.
-5. Let Argo CD reconcile `sample-api`, then run positive and negative connectivity tests:
+   Confirm the policy selects only `sample-api` pods, includes both `Ingress` and `Egress` policy types and allows only the intended ingress and egress paths.
+
+2. Confirm whether the cluster CNI enforces Kubernetes NetworkPolicy:
 
    ```bash
+   kubectl -n kube-system get pods -l k8s-app=aws-node
+   kubectl -n kube-system get daemonset aws-node -o yaml | grep -i network
+   ```
+
+   A NetworkPolicy object can exist without being enforced if the CNI is not configured for policy enforcement. Treat that as a failed validation, not as a successful deny test.
+
+3. Run `helm lint` and render the chart:
+
+   ```bash
+   helm lint helm-charts/charts/sample-api
+   helm template sample-api helm-charts/charts/sample-api \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     > /tmp/sample-api-networkpolicy.yaml
+   grep -A30 '^kind: NetworkPolicy' /tmp/sample-api-networkpolicy.yaml
+   ```
+
+   Confirm the rendered policy uses the expected namespace selectors and ports. Rendering locally catches template mistakes before Argo CD deploys them.
+
+4. Commit and push any chart or value changes if you changed them:
+
+   ```bash
+   git -C helm-charts status --short
+   git -C platform-config status --short
+   ```
+
+   Commit in the repository that owns the changed file. Chart template changes belong in `helm-charts`; environment values belong in `platform-config`.
+
+5. Refresh Argo CD and verify `sample-api` is synced:
+
+   ```bash
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application sample-api -o wide
    ```
 
-6. Confirm that the cluster networking implementation enforces Kubernetes NetworkPolicy before interpreting results:
+6. Confirm that the deployed NetworkPolicy and pods match the rendered intent:
 
    ```bash
    kubectl -n sample-api-dev get networkpolicy -o yaml
    kubectl -n sample-api-dev get pods -l app.kubernetes.io/name=sample-api -o wide
    ```
 
-7. Run positive and negative tests using temporary pods:
+7. Run a positive connectivity test from the allowed namespace or expected source:
 
    ```bash
    kubectl -n sample-api-dev run allowed-client --rm -it --restart=Never \
-     --image=curlimages/curl -- curl -fsS http://sample-api/
-   kubectl create namespace network-denied-test
-   kubectl -n network-denied-test run denied-client --rm -it --restart=Never \
-     --image=curlimages/curl --max-time=5 -- curl -fsS http://sample-api.sample-api-dev.svc.cluster.local/
+      --image=curlimages/curl -- curl -fsS http://sample-api/
    ```
 
-8. Validate DNS and required HTTPS egress from the application pod.
-9. Delete the temporary namespace after validation:
+   This should succeed. If it fails, inspect the Service, endpoints and NetworkPolicy before running deny tests.
+
+8. Run a negative test from an unintended namespace:
+
+   ```bash
+   kubectl create namespace network-denied-test
+   kubectl -n network-denied-test run denied-client --rm -it --restart=Never \
+      --image=curlimages/curl --max-time=5 -- curl -fsS http://sample-api.sample-api-dev.svc.cluster.local/
+   ```
+
+   This should fail or time out only if NetworkPolicy enforcement is enabled. If it succeeds, either the policy is too permissive or the CNI is not enforcing NetworkPolicy.
+
+9. Validate DNS and required HTTPS egress from an application pod:
+
+   ```bash
+   SAMPLE_API_POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
+   kubectl -n sample-api-dev exec "$SAMPLE_API_POD" -- nslookup kubernetes.default.svc.cluster.local
+   ```
+
+   DNS must keep working after egress policy is applied. If the application needs outbound HTTPS, validate that path with a non-sensitive endpoint used by the lab.
+
+10. Delete the temporary namespace after validation:
 
    ```bash
    kubectl delete namespace network-denied-test
@@ -96,6 +146,19 @@ kubectl -n sample-api-dev describe networkpolicy sample-api
 kubectl -n sample-api-dev get pods,svc,endpoints -o wide
 kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
 ```
+
+If the deny test succeeds unexpectedly:
+
+- Confirm the CNI enforces Kubernetes NetworkPolicy.
+- Confirm the policy selects the sample-api pods.
+- Confirm the source namespace does not match an allowed namespace selector.
+- Confirm there is no additional policy allowing the traffic.
+
+If the allowed test fails:
+
+- Confirm the Service has endpoints.
+- Confirm the allowed source matches the policy selectors.
+- Confirm the policy port matches the pod container port, not only the Service port.
 
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.

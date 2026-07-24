@@ -28,31 +28,68 @@ Implement and validate High Availability and Resilience in the complete platform
 Complete Lab 01 - Lab 16. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
-Primary implementation: `sample-api probes, PDB, anti-affinity and topology spread`.
+Primary implementation: sample API probes, PodDisruptionBudget, replica settings and scheduling constraints in the Helm chart and environment values.
 
 ## Files to Review
-Review the high-availability and resilience configuration files and update any environment-specific values before validation.
+Review these files before validation:
+
+- `helm-charts/charts/sample-api/templates/rollout.yaml` and `deployment.yaml`: probes, resources and pod template settings.
+- `helm-charts/charts/sample-api/templates/pdb.yaml`: disruption protection.
+- `helm-charts/charts/sample-api/values.yaml`: replica count, autoscaling and resource defaults.
+- `platform-config/clusters/dev/sample-api.yaml`: dev-specific replica and autoscaling values.
 
 ## Step-by-Step Implementation
 
-1. Review the sample API chart templates for probes, PDB, anti-affinity and topology spread constraints.
-2. Render the chart locally and confirm the HA settings are present:
+1. Review the currently configured replica and autoscaling values:
 
    ```bash
    cd "$WORKSPACE"
+   yq '.replicaCount, .autoscaling' helm-charts/charts/sample-api/values.yaml
+   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   ```
+
+   Confirm the dev environment has enough replicas for disruption tests. A `PodDisruptionBudget` with `minAvailable: 2` requires at least two healthy pods before voluntary disruptions can succeed.
+
+2. Review the sample API chart templates for probes and disruption protection:
+
+   ```bash
+   sed -n '1,200p' helm-charts/charts/sample-api/templates/rollout.yaml
+   sed -n '1,120p' helm-charts/charts/sample-api/templates/deployment.yaml
+   sed -n '1,120p' helm-charts/charts/sample-api/templates/pdb.yaml
+   ```
+
+   Confirm readiness probes protect traffic, liveness probes restart broken containers and the PDB protects against voluntary disruption.
+
+3. Render the chart locally and confirm the HA settings are present:
+
+   ```bash
    helm lint helm-charts/charts/sample-api
-   helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=false > /tmp/sample-api-ha.yaml
+   helm template sample-api helm-charts/charts/sample-api \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     --set rollout.enabled=false \
+     > /tmp/sample-api-ha.yaml
    grep -nE 'readinessProbe|livenessProbe|startupProbe|PodDisruptionBudget|topologySpreadConstraints|podAntiAffinity' /tmp/sample-api-ha.yaml
    ```
 
-3. Commit and push any chart changes.
-4. Let Argo CD reconcile `sample-api` from Git:
+   If `topologySpreadConstraints` or `podAntiAffinity` are not present, either the chart does not implement them yet or the values do not enable them. Do not claim that the lab validates a setting that is not rendered.
+
+4. Commit and push any chart or value changes if you changed them:
 
    ```bash
+   git -C helm-charts status --short
+   git -C platform-config status --short
+   ```
+
+   Commit chart changes in `helm-charts` and environment value changes in `platform-config`.
+
+5. Refresh Argo CD and confirm `sample-api` is healthy:
+
+   ```bash
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application sample-api -o wide
    ```
 
-5. Inspect the deployed workload before testing recovery:
+6. Inspect the deployed workload before testing recovery:
 
    ```bash
    kubectl -n sample-api-dev get rollout,pod,pdb -o wide
@@ -62,7 +99,23 @@ Review the high-availability and resilience configuration files and update any e
    kubectl get nodes -L topology.kubernetes.io/zone
    ```
 
-6. Run controlled pod deletion and optional node-drain tests to measure recovery:
+   Confirm pods are ready and note which nodes they run on. If all replicas are on one node, pod deletion can still be tested, but node failure and zone-spread claims cannot be fully validated.
+
+7. Run continuous traffic while testing recovery:
+
+   ```bash
+   kubectl -n sample-api-dev port-forward svc/sample-api 8080:80
+   ```
+
+   In another terminal:
+
+   ```bash
+   while true; do date -u; curl -fsS http://localhost:8080/health || echo "request failed"; sleep 2; done
+   ```
+
+   This gives you a simple signal for whether the service remains available during disruption.
+
+8. Run controlled pod deletion and measure recovery:
 
    ```bash
    POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
@@ -70,7 +123,9 @@ Review the high-availability and resilience configuration files and update any e
    kubectl -n sample-api-dev get pods -w
    ```
 
-   Drain one worker only when the lab environment has enough spare capacity:
+   Expected behavior: Kubernetes creates a replacement pod, the Service keeps at least one ready endpoint and the repeated health requests do not fail for a sustained period.
+
+9. Drain one worker only when the lab environment has enough spare capacity:
 
    ```bash
    kubectl drain <test-node> --ignore-daemonsets --delete-emptydir-data
@@ -101,6 +156,18 @@ kubectl -n sample-api-dev get pods -o wide
 kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
 kubectl get nodes -L topology.kubernetes.io/zone
 ```
+
+If the PDB blocks a drain:
+
+- Confirm the current replica count and ready pod count.
+- Confirm `minAvailable` is not higher than the environment can satisfy.
+- This may be correct behavior; a PDB should block voluntary disruption that would reduce availability too far.
+
+If all pods schedule on one node:
+
+- Confirm anti-affinity or topology spread constraints are actually rendered.
+- Confirm the cluster has enough nodes and zones to satisfy the constraints.
+- Confirm Karpenter or existing node capacity can place additional pods.
 
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.

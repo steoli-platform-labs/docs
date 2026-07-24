@@ -90,9 +90,13 @@ Use this canonical lab section order:
 
 Lab writing rules:
 
-- Keep lab steps practical and concise.
+- Keep lab steps practical, explicit and beginner-friendly. Concise should not mean vague.
 - Use a top-level numbered list in `Step-by-Step Implementation`.
 - Put commands, validation commands, negative tests and commit/push actions inside the relevant implementation step.
+- Each implementation step should explain what the user is doing, why it matters and what output or state to expect.
+- Prefer concrete commands over broad instructions such as "configure", "validate" or "review" without examples.
+- When a step depends on GitOps, explain whether changes must be committed and pushed, whether the root Argo CD Application must be refreshed and how to recognize stale desired state.
+- When a chart, Terraform module or Kubernetes manifest can drift over time, explain pinned versions, local rendering or validation and expected success or failure output.
 - Keep `Validation` as concise pass/fail bullet criteria.
 - Use clear `Troubleshooting` entries for common failure modes and explain likely root causes in plain language.
 - Add short concept explanations when they help users understand what they are deploying.

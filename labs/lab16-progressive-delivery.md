@@ -28,41 +28,103 @@ Implement and validate Progressive Delivery in the complete platform reference i
 Complete Lab 01 - Lab 15. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
-Primary implementation: `sample-api Rollout chart template`.
+Primary implementation: the sample API Rollout chart template, Argo Rollouts controller Application and environment-specific image values.
 
 ## Files to Review
-Review the progressive delivery desired-state files and update any environment-specific values before validation.
+Review these files before validation:
+
+- `helm-charts/charts/sample-api/templates/rollout.yaml`: Argo Rollouts `Rollout` resource.
+- `helm-charts/charts/sample-api/values.yaml`: rollout and image defaults.
+- `platform-config/clusters/dev/argo-rollouts.yaml`: Argo Rollouts controller Application.
+- `platform-config/clusters/dev/sample-api.yaml`: deployed sample API image values.
 
 ## Step-by-Step Implementation
 
-1. Review the `sample-api` Rollout template and the `rollout.enabled` chart value.
-2. Review `platform-config/clusters/dev/argo-rollouts.yaml` and `sample-api.yaml`.
-3. Render the chart locally with Rollout enabled before committing changes:
+1. Review the Rollout template and rollout values:
 
    ```bash
    cd "$WORKSPACE"
+   yq '.rollout' helm-charts/charts/sample-api/values.yaml
+   sed -n '1,180p' helm-charts/charts/sample-api/templates/rollout.yaml
+   ```
+
+   Confirm the Rollout has a selector, pod template, readiness probes and canary steps. Progressive delivery only works if new ReplicaSets can become ready and the controller can manage them.
+
+2. Review the controller and application GitOps state:
+
+   ```bash
+   yq '.spec.source' platform-config/clusters/dev/argo-rollouts.yaml
+   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   ```
+
+   Confirm Argo Rollouts is installed before relying on `Rollout` resources, and confirm `sample-api` uses an image tag that can be changed through Git.
+
+3. Render the chart locally with Rollout enabled before committing changes:
+
+   ```bash
    helm lint helm-charts/charts/sample-api
-   helm template sample-api helm-charts/charts/sample-api --set rollout.enabled=true | grep -A30 '^kind: Rollout'
+   helm template sample-api helm-charts/charts/sample-api \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     --set rollout.enabled=true \
+     > /tmp/sample-api-rollout.yaml
+   grep -A60 '^kind: Rollout' /tmp/sample-api-rollout.yaml
    ```
 
-4. Commit and push any chart or GitOps value changes.
-5. Let Argo CD reconcile Argo Rollouts and the sample API from Git:
+   Confirm the rendered output contains a `Rollout` and not only a `Deployment`.
+
+4. Commit and push any chart or GitOps value changes if you made any:
 
    ```bash
-   kubectl -n argocd get application argo-rollouts sample-api -o wide
+   git -C helm-charts status --short
+   git -C platform-config status --short
    ```
 
-6. Change the sample API image tag through Git and observe the canary rollout:
+   Chart template changes belong in `helm-charts`. Image tag or environment-specific values belong in `platform-config`.
+
+5. Refresh Argo CD and confirm Argo Rollouts and sample API are healthy:
 
    ```bash
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application argo-rollouts sample-api -o wide
    kubectl -n argo-rollouts get pods
+   kubectl -n sample-api-dev get rollout sample-api
+   ```
+
+6. Observe the current stable state before changing the image:
+
+   ```bash
    kubectl -n sample-api-dev get rollout,replicaset,pod
    kubectl -n sample-api-dev describe rollout sample-api
+   kubectl argo rollouts get rollout sample-api -n sample-api-dev
+   ```
+
+   Record the stable ReplicaSet and current image tag. You need a baseline before validating canary behavior.
+
+7. Change the sample API image tag through Git and observe the canary rollout:
+
+   ```bash
+   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   ```
+
+   Change the image tag to a known new immutable tag, commit and push the GitOps change, then watch the rollout:
+
+   ```bash
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application sample-api -o wide
    kubectl argo rollouts get rollout sample-api -n sample-api-dev --watch
    ```
 
-   Change the image tag in Git to a known new immutable tag, merge it and observe the rollout steps.
+   The Rollout should create a new ReplicaSet and progress through the canary steps. If the image tag does not change, no meaningful progressive delivery event occurs.
+
+8. Test abort and rollback with a deliberately bad image only in the dev environment:
+
+   ```bash
+   kubectl argo rollouts abort sample-api -n sample-api-dev
+   kubectl argo rollouts undo sample-api -n sample-api-dev
+   kubectl argo rollouts get rollout sample-api -n sample-api-dev
+   ```
+
+   Use this only for controlled validation. Return Git to the intended image tag after the test so Argo CD does not continuously fight the live rollback.
 
 ## Expected Results
 Argo Rollouts is installed and the sample API is managed as a Rollout when progressive delivery is enabled.
@@ -87,6 +149,19 @@ kubectl -n argocd describe application sample-api
 kubectl -n sample-api-dev describe rollout sample-api
 kubectl -n argo-rollouts get pods -o wide
 ```
+
+If no canary happens:
+
+- Confirm the rendered chart creates a `Rollout`, not a `Deployment`.
+- Confirm the image tag changed in Git.
+- Confirm Argo CD synced the changed values.
+- Confirm the Rollout controller is healthy.
+
+If rollout pauses unexpectedly:
+
+- Inspect `kubectl argo rollouts get rollout sample-api -n sample-api-dev`.
+- Check pod readiness and image pull errors.
+- Confirm pause steps are part of the configured canary strategy.
 
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.

@@ -28,26 +28,93 @@ Implement and validate External Secrets Operator in the complete platform refere
 Complete Lab 01 - Lab 11. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
 
 ## Repository Changes
-Primary implementation: `platform-config/addons/external-secrets`.
+Primary implementation: `platform-config/clusters/dev/external-secrets.yaml` plus the SecretStore and ExternalSecret resources used by workloads.
 
 ## Files to Review
-Review the External Secrets desired-state files and update any environment-specific values before validation.
+Review these files before validation:
+
+- `platform-config/clusters/dev/external-secrets.yaml`: Argo CD Application for the External Secrets Operator Helm chart.
+- `platform-config/addons/external-secrets/cluster-secret-store.yaml`: `ClusterSecretStore` for AWS Secrets Manager. This file must be wired into GitOps before Argo CD can apply it.
+- `helm-charts/charts/sample-api/templates/externalsecret.yaml`: optional workload-level ExternalSecret template.
+- `platform-config/clusters/dev/sample-api.yaml`: values that enable or disable the sample API ExternalSecret.
 
 ## Step-by-Step Implementation
 
-1. Review `platform-config/clusters/dev/external-secrets.yaml` and `platform-config/addons/external-secrets/cluster-secret-store.yaml`.
-2. Confirm the SecretStore settings match the AWS region and authentication model from the lab environment.
-3. Commit and push any required `platform-config` changes.
-4. Let Argo CD reconcile the `external-secrets` Application from Git:
+1. Review the External Secrets Operator Application:
+
+   ```bash
+   cd "$WORKSPACE/platform-config"
+   yq '.spec.source' clusters/dev/external-secrets.yaml
+   yq '.spec.destination' clusters/dev/external-secrets.yaml
+   ```
+
+   Confirm the chart repository is `https://charts.external-secrets.io`, the chart is `external-secrets` and the destination namespace is `external-secrets`.
+
+2. Check whether the SecretStore desired state exists:
+
+   ```bash
+   grep -R "kind: ClusterSecretStore\|kind: SecretStore" -n . || true
+   ```
+
+   The operator can be healthy without any store configured. A `ClusterSecretStore` or `SecretStore` is required before an `ExternalSecret` can read from AWS Secrets Manager. Because the root Application currently points at `clusters/dev`, files under `addons/external-secrets` also need an Argo CD Application or other GitOps wiring before they are reconciled.
+
+3. Review the sample API ExternalSecret template and values:
 
    ```bash
    cd "$WORKSPACE"
+   yq '.secret' helm-charts/charts/sample-api/values.yaml
+   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   ```
+
+   Confirm whether the sample API chart should create an `ExternalSecret`. Do not commit real secret values. Only commit references such as secret names, remote keys and property names.
+
+4. Confirm the AWS test secret exists without printing its value:
+
+   ```bash
+   aws secretsmanager describe-secret --secret-id <test-secret-name-or-arn>
+   ```
+
+   This confirms the secret metadata exists. Do not run commands that print secret values during the lab.
+
+5. Render the relevant charts before relying on Argo CD:
+
+   ```bash
+   helm template external-secrets external-secrets \
+     --repo https://charts.external-secrets.io \
+     --version "$(yq -r '.spec.source.targetRevision' platform-config/clusters/dev/external-secrets.yaml)" \
+     --namespace external-secrets \
+     >/dev/null
+
+   helm lint helm-charts/charts/sample-api
+   helm template sample-api helm-charts/charts/sample-api \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     >/dev/null
+   ```
+
+   A render failure here means Argo CD will also fail to generate manifests.
+
+6. Commit and push the desired state if you changed it:
+
+   ```bash
+   cd "$WORKSPACE/platform-config"
+   git status --short
+   git add clusters/dev/external-secrets.yaml clusters/dev/sample-api.yaml addons/external-secrets/cluster-secret-store.yaml
+   git commit -m "feat: configure external secrets"
+   git push
+   ```
+
+   If you added different SecretStore manifests or Argo CD wiring files, stage those actual paths too. If there are no changed files, skip the commit.
+
+7. Refresh the root Argo CD Application, then reconcile `external-secrets`:
+
+   ```bash
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application external-secrets -o wide
    kubectl -n argocd annotate application external-secrets argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application external-secrets -o wide
    ```
 
-5. Validate the operator, `ClusterSecretStore` readiness and a test `ExternalSecret` reconciliation:
+8. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
 
    ```bash
    kubectl -n argocd get application external-secrets -o wide
@@ -58,6 +125,8 @@ Review the External Secrets desired-state files and update any environment-speci
    kubectl -n sample-api-dev describe externalsecret sample-api
    kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
    ```
+
+   Expected behavior: operator pods are ready, the store reports `Ready=True` and the `ExternalSecret` reports `Ready=True` after it syncs.
 
    Create or identify a non-sensitive test secret in AWS Secrets Manager, enable the chart's ExternalSecret configuration, sync Argo CD and verify the Kubernetes Secret metadata and key names without printing values:
 
@@ -90,6 +159,14 @@ kubectl -n external-secrets get pods -o wide
 kubectl describe clustersecretstore aws-secrets-manager
 kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
 ```
+
+If the operator is healthy but no Kubernetes Secret appears:
+
+- Confirm a `ClusterSecretStore` or `SecretStore` exists and is ready.
+- Confirm the `ExternalSecret` exists in the workload namespace.
+- Confirm the remote AWS secret exists and the remote key/property names match.
+- Check operator logs for authentication or `AccessDenied` errors.
+- Do not troubleshoot by printing decoded secret values.
 
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.

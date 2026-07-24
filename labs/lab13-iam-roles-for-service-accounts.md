@@ -35,12 +35,12 @@ Before starting this lab:
 - AWS Secrets Manager operational
 - AWS CLI, Terraform, kubectl and Helm installed, with repository URLs configured
 
-## Architecture
+The request flow for IRSA is:
 
 ```text
            Kubernetes Pod
                   │
-          Service Account
+           Service Account
                   │
            IAM Role (IRSA)
                   │
@@ -53,8 +53,6 @@ Before starting this lab:
          AWS Service Access
 ```
 
-## AWS Resources
-
 The following AWS resources are introduced during this lab.
 
 | Resource | Purpose |
@@ -63,8 +61,6 @@ The following AWS resources are introduced during this lab.
 | IAM Policy | Least privilege permissions |
 | IAM Trust Policy | OIDC federation |
 | AWS STS | Temporary credentials |
-
-## Design Decisions
 
 The platform follows AWS security best practices.
 
@@ -80,8 +76,6 @@ The platform follows AWS security best practices.
 
 - **Platform migration:** Existing platform services, including External Secrets Operator and Karpenter, are migrated from static credentials to IRSA.
 
-## Implementation Overview
-
 This lab consists of the following high-level tasks.
 
 1. Verify the EKS OIDC provider
@@ -96,33 +90,103 @@ This lab consists of the following high-level tasks.
 
 ## Repository Changes
 
-Primary implementation: `EKS OIDC output and service-account annotations`.
+Primary implementation: Terraform IAM resources in `platform-live` and GitOps-managed Kubernetes service-account annotations in `platform-config` or Helm values.
 
 ## Files to Review
 
-Review the IRSA Terraform and GitOps files and update any environment-specific values before validation.
+Review these files before validation:
+
+- `platform-live/environments/dev`: Terraform composition and outputs for the EKS OIDC provider and IAM roles.
+- `platform-modules`: reusable IAM or EKS module code if IRSA support is implemented there.
+- `platform-config/clusters/dev/external-secrets.yaml` and `platform-config/clusters/dev/karpenter.yaml`: GitOps Applications for AWS-integrated controllers.
+- Helm values or Kubernetes manifests that render service accounts for External Secrets Operator, Karpenter and other AWS-integrated workloads.
 
 ## Step-by-Step Implementation
 
-1. Review the Terraform outputs for the EKS OIDC provider and any workload IAM roles used by platform controllers.
-2. Review the service-account annotations in GitOps-managed manifests.
-3. Apply Terraform changes first if IAM roles or trust policies changed. Before applying, run the Terraform validation checks:
+1. Confirm the EKS cluster has an OIDC issuer:
+
+   ```bash
+   cd "$WORKSPACE/platform-live/environments/dev"
+   terraform output
+   aws eks describe-cluster --name <cluster-name> \
+     --query 'cluster.identity.oidc.issuer' \
+     --output text
+   ```
+
+   IRSA requires the EKS OIDC issuer. If the output is empty or the IAM OIDC provider has not been created, create that infrastructure before annotating service accounts.
+
+2. Identify which workloads need AWS permissions:
+
+   ```bash
+   kubectl -n external-secrets get serviceaccount external-secrets -o yaml
+   kubectl -n karpenter get serviceaccount karpenter -o yaml
+   ```
+
+   External Secrets needs permission to read selected AWS Secrets Manager paths. Karpenter needs permission to provision and manage EC2 capacity. These should be separate IAM roles.
+
+3. Review Terraform for IAM roles, trust policies and policies:
 
    ```bash
    cd "$WORKSPACE"
+   grep -R "AssumeRoleWithWebIdentity\|oidc\|sts.amazonaws.com\|eks.amazonaws.com/role-arn" -n \
+     platform-live platform-modules || true
+   ```
+
+   Confirm each trust policy restricts `sub` to the exact Kubernetes namespace and service account, such as `system:serviceaccount:external-secrets:external-secrets`.
+
+4. Apply Terraform changes first if IAM roles or trust policies changed. Before applying, run the Terraform validation checks:
+
+   ```bash
    terraform -chdir=platform-modules fmt -recursive
    terraform -chdir=platform-live fmt -recursive
    terraform -chdir=platform-live/environments/dev validate
    ```
 
-4. Commit and push GitOps annotation changes after the IAM roles exist.
-5. Let Argo CD reconcile affected Applications:
+   Then apply from the live environment only after reviewing the plan:
 
    ```bash
+   terraform -chdir=platform-live/environments/dev plan
+   terraform -chdir=platform-live/environments/dev apply
+   ```
+
+   Terraform must create IAM roles before Kubernetes workloads are configured to use them.
+
+5. Review and add service-account annotations in GitOps-managed desired state:
+
+   ```bash
+   grep -R "eks.amazonaws.com/role-arn" -n platform-config helm-charts || true
+   ```
+
+   The annotation format is:
+
+   ```yaml
+   eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<role-name>
+   ```
+
+   Add annotations through Helm values or service-account manifests, not by manually patching live service accounts.
+
+6. Commit and push GitOps annotation changes after the IAM roles exist:
+
+   ```bash
+   cd "$WORKSPACE/platform-config"
+   git status --short
+   git add clusters/dev/external-secrets.yaml clusters/dev/karpenter.yaml addons/external-secrets/cluster-secret-store.yaml
+   git commit -m "feat: configure irsa service accounts"
+   git push
+   ```
+
+   If annotations were added in different GitOps or Helm values files, stage those actual paths instead. Skip the commit if there are no changed files.
+
+7. Refresh the root Argo CD Application and reconcile affected Applications:
+
+   ```bash
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get applications.argoproj.io -o wide
    ```
 
-6. Validate that pods use the annotated service accounts:
+   If only specific apps changed, refresh those apps too, such as `external-secrets` or `karpenter`.
+
+8. Validate that pods use the annotated service accounts:
 
    ```bash
    kubectl -n external-secrets get serviceaccount external-secrets -o yaml
@@ -139,13 +203,24 @@ Review the IRSA Terraform and GitOps files and update any environment-specific v
    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<role-name>
    ```
 
-7. Inspect the role trust policy and permissions:
+9. Inspect the role trust policy and permissions:
 
    ```bash
    aws iam get-role --role-name <role-name>
    aws iam list-attached-role-policies --role-name <role-name>
    aws iam list-role-policies --role-name <role-name>
    ```
+
+   Confirm permissions are narrow and the trust policy does not allow arbitrary service accounts.
+
+10. Validate AWS access through controller behavior:
+
+   ```bash
+   kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
+   kubectl -n karpenter logs deployment/karpenter --since=10m --tail=200
+   ```
+
+   Successful validation means controllers can call only the AWS APIs they require without static credentials. Look specifically for absence of `AccessDenied`, `NoCredentialProviders` and web identity errors.
 
 ## Expected Results
 
@@ -173,33 +248,26 @@ kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=
 kubectl -n karpenter logs deployment/karpenter --since=10m --tail=200
 ```
 
+If a controller reports `AccessDenied`:
+
+- Confirm the pod uses the expected service account.
+- Confirm the service account has the exact role ARN annotation.
+- Confirm the IAM trust policy `sub` matches the namespace and service-account name.
+- Confirm the IAM policy allows the specific AWS action and resource.
+
+If a controller reports missing credentials:
+
+- Confirm the EKS OIDC provider exists in IAM.
+- Confirm the pod was restarted after the annotation was applied.
+- Confirm no static credentials are masking or conflicting with IRSA.
+
 ## Final Repository State
 
 The implementation remains GitOps-driven and mergeable to `main`.
 
-## Best Practices
-
-This lab follows AWS identity best practices.
-
-- Use one IAM role per workload.
-- Follow the Principle of Least Privilege.
-- Avoid wildcard permissions.
-- Never use static AWS credentials.
-- Audit IAM roles regularly.
-
 ## Cleanup
 
-No cleanup is required.
-
-IRSA becomes the platform's standard authentication mechanism for AWS access.
-
-## References
-
-- [Amazon EKS IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [AWS STS Documentation](https://docs.aws.amazon.com/STS/latest/APIReference/welcome.html)
-- [Amazon EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
-- [Kubernetes Service Accounts](https://kubernetes.io/docs/concepts/security/service-accounts/)
-- [AWS IAM Documentation](https://docs.aws.amazon.com/iam/)
+No cleanup is required. IRSA becomes the platform's standard authentication mechanism for AWS access. Keep one IAM role per workload, avoid wildcard permissions, never use static AWS credentials and audit IAM roles regularly.
 
 ## Next Steps
 
