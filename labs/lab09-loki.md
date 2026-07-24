@@ -232,7 +232,7 @@ Review these files before validation:
 10. Generate or locate a known application log line:
 
    ```bash
-   kubectl -n sample-api-dev logs deploy/sample-api --tail=5
+   kubectl -n sample-api-dev logs -l app.kubernetes.io/name=sample-api --tail=5
    ```
 
    This command reads recent application logs from Kubernetes. Alloy should collect the same pod logs and send them to Loki.
@@ -325,7 +325,7 @@ If Alloy is healthy but Loki has no application logs:
 
 - Confirm the Alloy pod discovery selector matches the node name exposed through `HOSTNAME`.
 - Confirm Alloy logs do not show connection errors to `loki.monitoring.svc.cluster.local:3100`.
-- Confirm the application namespace has recent logs with `kubectl -n sample-api-dev logs deploy/sample-api --tail=20`.
+- Confirm the application namespace has recent logs with `kubectl -n sample-api-dev logs -l app.kubernetes.io/name=sample-api --tail=20`.
 - Retry the Loki query with a wider time range, such as 30 minutes.
 
 ## Final Repository State
