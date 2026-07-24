@@ -118,7 +118,8 @@ Review these files before validation:
    - `targetRevision` is pinned instead of using `*`, so the lab does not drift when Grafana publishes a new chart.
    - `deploymentMode` is `SingleBinary`, which runs Loki as one stateful workload for a small development cluster.
    - `loki.storage.type` is `filesystem`, so this lab does not need S3 or another object store.
-   - `singleBinary.persistence.enabled` is `false`, so Loki uses ephemeral pod storage instead of requiring a cluster `StorageClass`.
+   - `singleBinary.persistence.enabled` is `false`, so Loki does not create a PVC or require a cluster `StorageClass`.
+   - `singleBinary.extraVolumes` and `singleBinary.extraVolumeMounts` mount an `emptyDir` at `/var/loki`, giving Loki writable ephemeral storage while keeping the lab lightweight.
    - `gateway`, `lokiCanary` and Helm `test` are disabled to keep the lab small enough for the current development cluster.
    - `loki.useTestSchema` is enabled for this non-production lab. Production Loki deployments should use an explicit schema and object storage.
 
@@ -313,6 +314,12 @@ If `loki-0` stays `Pending` because of `storage-loki-0`:
 - Check the PVC with `kubectl -n monitoring get pvc storage-loki-0`.
 - A message such as `no persistent volumes available for this claim and no storage class is set` means the cluster has no default dynamic volume provisioner.
 - For this lab, `singleBinary.persistence.enabled: false` avoids that dependency. Later production-oriented labs can add durable object storage and retention.
+
+If `loki-0` enters `CrashLoopBackOff` with `mkdir /var/loki: read-only file system`:
+
+- Confirm `singleBinary.extraVolumes` defines an `emptyDir` named `storage`.
+- Confirm `singleBinary.extraVolumeMounts` mounts that volume at `/var/loki`.
+- Loki needs `/var/loki` to be writable even when persistence is disabled.
 
 If Alloy is healthy but Loki has no application logs:
 
