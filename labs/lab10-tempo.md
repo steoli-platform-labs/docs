@@ -348,6 +348,12 @@ If Tempo is healthy but Grafana shows no traces:
 - Confirm the Grafana Tempo data source URL is `http://tempo.monitoring.svc.cluster.local:3200`.
 - Widen the Grafana time range and search by the expected service name.
 
+If the OpenTelemetry Collector pod is `Pending` with `Too many pods`:
+
+- The small pre-Karpenter development cluster has reached its per-node pod capacity.
+- Confirm the dev `sample-api` desired state uses a small replica count before Lab 11 introduces node autoscaling.
+- Reconcile `sample-api`, then refresh `opentelemetry` after capacity is available.
+
 ## Final Repository State
 
 The implementation remains GitOps-driven and mergeable to `main`.
