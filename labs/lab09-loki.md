@@ -139,7 +139,21 @@ Review these files before validation:
    - `loki.source.kubernetes "pods"` reads Kubernetes pod logs through the Kubernetes API.
    - `loki.write "default"` forwards logs to `http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push`.
 
-3. Render both Helm charts locally before relying on Argo CD:
+3. Compare the pinned chart versions with the latest available chart versions:
+
+   ```bash
+   echo "Pinned Loki chart:  $(yq -r '.spec.source.targetRevision' clusters/dev/loki.yaml)"
+   helm show chart loki --repo https://grafana.github.io/helm-charts | yq '.version'
+
+   echo "Pinned Alloy chart: $(yq -r '.spec.source.targetRevision' clusters/dev/alloy.yaml)"
+   helm show chart alloy --repo https://grafana.github.io/helm-charts | yq '.version'
+   ```
+
+   The pinned versions in `clusters/dev/loki.yaml` and `clusters/dev/alloy.yaml` are the versions tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned versions just because newer versions are available; Helm charts can change required values between releases.
+
+   If you intentionally update a chart version, update the YAML, render the chart locally, review the rendered manifests and commit the tested change. Treat chart upgrades as deliberate maintenance, not as an automatic part of the lab.
+
+4. Render both Helm charts locally before relying on Argo CD:
 
    ```bash
    yq -r '.spec.source.helm.values' clusters/dev/loki.yaml \
@@ -161,10 +175,33 @@ Review these files before validation:
 
    These commands catch chart value errors before Argo CD tries to render the Applications. If Loki reports a missing bucket or missing schema here, Argo CD will also fail and no Loki pods will be created.
 
-4. Commit and push the desired state:
+   No output is expected when both commands succeed because the rendered manifests are redirected to `/dev/null`. A successful command returns to the shell prompt with exit code `0`.
+
+   To confirm the exit code after a render command, run:
+
+   ```bash
+   echo $?
+   ```
+
+   Expected result:
+
+   ```text
+   0
+   ```
+
+   Any Helm render error prints to the terminal and returns a non-zero exit code.
+
+5. Commit and push the desired state if you changed it:
 
    ```bash
    git status --short
+   ```
+
+   If this command prints no files, your local repository already matches Git and there is nothing to commit for this step.
+
+   If you edited `loki.yaml`, `alloy.yaml` or chart versions during this lab, commit and push those changes:
+
+   ```bash
    git add clusters/dev/loki.yaml clusters/dev/alloy.yaml
    git commit -m "feat: configure loki and alloy"
    git push
@@ -172,7 +209,7 @@ Review these files before validation:
 
    Argo CD reconciles from Git. Local uncommitted changes are not deployed by Argo CD.
 
-5. Let Argo CD reconcile Loki and Alloy from Git:
+6. Let Argo CD reconcile Loki and Alloy from Git:
 
    ```bash
    kubectl -n argocd get application loki alloy -o wide
@@ -183,7 +220,7 @@ Review these files before validation:
 
    `SYNC STATUS` should move to `Synced`. If an Application shows `Unknown`, Argo CD could not compare the live cluster to the target manifests. The most common cause is a Helm render error, and pods will not exist until that is fixed.
 
-6. If either Application is not `Synced`, inspect the Argo CD condition before checking pods:
+7. If either Application is not `Synced`, inspect the Argo CD condition before checking pods:
 
    ```bash
    kubectl -n argocd describe application loki
@@ -192,7 +229,7 @@ Review these files before validation:
 
    Look for `Status.Conditions`. A message such as `Failed to load target state` or `failed to generate manifest` means the Helm chart did not render. Fix the values in Git, push the change, then refresh the Application again.
 
-7. Validate that the workloads exist and are ready:
+8. Validate that the workloads exist and are ready:
 
    ```bash
    kubectl -n argocd get application loki alloy -o wide
@@ -207,7 +244,7 @@ Review these files before validation:
    - Alloy has one pod per schedulable node because it runs as a DaemonSet.
    - The `loki` service exposes port `3100` inside the cluster.
 
-8. Check Alloy logs for collection and forwarding activity:
+9. Check Alloy logs for collection and forwarding activity:
 
    ```bash
    kubectl -n monitoring logs -l app.kubernetes.io/name=alloy --since=10m --tail=200
@@ -215,7 +252,7 @@ Review these files before validation:
 
    The logs should not show repeated connection failures to Loki. Short startup messages are normal while Loki is becoming ready.
 
-9. Port-forward Loki and check readiness:
+10. Port-forward Loki and check readiness:
 
    ```bash
    kubectl -n monitoring port-forward svc/loki 3100:3100
@@ -229,7 +266,7 @@ Review these files before validation:
 
    A successful response confirms the Loki HTTP API is reachable through the local port-forward.
 
-10. Generate or locate a known application log line:
+11. Generate or locate a known application log line:
 
    ```bash
    kubectl -n sample-api-dev logs -l app.kubernetes.io/name=sample-api --tail=5
@@ -237,7 +274,7 @@ Review these files before validation:
 
    This command reads recent application logs from Kubernetes. Alloy should collect the same pod logs and send them to Loki.
 
-11. Query Loki for recent application logs:
+12. Query Loki for recent application logs:
 
    ```bash
    curl -G -fsS http://localhost:3100/loki/api/v1/query_range \
@@ -248,7 +285,7 @@ Review these files before validation:
 
    The response should include a `status` of `success`. If the `result` array is empty, wait a minute and retry. Log ingestion is usually quick, but Alloy must discover the pod and send the log stream before Loki can return it.
 
-12. Add Loki as a Grafana data source through the Grafana UI:
+13. Add Loki as a Grafana data source through the Grafana UI:
 
    ```bash
    kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
@@ -262,7 +299,7 @@ Review these files before validation:
    - Use `http://loki.monitoring.svc.cluster.local:3100` as the URL.
    - Save and test the data source.
 
-13. Query logs in Grafana Explore:
+14. Query logs in Grafana Explore:
 
    Open `Explore`, choose the Loki data source and run:
 
