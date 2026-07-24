@@ -99,33 +99,166 @@ This lab consists of the following high-level tasks.
 
 ## Repository Changes
 
-Primary implementation: `platform-config/clusters/dev/tempo.yaml and opentelemetry.yaml`.
+Primary implementation: `platform-config/clusters/dev/tempo.yaml` and `platform-config/clusters/dev/opentelemetry.yaml`.
+
+`tempo.yaml` deploys Grafana Tempo, the trace storage and query backend.
+
+`opentelemetry.yaml` deploys the OpenTelemetry Collector, the component that receives traces from instrumented workloads and exports them to Tempo.
 
 ## Files to Review
 
-Review the Tempo and tracing desired-state files and update any environment-specific values before validation.
+Review these files before validation:
+
+- `platform-config/clusters/dev/tempo.yaml`: Tempo chart repository, chart version, release name and monitoring namespace target.
+- `platform-config/clusters/dev/opentelemetry.yaml`: OpenTelemetry Collector chart repository, chart version, collector mode, image and trace pipeline configuration.
+- `platform-config/bootstrap/root-application.yaml`: root Argo CD Application that discovers `clusters/dev/*.yaml`.
 
 ## Step-by-Step Implementation
 
-1. Review `platform-config/clusters/dev/tempo.yaml` and `platform-config/clusters/dev/opentelemetry.yaml`.
-2. Confirm the Tempo and OpenTelemetry chart settings match the lab environment.
-3. Commit and push any required `platform-config` changes.
-4. Let Argo CD reconcile Tempo and OpenTelemetry from Git:
+1. Review the Tempo desired state:
 
    ```bash
-   cd "$WORKSPACE"
+   cd "$WORKSPACE/platform-config"
+   yq '.spec.source' clusters/dev/tempo.yaml
+   ```
+
+   Confirm these values are intentional for the lab:
+
+   - `repoURL` points to the Grafana Helm chart repository.
+   - `chart` is `tempo`.
+   - `targetRevision` is pinned to the tested chart version.
+   - `releaseName` is `tempo`.
+   - The destination namespace is `monitoring`.
+
+   Tempo is the backend that stores and queries traces. It does not create traces by itself; applications or collectors must send traces to it.
+
+2. Review the OpenTelemetry Collector desired state:
+
+   ```bash
+   yq '.spec.source' clusters/dev/opentelemetry.yaml
+   ```
+
+   Confirm these values are intentional for the lab:
+
+   - `repoURL` points to the OpenTelemetry Helm chart repository.
+   - `chart` is `opentelemetry-collector`.
+   - `targetRevision` is pinned to the tested chart version.
+   - `releaseName` is `opentelemetry`.
+   - The destination namespace is `monitoring`.
+   - `mode` is `deployment`.
+   - `image.repository` is set explicitly because the current chart requires it.
+   - The collector receives OTLP traces and exports them to `tempo.monitoring.svc.cluster.local:4317`.
+
+   The collector is the middle hop. Instrumented applications send spans to the collector, and the collector exports those spans to Tempo.
+
+3. Compare the configured chart versions with the latest available chart versions:
+
+   ```bash
+   echo "Configured Tempo chart: $(yq -r '.spec.source.targetRevision' clusters/dev/tempo.yaml)"
+   helm show chart tempo --repo https://grafana.github.io/helm-charts | yq '.version'
+
+   echo "Configured OpenTelemetry chart: $(yq -r '.spec.source.targetRevision' clusters/dev/opentelemetry.yaml)"
+   helm show chart opentelemetry-collector \
+     --repo https://open-telemetry.github.io/opentelemetry-helm-charts \
+     | yq '.version'
+   ```
+
+   The pinned versions in `clusters/dev/tempo.yaml` and `clusters/dev/opentelemetry.yaml` are the versions tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned versions just because newer versions are available; Helm charts can change required values between releases.
+
+4. Render both Helm charts locally before relying on Argo CD:
+
+   ```bash
+   helm template tempo tempo \
+     --repo https://grafana.github.io/helm-charts \
+     --version "$(yq -r '.spec.source.targetRevision' clusters/dev/tempo.yaml)" \
+     --namespace monitoring \
+     >/dev/null
+
+   helm template opentelemetry opentelemetry-collector \
+     --repo https://open-telemetry.github.io/opentelemetry-helm-charts \
+     --version "$(yq -r '.spec.source.targetRevision' clusters/dev/opentelemetry.yaml)" \
+     --namespace monitoring \
+     --values <(yq -r '.spec.source.helm.values' clusters/dev/opentelemetry.yaml) \
+     >/dev/null
+   ```
+
+   No output is expected when rendering succeeds because the rendered manifests are redirected to `/dev/null`. A Helm error here means Argo CD will also fail to generate manifests.
+
+   If the OpenTelemetry render fails with a message such as `image.repository must be set`, the chart version requires explicit values. Fix the desired state in `clusters/dev/opentelemetry.yaml`, render again, then commit and push the tested configuration.
+
+5. Commit and push the desired state if you changed it:
+
+   ```bash
+   git status --short
+   ```
+
+   If this command prints no files, your local repository already matches Git and there is nothing to commit for this step.
+
+   If you edited `tempo.yaml`, `opentelemetry.yaml` or chart versions during this lab, commit and push those changes:
+
+   ```bash
+   git add clusters/dev/tempo.yaml clusters/dev/opentelemetry.yaml
+   git commit -m "feat: configure tempo and opentelemetry"
+   git push
+   ```
+
+   Argo CD reconciles from Git. Local uncommitted changes are not deployed by Argo CD.
+
+6. Refresh the root Argo CD Application so child Applications pick up the latest `platform-config` commit:
+
+   ```bash
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application platform-root -o wide
+   ```
+
+   The root Application should show the latest Git revision from `platform-config/main`. If the root app is still on an old revision, child app refreshes may continue using old desired state.
+
+7. Let Argo CD reconcile Tempo and OpenTelemetry from Git:
+
+   ```bash
    kubectl -n argocd get application tempo opentelemetry -o wide
    kubectl -n argocd annotate application tempo argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application opentelemetry argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application tempo opentelemetry -o wide
    ```
 
-5. Validate Tempo readiness and confirm traces can be queried through Grafana:
+   `SYNC STATUS` should move to `Synced`. If an Application shows `Unknown`, inspect the Application before checking pods because Argo CD may have failed during Helm rendering.
+
+8. If either Application is not `Synced`, inspect the Argo CD condition:
+
+   ```bash
+   kubectl -n argocd describe application tempo
+   kubectl -n argocd describe application opentelemetry
+   ```
+
+   Look for `Status.Conditions`. A message such as `failed to generate manifest` means the chart did not render. Fix the Helm values in Git, push the change and refresh `platform-root` again.
+
+9. Validate that the tracing workloads exist and are ready:
 
    ```bash
    kubectl -n argocd get application tempo opentelemetry -o wide
-   kubectl -n monitoring get pods
+   kubectl -n monitoring get pods -l app.kubernetes.io/name=tempo
+   kubectl -n monitoring get pods -l app.kubernetes.io/name=opentelemetry-collector
+   kubectl -n monitoring get svc tempo opentelemetry-opentelemetry-collector
+   ```
+
+   Expected result:
+
+   - Tempo has a running pod and a Service for the Tempo API.
+   - OpenTelemetry Collector has a running pod or DaemonSet/Deployment, depending on chart configuration.
+   - Services expose the ports used by applications or collectors to send traces.
+
+10. Check collector logs for receiver and exporter startup:
+
+   ```bash
    kubectl -n monitoring logs -l app.kubernetes.io/name=opentelemetry-collector --since=10m --tail=200
+   ```
+
+   The logs should show the collector starting receivers and exporters. Repeated errors connecting to Tempo mean the collector pipeline or Tempo service address is wrong.
+
+11. Port-forward Tempo and check readiness:
+
+   ```bash
    kubectl -n monitoring port-forward svc/tempo 3200:3200
    ```
 
@@ -135,7 +268,46 @@ Review the Tempo and tracing desired-state files and update any environment-spec
    curl -fsS http://localhost:3200/ready
    ```
 
-   Send traffic through the instrumented sample API, then use Grafana Explore to search Tempo by service name and inspect a trace.
+   A successful response confirms that the Tempo HTTP API is reachable through the local port-forward.
+
+12. Add Tempo as a Grafana data source:
+
+   ```bash
+   kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
+   ```
+
+   In Grafana:
+
+   - Open `http://localhost:3000`.
+   - Go to `Connections` then `Data sources`.
+   - Add a Tempo data source.
+   - Use `http://tempo.monitoring.svc.cluster.local:3200` as the URL.
+   - Save and test the data source.
+
+13. Understand what is required for end-to-end trace validation:
+
+   Deployment health only proves that Tempo and the collector are running. End-to-end tracing also requires an instrumented application or a trace generator that sends spans to the collector.
+
+   To pass end-to-end validation, confirm all of the following are true:
+
+   - The application includes OpenTelemetry instrumentation or an OpenTelemetry auto-instrumentation mechanism.
+   - The application has `OTEL_EXPORTER_OTLP_ENDPOINT` or equivalent configuration pointing to the collector.
+   - The collector has an OTLP receiver enabled.
+   - The collector has an exporter that sends traces to Tempo.
+   - Grafana can query Tempo and display the trace.
+
+14. Generate traces and inspect them in Grafana:
+
+   Send traffic to the instrumented sample API, then use Grafana Explore with the Tempo data source to search by service name and inspect a trace.
+
+   A useful trace should show:
+
+   - A trace ID.
+   - A root span for the incoming request.
+   - Child spans for meaningful downstream work, if the application performs any.
+   - Span durations that line up with the request timing.
+
+   If no traces appear, first validate deployment health, then validate that the application is actually emitting spans. Tempo cannot display traces that were never generated or exported.
 
 ## Expected Results
 
@@ -161,6 +333,20 @@ kubectl -n argocd describe application opentelemetry
 kubectl -n monitoring get pods -o wide
 kubectl -n monitoring logs -l app.kubernetes.io/name=opentelemetry-collector --since=10m --tail=200
 ```
+
+If `opentelemetry` shows `Unknown`:
+
+- Read `kubectl -n argocd describe application opentelemetry`.
+- A Helm render error means no collector resources were created.
+- Newer OpenTelemetry Collector chart versions may require explicit image or mode values.
+
+If Tempo is healthy but Grafana shows no traces:
+
+- Confirm the application is instrumented; non-instrumented applications do not produce traces automatically.
+- Confirm the application points to the OpenTelemetry Collector endpoint.
+- Confirm collector logs show spans being received and exported.
+- Confirm the Grafana Tempo data source URL is `http://tempo.monitoring.svc.cluster.local:3200`.
+- Widen the Grafana time range and search by the expected service name.
 
 ## Final Repository State
 
