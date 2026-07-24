@@ -104,6 +104,9 @@ The labs remain the hands-on implementation path. Use this page when a lab intro
 - **Logs:** Timestamped records emitted by applications and components.
 - **Traces:** End-to-end request paths across services. A trace is made of spans.
 - **Span:** A timed unit of work within a distributed trace.
+- **Distributed tracing:** A way to follow one request across process, pod or service boundaries. Each service adds spans to the same trace ID, creating a timeline of what happened and where time was spent.
+- **Trace ID:** The identifier shared by all spans that belong to the same request path.
+- **Trace context:** Metadata propagated between services, usually through HTTP or messaging headers, so downstream services can attach their spans to the same trace.
 - **Prometheus:** A metrics database and query engine that scrapes targets and stores time-series data.
 - **Prometheus Operator:** An operator that manages Prometheus, Alertmanager and related monitoring resources using CRDs.
 - **ServiceMonitor:** A Prometheus Operator custom resource that tells Prometheus how to scrape a Kubernetes Service.
