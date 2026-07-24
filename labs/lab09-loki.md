@@ -266,13 +266,20 @@ Review these files before validation:
 
    A successful response confirms the Loki HTTP API is reachable through the local port-forward.
 
-11. Generate or locate a known application log line:
+11. Generate a known application log line:
 
    ```bash
-   kubectl -n sample-api-dev logs -l app.kubernetes.io/name=sample-api --tail=5
+   SAMPLE_API_POD=$(kubectl -n sample-api-dev get pod \
+     -l app.kubernetes.io/name=sample-api \
+     -o jsonpath='{.items[0].metadata.name}')
+
+   kubectl -n sample-api-dev exec "$SAMPLE_API_POD" -- sh -c \
+     'echo "loki smoke test from sample-api-dev $(date -u +%Y-%m-%dT%H:%M:%SZ)" > /proc/1/fd/1'
+
+   kubectl -n sample-api-dev logs "$SAMPLE_API_POD" --tail=5
    ```
 
-   This command reads recent application logs from Kubernetes. Alloy should collect the same pod logs and send them to Loki.
+   The `sample-api` application does not emit an access log for every request, so this writes one explicit smoke-test line to the existing application container stdout. Alloy should collect the same pod log stream and send it to Loki.
 
 12. Query Loki for recent application logs:
 
@@ -283,7 +290,7 @@ Review these files before validation:
      --data-urlencode "end=$(date -u +%s)000000000"
    ```
 
-   The response should include a `status` of `success`. If the `result` array is empty, wait a minute and retry. Log ingestion is usually quick, but Alloy must discover the pod and send the log stream before Loki can return it.
+   The response should include a `status` of `success` and the `loki smoke test from sample-api-dev` line. If the `result` array is empty, wait a minute and retry. Log ingestion is usually quick, but Alloy must read and forward the log stream before Loki can return it.
 
 13. Add Loki as a Grafana data source through the Grafana UI:
 
@@ -306,6 +313,8 @@ Review these files before validation:
    ```logql
    {namespace="sample-api-dev"}
    ```
+
+   Set the time range to `Last 1 hour` and select `Run query`. The Logs panel should show the smoke-test line. The Logs volume panel may still say no volume information for short-lived, low-volume test data; the Logs panel is the validation target.
 
    This confirms logs are usable from the same Grafana interface that already shows Prometheus metrics.
 
@@ -363,6 +372,7 @@ If Alloy is healthy but Loki has no application logs:
 - Confirm the Alloy pod discovery selector matches the node name exposed through `HOSTNAME`.
 - Confirm Alloy logs do not show connection errors to `loki.monitoring.svc.cluster.local:3100`.
 - Confirm the application namespace has recent logs with `kubectl -n sample-api-dev logs -l app.kubernetes.io/name=sample-api --tail=20`.
+- Generate the smoke-test log line again if the sample application has not emitted recent logs.
 - Retry the Loki query with a wider time range, such as 30 minutes.
 
 ## Final Repository State
