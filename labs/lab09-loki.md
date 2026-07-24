@@ -57,6 +57,8 @@ No additional AWS infrastructure is provisioned during this lab.
 
 Loki and Grafana Alloy are deployed into the existing Amazon EKS cluster using ArgoCD and Helm.
 
+This lab intentionally uses ephemeral Loki storage. Logs are stored on the Loki pod filesystem and are lost if the pod is deleted or restarted. That tradeoff is acceptable for learning log collection and querying without adding new AWS resources. A production Loki deployment should use durable object storage, such as Amazon S3, with explicit retention and access controls.
+
 ## Design Decisions
 
 The logging platform follows cloud-native observability best practices.
@@ -64,6 +66,8 @@ The logging platform follows cloud-native observability best practices.
 - **GitOps deployment:** All logging components are deployed through ArgoCD. No manual Helm installations are performed.
 
 - **Loki:** Grafana Loki is selected as the centralized logging platform because it integrates natively with Grafana and is optimized for Kubernetes environments.
+
+- **Ephemeral storage:** Loki uses ephemeral filesystem storage in this lab to keep the development platform small and avoid introducing object storage, IRSA and retention policies before those concepts are needed. This is not a production logging configuration.
 
 - **Grafana Alloy:** Grafana Alloy is used as the log collection agent. Alloy replaces Promtail and provides a unified telemetry collector capable of collecting logs, metrics and traces.
 
@@ -90,7 +94,7 @@ This lab consists of the following high-level tasks.
 
 Primary implementation: `platform-config/clusters/dev/loki.yaml` and `platform-config/clusters/dev/alloy.yaml`.
 
-`loki.yaml` deploys Loki in single-binary mode with filesystem-backed ephemeral storage for this development lab. This keeps Lab 09 lightweight and avoids creating object storage or persistent volumes before the later AWS storage and production-hardening labs.
+`loki.yaml` deploys Loki in single-binary mode with filesystem-backed ephemeral storage for this development lab. This keeps Lab 09 lightweight and avoids creating object storage or persistent volumes before the later AWS storage and production-hardening labs. Logs are not durable in this lab.
 
 `alloy.yaml` deploys Alloy as a DaemonSet and configures a Kubernetes API-based log pipeline from pod discovery to Loki.
 
@@ -326,6 +330,7 @@ The `loki` and `alloy` Argo CD Applications reconcile successfully and log data 
 
 - Both Argo CD applications are healthy.
 - Loki reports ready.
+- Loki uses ephemeral storage, so logs survive normal queries but not Loki pod replacement or restart.
 - Alloy runs on every intended node or as the configured workload mode.
 - Alloy logs show successful discovery and writes, without authentication or connection failures.
 - A log line from `sample-api-dev` becomes queryable in Loki/Grafana within the expected ingestion delay.
@@ -393,7 +398,7 @@ This lab follows cloud-native logging best practices.
 
 No cleanup is required.
 
-Loki and Grafana Alloy remain permanent platform services.
+Loki and Grafana Alloy remain platform services, but Loki log data is ephemeral in this lab.
 
 ## References
 
@@ -404,5 +409,7 @@ Loki and Grafana Alloy remain permanent platform services.
 - [CNCF Observability Landscape](https://landscape.cncf.io/card-mode?category=observability-and-analysis)
 
 ## Next Steps
+
+Future lab exercises can harden this setup by migrating Loki from ephemeral filesystem storage to S3-backed object storage using IRSA, explicit retention and production-ready schema configuration.
 
 Continue with [Lab 10 - Tempo and OpenTelemetry](./lab10-tempo.md).
