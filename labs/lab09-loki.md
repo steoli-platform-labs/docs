@@ -88,34 +88,135 @@ This lab consists of the following high-level tasks.
 
 ## Repository Changes
 
-Primary implementation: `platform-config/clusters/dev/loki.yaml and alloy.yaml`.
+Primary implementation: `platform-config/clusters/dev/loki.yaml` and `platform-config/clusters/dev/alloy.yaml`.
+
+`loki.yaml` deploys Loki in single-binary mode with filesystem-backed ephemeral storage for this development lab. This keeps Lab 09 lightweight and avoids creating object storage or persistent volumes before the later AWS storage and production-hardening labs.
+
+`alloy.yaml` deploys Alloy as a DaemonSet and configures a Kubernetes API-based log pipeline from pod discovery to Loki.
 
 ## Files to Review
 
-Review the Loki and log collection desired-state files and update any environment-specific values before validation.
+Review these files before validation:
+
+- `platform-config/clusters/dev/loki.yaml`: Loki Helm chart version, single-binary mode, filesystem storage and replica settings.
+- `platform-config/clusters/dev/alloy.yaml`: Alloy Helm chart version, node-local pod discovery and log forwarding pipeline.
+- `platform-config/bootstrap/root-application.yaml`: root Argo CD Application that discovers `clusters/dev/*.yaml`.
 
 ## Step-by-Step Implementation
 
-1. Review `platform-config/clusters/dev/loki.yaml` and `platform-config/clusters/dev/alloy.yaml`.
-2. Confirm both Applications target the expected namespace and chart repositories.
-3. Commit and push any required `platform-config` changes.
-4. Let Argo CD reconcile Loki and Alloy from Git:
+1. Review the Loki desired state:
 
    ```bash
-   cd "$WORKSPACE"
+   cd "$WORKSPACE/platform-config"
+   yq '.spec.source' clusters/dev/loki.yaml
+   ```
+
+   Confirm these values are intentional for the lab:
+
+   - `repoURL` is `https://grafana.github.io/helm-charts`.
+   - `chart` is `loki`.
+   - `targetRevision` is pinned instead of using `*`, so the lab does not drift when Grafana publishes a new chart.
+   - `deploymentMode` is `SingleBinary`, which runs Loki as one stateful workload for a small development cluster.
+   - `loki.storage.type` is `filesystem`, so this lab does not need S3 or another object store.
+   - `singleBinary.persistence.enabled` is `false`, so Loki uses ephemeral pod storage instead of requiring a cluster `StorageClass`.
+   - `gateway`, `lokiCanary` and Helm `test` are disabled to keep the lab small enough for the current development cluster.
+   - `loki.useTestSchema` is enabled for this non-production lab. Production Loki deployments should use an explicit schema and object storage.
+
+2. Review the Alloy desired state:
+
+   ```bash
+   yq '.spec.source' clusters/dev/alloy.yaml
+   ```
+
+   Confirm these values are intentional for the lab:
+
+   - `chart` is `alloy`.
+   - `targetRevision` is pinned.
+   - `discovery.kubernetes "pods"` discovers pods from the Kubernetes API.
+   - The pod field selector limits each Alloy DaemonSet pod to logs from workloads on its own node, avoiding duplicate collection.
+   - `discovery.relabel "pods"` keeps the internal pod identity labels required by `loki.source.kubernetes` and adds query-friendly Loki labels such as `namespace`, `pod`, `container` and `app`.
+   - `loki.source.kubernetes "pods"` reads Kubernetes pod logs through the Kubernetes API.
+   - `loki.write "default"` forwards logs to `http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push`.
+
+3. Render both Helm charts locally before relying on Argo CD:
+
+   ```bash
+   yq -r '.spec.source.helm.values' clusters/dev/loki.yaml \
+     | helm template loki loki \
+       --repo https://grafana.github.io/helm-charts \
+       --version "$(yq -r '.spec.source.targetRevision' clusters/dev/loki.yaml)" \
+       --namespace monitoring \
+       --values - \
+       >/dev/null
+
+   yq -r '.spec.source.helm.values' clusters/dev/alloy.yaml \
+     | helm template alloy alloy \
+       --repo https://grafana.github.io/helm-charts \
+       --version "$(yq -r '.spec.source.targetRevision' clusters/dev/alloy.yaml)" \
+       --namespace monitoring \
+       --values - \
+       >/dev/null
+   ```
+
+   These commands catch chart value errors before Argo CD tries to render the Applications. If Loki reports a missing bucket or missing schema here, Argo CD will also fail and no Loki pods will be created.
+
+4. Commit and push the desired state:
+
+   ```bash
+   git status --short
+   git add clusters/dev/loki.yaml clusters/dev/alloy.yaml
+   git commit -m "feat: configure loki and alloy"
+   git push
+   ```
+
+   Argo CD reconciles from Git. Local uncommitted changes are not deployed by Argo CD.
+
+5. Let Argo CD reconcile Loki and Alloy from Git:
+
+   ```bash
    kubectl -n argocd get application loki alloy -o wide
    kubectl -n argocd annotate application loki argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application alloy argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application loki alloy -o wide
    ```
 
-5. Validate Loki readiness and confirm Alloy is forwarding Kubernetes logs:
+   `SYNC STATUS` should move to `Synced`. If an Application shows `Unknown`, Argo CD could not compare the live cluster to the target manifests. The most common cause is a Helm render error, and pods will not exist until that is fixed.
+
+6. If either Application is not `Synced`, inspect the Argo CD condition before checking pods:
+
+   ```bash
+   kubectl -n argocd describe application loki
+   kubectl -n argocd describe application alloy
+   ```
+
+   Look for `Status.Conditions`. A message such as `Failed to load target state` or `failed to generate manifest` means the Helm chart did not render. Fix the values in Git, push the change, then refresh the Application again.
+
+7. Validate that the workloads exist and are ready:
 
    ```bash
    kubectl -n argocd get application loki alloy -o wide
    kubectl -n monitoring get pods -l app.kubernetes.io/name=loki
    kubectl -n monitoring get pods -l app.kubernetes.io/name=alloy
+   kubectl -n monitoring get svc loki
+   ```
+
+   Expected result:
+
+   - Loki has a `loki-0` pod from the single-binary StatefulSet.
+   - Alloy has one pod per schedulable node because it runs as a DaemonSet.
+   - The `loki` service exposes port `3100` inside the cluster.
+
+8. Check Alloy logs for collection and forwarding activity:
+
+   ```bash
    kubectl -n monitoring logs -l app.kubernetes.io/name=alloy --since=10m --tail=200
+   ```
+
+   The logs should not show repeated connection failures to Loki. Short startup messages are normal while Loki is becoming ready.
+
+9. Port-forward Loki and check readiness:
+
+   ```bash
    kubectl -n monitoring port-forward svc/loki 3100:3100
    ```
 
@@ -123,17 +224,52 @@ Review the Loki and log collection desired-state files and update any environmen
 
    ```bash
    curl -fsS http://localhost:3100/ready
+   ```
+
+   A successful response confirms the Loki HTTP API is reachable through the local port-forward.
+
+10. Generate or locate a known application log line:
+
+   ```bash
+   kubectl -n sample-api-dev logs deploy/sample-api --tail=5
+   ```
+
+   This command reads recent application logs from Kubernetes. Alloy should collect the same pod logs and send them to Loki.
+
+11. Query Loki for recent application logs:
+
+   ```bash
    curl -G -fsS http://localhost:3100/loki/api/v1/query_range \
      --data-urlencode 'query={namespace="sample-api-dev"}' \
      --data-urlencode "start=$(date -u -v-10M +%s)000000000" \
      --data-urlencode "end=$(date -u +%s)000000000"
    ```
 
-   Generate a known log line:
+   The response should include a `status` of `success`. If the `result` array is empty, wait a minute and retry. Log ingestion is usually quick, but Alloy must discover the pod and send the log stream before Loki can return it.
+
+12. Add Loki as a Grafana data source through the Grafana UI:
 
    ```bash
-   kubectl -n sample-api-dev logs deploy/sample-api --tail=5
+   kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
    ```
+
+   In Grafana:
+
+   - Open `http://localhost:3000`.
+   - Go to `Connections` then `Data sources`.
+   - Add a Loki data source.
+   - Use `http://loki.monitoring.svc.cluster.local:3100` as the URL.
+   - Save and test the data source.
+
+13. Query logs in Grafana Explore:
+
+   Open `Explore`, choose the Loki data source and run:
+
+   ```logql
+   {namespace="sample-api-dev"}
+   ```
+
+   This confirms logs are usable from the same Grafana interface that already shows Prometheus metrics.
 
 ## Expected Results
 
@@ -158,6 +294,32 @@ kubectl -n argocd describe application alloy
 kubectl -n monitoring get pods -o wide
 kubectl -n monitoring get events --sort-by=.lastTimestamp
 ```
+
+If `loki` shows `Unknown`:
+
+- Read `kubectl -n argocd describe application loki` before checking pods.
+- `Unknown` often means Argo CD could not render the Helm chart, so Kubernetes resources were never created.
+- A missing `loki.storage.bucketNames.chunks` message means the chart is trying to run in object-storage mode without bucket names.
+- A missing `schema_config` message means the chart needs either an explicit Loki schema or `loki.useTestSchema: true` for a temporary lab deployment.
+
+If `kubectl -n monitoring get pods -l app.kubernetes.io/name=loki` returns no resources:
+
+- Confirm the Argo CD Application is `Synced` first.
+- Confirm the `loki` Application points to the `monitoring` namespace.
+- Confirm the chart rendered successfully with the local `helm template` command from the implementation steps.
+
+If `loki-0` stays `Pending` because of `storage-loki-0`:
+
+- Check the PVC with `kubectl -n monitoring get pvc storage-loki-0`.
+- A message such as `no persistent volumes available for this claim and no storage class is set` means the cluster has no default dynamic volume provisioner.
+- For this lab, `singleBinary.persistence.enabled: false` avoids that dependency. Later production-oriented labs can add durable object storage and retention.
+
+If Alloy is healthy but Loki has no application logs:
+
+- Confirm the Alloy pod discovery selector matches the node name exposed through `HOSTNAME`.
+- Confirm Alloy logs do not show connection errors to `loki.monitoring.svc.cluster.local:3100`.
+- Confirm the application namespace has recent logs with `kubectl -n sample-api-dev logs deploy/sample-api --tail=20`.
+- Retry the Loki query with a wider time range, such as 30 minutes.
 
 ## Final Repository State
 
