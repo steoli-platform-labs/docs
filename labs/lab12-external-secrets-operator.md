@@ -33,13 +33,14 @@ Before starting this lab:
 - Repository URLs configured
 
 ## Repository Changes
-Primary implementation: `platform-config/clusters/dev/external-secrets.yaml` plus the SecretStore and ExternalSecret resources used by workloads.
+Primary implementation: `platform-config/clusters/dev/external-secrets.yaml`, `platform-config/clusters/dev/external-secrets-config.yaml`, the SecretStore manifests and the ExternalSecret resources used by workloads.
 
 ## Files to Review
 Review these files before validation:
 
 - `platform-config/clusters/dev/external-secrets.yaml`: Argo CD Application for the External Secrets Operator Helm chart.
-- `platform-config/addons/external-secrets/cluster-secret-store.yaml`: `ClusterSecretStore` for AWS Secrets Manager. This file must be wired into GitOps before Argo CD can apply it.
+- `platform-config/clusters/dev/external-secrets-config.yaml`: Argo CD Application that applies the External Secrets configuration under `addons/external-secrets`.
+- `platform-config/addons/external-secrets/cluster-secret-store.yaml`: `ClusterSecretStore` for AWS Secrets Manager.
 - `helm-charts/charts/sample-api/templates/externalsecret.yaml`: optional workload-level ExternalSecret template.
 - `platform-config/clusters/dev/sample-api.yaml`: values that enable or disable the sample API ExternalSecret.
 
@@ -64,13 +65,14 @@ Review these files before validation:
 
    The pinned version in `clusters/dev/external-secrets.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
-2. Check whether the SecretStore desired state exists:
+2. Check whether the SecretStore desired state and GitOps wiring exist:
 
    ```bash
+   yq '.spec.source' clusters/dev/external-secrets-config.yaml
    grep -R "kind: ClusterSecretStore\|kind: SecretStore" -n . || true
    ```
 
-   The operator can be healthy without any store configured. A `ClusterSecretStore` or `SecretStore` is required before an `ExternalSecret` can read from AWS Secrets Manager. Because the root Application currently points at `clusters/dev`, files under `addons/external-secrets` also need an Argo CD Application or other GitOps wiring before they are reconciled.
+   The operator can be healthy without any store configured. A `ClusterSecretStore` or `SecretStore` is required before an `ExternalSecret` can read from AWS Secrets Manager. The root Application points at `clusters/dev`, so `external-secrets-config.yaml` is the child Application that tells Argo CD to reconcile the store manifests under `addons/external-secrets`.
 
 3. Review the sample API ExternalSecret template and values:
 
@@ -80,7 +82,7 @@ Review these files before validation:
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
    ```
 
-   Confirm whether the sample API chart should create an `ExternalSecret`. Do not commit real secret values. Only commit references such as secret names, remote keys and property names.
+   Confirm the sample API chart creates an `ExternalSecret` and references the same remote key used in the AWS test secret step. Do not commit real secret values. Only commit references such as secret names, remote keys and property names.
 
 4. Create or confirm the AWS test secret without printing its value:
 
@@ -132,28 +134,31 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE/platform-config"
    git status --short
-   git add clusters/dev/external-secrets.yaml clusters/dev/sample-api.yaml addons/external-secrets/cluster-secret-store.yaml
+   git add clusters/dev/external-secrets.yaml clusters/dev/external-secrets-config.yaml clusters/dev/sample-api.yaml addons/external-secrets/cluster-secret-store.yaml
    git commit -m "feat: configure external secrets"
    git push
    ```
 
    If you added different SecretStore manifests or Argo CD wiring files, stage those actual paths too. If there are no changed files, skip the commit.
 
-7. Refresh the root Argo CD Application, then reconcile `external-secrets`:
+7. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api`:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application external-secrets -o wide
+   kubectl -n argocd get application external-secrets external-secrets-config sample-api -o wide
    kubectl -n argocd annotate application external-secrets argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application external-secrets -o wide
+   kubectl -n argocd annotate application external-secrets-config argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd annotate application sample-api argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application external-secrets external-secrets-config sample-api -o wide
    ```
 
-   Expected behavior: after the latest `platform-config` commit is reconciled, `external-secrets` should move toward `Synced / Healthy`. If it shows `OutOfSync / Degraded`, describe the Application and check for sync errors before continuing.
+   Expected behavior: after the latest `platform-config` commit is reconciled, `external-secrets`, `external-secrets-config` and `sample-api` should move toward `Synced / Healthy`. If any Application shows `OutOfSync / Degraded`, describe that Application and check for sync errors before continuing.
 
 8. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
 
    ```bash
    kubectl -n argocd get application external-secrets -o wide
+   kubectl -n argocd get application external-secrets-config sample-api -o wide
    kubectl -n external-secrets get pods,serviceaccounts
    kubectl get clustersecretstore aws-secrets-manager -o yaml
    kubectl describe clustersecretstore aws-secrets-manager
