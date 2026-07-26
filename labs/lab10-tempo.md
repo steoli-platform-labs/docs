@@ -302,7 +302,21 @@ Review these files before validation:
 
    Deployment health only proves that Tempo and the collector are running. End-to-end tracing also requires an instrumented application or a trace generator that sends spans to the collector. At this point in the lab series, the sample API may not emit OpenTelemetry traces yet, so use a temporary trace-generator Job to prove the collector-to-Tempo pipeline works.
 
-   Create a one-off `telemetrygen` Job in the `monitoring` namespace:
+   First confirm the cluster has room for one short-lived test pod:
+
+   ```bash
+   kubectl get nodes
+   kubectl -n monitoring get pods -o wide
+   kubectl -n sample-api-dev get hpa
+   ```
+
+   A small pre-Karpenter cluster can be at its pod limit. If a previous `telemetrygen-traces` Job is still present, remove it before retrying:
+
+   ```bash
+   kubectl -n monitoring delete job telemetrygen-traces --ignore-not-found
+   ```
+
+   Then create a one-off `telemetrygen` Job in the `monitoring` namespace:
 
    ```bash
    kubectl -n monitoring create job telemetrygen-traces \
@@ -318,6 +332,38 @@ Review these files before validation:
    ```
 
    Expected result: the Job completes successfully and its logs show that traces were generated and exported to the OpenTelemetry Collector. This validates the telemetry path from generator to collector to Tempo, even before the sample API is instrumented.
+
+   If the wait command times out, check whether the Job pod was scheduled:
+
+   ```bash
+   kubectl -n monitoring get pods -l job-name=telemetrygen-traces -o wide
+   kubectl -n monitoring describe job telemetrygen-traces
+   kubectl -n monitoring get events --sort-by=.lastTimestamp
+   ```
+
+   If the event says `Too many pods`, the Job did not run and `kubectl logs job/telemetrygen-traces` will be empty. Do not troubleshoot Tempo yet; first free one pod slot or add capacity. Scaling `sample-api` directly may not work because its HPA has `minReplicas: 2` and Argo CD self-heal restores the Git-defined replica count.
+
+   For a short Lab 10 validation only, temporarily scale down a controller that is not required for tracing, run the generator, then restore it. For example, if External Secrets Operator is installed already, it is not required for Lab 10:
+
+   ```bash
+   kubectl -n external-secrets scale deployment external-secrets --replicas=0
+   kubectl -n monitoring delete job telemetrygen-traces --ignore-not-found
+
+   kubectl -n monitoring create job telemetrygen-traces \
+     --image=ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:0.165.0 \
+     -- traces \
+     --otlp-endpoint opentelemetry-opentelemetry-collector.monitoring.svc.cluster.local:4317 \
+     --otlp-insecure \
+     --service telemetrygen \
+     --traces 20
+
+   kubectl -n monitoring wait --for=condition=complete job/telemetrygen-traces --timeout=120s
+   kubectl -n monitoring logs job/telemetrygen-traces
+   kubectl -n monitoring delete job telemetrygen-traces
+   kubectl -n external-secrets scale deployment external-secrets --replicas=1
+   ```
+
+   This is a temporary live-cluster workaround, not GitOps desired state. If Argo CD self-heal restores the scaled deployment before the Job schedules, repeat the test after Lab 11 installs Karpenter or add another worker node to the development node group. Moving from `t3.medium` to a larger instance type or adding a third node both work; adding capacity is the durable fix because the observability stack is already near the pod limit of the two-node development cluster.
 
    To pass end-to-end validation with a real application later, confirm all of the following are true:
 
@@ -411,6 +457,15 @@ If the OpenTelemetry Collector pod is `Pending` with `Too many pods`:
 - The small pre-Karpenter development cluster has reached its per-node pod capacity.
 - Confirm the dev `sample-api` desired state uses a small replica count before Lab 11 introduces node autoscaling.
 - Reconcile `sample-api`, then refresh `opentelemetry` after capacity is available.
+
+If the `telemetrygen-traces` Job times out:
+
+- Check `kubectl -n monitoring get pods -l job-name=telemetrygen-traces -o wide`.
+- If the pod is `Pending` and events say `Too many pods`, the generator never ran and empty logs are expected.
+- Delete the stuck Job with `kubectl -n monitoring delete job telemetrygen-traces` before retrying.
+- Free one temporary pod slot, run the Job again, then restore the scaled workload.
+- Do not rely on `kubectl -n sample-api-dev scale rollout sample-api --replicas=1` while the sample API HPA has `minReplicas: 2`; the HPA and Argo CD self-heal can bring it back to two replicas.
+- The durable fix is to add capacity with Karpenter in Lab 11, add another worker node or use larger worker nodes for the development cluster.
 
 ## Final Repository State
 
