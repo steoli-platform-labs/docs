@@ -25,7 +25,12 @@ Concepts introduced in this lab include high availability, resilience, readiness
 Implement and validate High Availability and Resilience in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 16. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
+
+Before starting this lab:
+
+- Lab 01 - Lab 16 completed
+- AWS CLI, Terraform, kubectl and Helm installed
+- Repository URLs configured
 
 ## Repository Changes
 Primary implementation: sample API probes, PodDisruptionBudget, replica settings and scheduling constraints in the Helm chart and environment values.

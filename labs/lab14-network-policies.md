@@ -25,7 +25,12 @@ Concepts introduced in this lab include NetworkPolicies, pod selectors, namespac
 Implement and validate Network Policies in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 13. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
+
+Before starting this lab:
+
+- Lab 01 - Lab 13 completed
+- AWS CLI, Terraform, kubectl and Helm installed
+- Repository URLs configured
 
 ## Repository Changes
 Primary implementation: `helm-charts/charts/sample-api/templates/networkpolicy.yaml` and the sample API chart values that enable or tune policy behavior.

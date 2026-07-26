@@ -25,7 +25,12 @@ Concepts introduced in this lab include External Secrets Operator, ExternalSecre
 Implement and validate External Secrets Operator in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 11. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
+
+Before starting this lab:
+
+- Lab 01 - Lab 11 completed
+- AWS CLI, Terraform, kubectl and Helm installed
+- Repository URLs configured
 
 ## Repository Changes
 Primary implementation: `platform-config/clusters/dev/external-secrets.yaml` plus the SecretStore and ExternalSecret resources used by workloads.

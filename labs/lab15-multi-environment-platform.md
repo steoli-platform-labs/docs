@@ -25,7 +25,12 @@ Concepts introduced in this lab include environment separation, namespace bounda
 Implement and validate Multi-Environment Platform in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 14. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
+
+Before starting this lab:
+
+- Lab 01 - Lab 14 completed
+- AWS CLI, Terraform, kubectl and Helm installed
+- Repository URLs configured
 
 ## Repository Changes
 Primary implementation: `platform-config/environments/namespaces.yaml` plus environment-specific GitOps Applications and values as they are introduced.

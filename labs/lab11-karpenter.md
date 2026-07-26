@@ -25,7 +25,12 @@ Concepts introduced in this lab include Karpenter, unschedulable pods, NodePools
 Implement and validate Karpenter in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 10. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
+
+Before starting this lab:
+
+- Lab 01 - Lab 10 completed
+- AWS CLI, Terraform, kubectl and Helm installed
+- Repository URLs configured
 
 ## Repository Changes
 Primary implementation: `platform-config/clusters/dev/karpenter.yaml` plus the Karpenter provisioning resources that define cluster capacity.

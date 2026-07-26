@@ -25,7 +25,12 @@ Concepts introduced in this lab include chaos engineering, controlled failure in
 Implement and validate Chaos Engineering in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 17. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
+
+Before starting this lab:
+
+- Lab 01 - Lab 17 completed
+- AWS CLI, Terraform, kubectl and Helm installed
+- Repository URLs configured
 
 ## Repository Changes
 Primary implementation: `platform-config/chaos/delete-pod.yaml`, including the chaos Job and least-privilege RBAC used to delete one sample API pod.

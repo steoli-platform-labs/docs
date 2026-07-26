@@ -25,7 +25,12 @@ Concepts introduced in this lab include progressive delivery, Argo Rollouts, Rol
 Implement and validate Progressive Delivery in the complete platform reference implementation.
 
 ## Prerequisites
-Complete Lab 01 - Lab 15. AWS CLI, Terraform, kubectl and Helm must be installed, with repository URLs configured.
+
+Before starting this lab:
+
+- Lab 01 - Lab 15 completed
+- AWS CLI, Terraform, kubectl and Helm installed
+- Repository URLs configured
 
 ## Repository Changes
 Primary implementation: the sample API Rollout chart template, Argo Rollouts controller Application and environment-specific image values.
