@@ -32,9 +32,6 @@ Before starting this lab:
 - AWS CLI, Terraform, kubectl and Helm installed
 - Repository URLs configured
 
-## Repository Changes
-Primary implementation: `platform-config/chaos/delete-pod.yaml`, including the chaos Job and least-privilege RBAC used to delete one sample API pod.
-
 ## Files to Review
 Review these files before validation:
 

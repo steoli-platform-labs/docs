@@ -32,9 +32,6 @@ Before starting this lab:
 - AWS CLI, Terraform, kubectl and Helm installed
 - Repository URLs configured
 
-## Repository Changes
-Primary implementation: `helm-charts/charts/sample-api/templates/networkpolicy.yaml` and the sample API chart values that enable or tune policy behavior.
-
 ## Files to Review
 Review these files before validation:
 

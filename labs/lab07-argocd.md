@@ -101,10 +101,6 @@ This lab consists of the following high-level tasks.
 9. Test self-healing
 10. Verify drift detection
 
-## Repository Changes
-
-Primary implementation: `platform-config/bootstrap and platform-config/clusters/dev`.
-
 ## Files to Review
 
 Review the GitOps bootstrap and cluster desired-state files. Update repository URLs and environment-specific values before validation.

@@ -32,9 +32,6 @@ Before starting this lab:
 - AWS CLI, Terraform, kubectl and Helm installed
 - Repository URLs configured
 
-## Repository Changes
-Primary implementation: `platform-config/clusters/dev/karpenter.yaml`, `platform-config/clusters/dev/karpenter-provisioning.yaml`, the Karpenter provisioning resources that define cluster capacity and the EKS Terraform IAM resources that let Karpenter call AWS APIs.
-
 ## Files to Review
 Review these files before validation:
 

@@ -88,10 +88,6 @@ This lab consists of the following high-level tasks.
 8. Verify AWS authentication
 9. Remove static credentials
 
-## Repository Changes
-
-Primary implementation: Terraform IAM resources in `platform-live` and GitOps-managed Kubernetes service-account annotations in `platform-config` or Helm values.
-
 ## Files to Review
 
 Review these files before validation:

@@ -45,16 +45,9 @@ later labs
   -> use the S3 backend bucket
 ```
 
-## Repository Changes
-
-| Repository | Responsibility |
-|------------|----------------|
-| `platform-bootstrap` | Creates and protects the backend bucket |
-| `docs` | Documents the lab workflow |
-
-`platform-bootstrap` does not commit `backend.tf`. The migration script creates a local ignored `backend.tf` only after the bucket exists.
-
 ## Files to Review
+
+`platform-bootstrap` owns the backend bucket for these labs. It does not commit `backend.tf`; the migration script creates a local ignored `backend.tf` only after the bucket exists.
 
 | File | Why it matters |
 |------|----------------|

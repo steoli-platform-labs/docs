@@ -32,9 +32,6 @@ Before starting this lab:
 - AWS CLI, Terraform, kubectl and Helm installed
 - Repository URLs configured
 
-## Repository Changes
-Primary implementation: External Secrets IAM/Pod Identity resources in Terraform, `platform-config/clusters/dev/external-secrets.yaml`, `platform-config/clusters/dev/external-secrets-config.yaml`, the SecretStore manifests and the ExternalSecret resources used by workloads.
-
 ## Files to Review
 Review these files before validation:
 

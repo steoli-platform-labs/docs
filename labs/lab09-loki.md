@@ -90,14 +90,6 @@ This lab consists of the following high-level tasks.
 7. Query Kubernetes logs
 8. Validate end-to-end logging
 
-## Repository Changes
-
-Primary implementation: `platform-config/clusters/dev/loki.yaml` and `platform-config/clusters/dev/alloy.yaml`.
-
-`loki.yaml` deploys Loki in single-binary mode with filesystem-backed ephemeral storage for this development lab. This keeps Lab 09 lightweight and avoids creating object storage or persistent volumes before the later AWS storage and production-hardening labs. Logs are not durable in this lab.
-
-`alloy.yaml` deploys Alloy as a DaemonSet and configures a Kubernetes API-based log pipeline from pod discovery to Loki.
-
 ## Files to Review
 
 Review these files before validation:
@@ -105,6 +97,8 @@ Review these files before validation:
 - `platform-config/clusters/dev/loki.yaml`: Loki Helm chart version, single-binary mode, filesystem storage and replica settings.
 - `platform-config/clusters/dev/alloy.yaml`: Alloy Helm chart version, node-local pod discovery and log forwarding pipeline.
 - `platform-config/bootstrap/root-application.yaml`: root Argo CD Application that discovers `clusters/dev/*.yaml`.
+
+`loki.yaml` deploys Loki in single-binary mode with filesystem-backed ephemeral storage for this development lab. This keeps Lab 09 lightweight and avoids creating object storage or persistent volumes before the later AWS storage and production-hardening labs. Logs are not durable in this lab. `alloy.yaml` deploys Alloy as a DaemonSet and configures a Kubernetes API-based log pipeline from pod discovery to Loki.
 
 ## Step-by-Step Implementation
 

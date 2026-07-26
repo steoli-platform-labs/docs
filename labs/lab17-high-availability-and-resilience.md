@@ -32,9 +32,6 @@ Before starting this lab:
 - AWS CLI, Terraform, kubectl and Helm installed
 - Repository URLs configured
 
-## Repository Changes
-Primary implementation: sample API probes, PodDisruptionBudget, replica settings and scheduling constraints in the Helm chart and environment values.
-
 ## Files to Review
 Review these files before validation:
 

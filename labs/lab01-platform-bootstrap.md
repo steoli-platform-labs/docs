@@ -129,19 +129,9 @@ This lab consists of the following high-level tasks.
 5. Clone the repositories locally
 6. Verify the development environment
 
-## Repository Changes
-
-| Repository | Change |
-|------------|--------|
-| docs | Existing documentation repository is prepared for the project |
-| platform-bootstrap | Empty repository created for Lab 02 bootstrap infrastructure |
-| platform-modules | Empty repository created for reusable Terraform modules |
-| platform-live | Empty repository created for environment compositions |
-| platform-config | Empty repository created for GitOps desired state |
-| helm-charts | Empty repository created for custom Helm charts |
-| sample-api | Empty repository created for the reference application |
-
 ## Files to Review
+
+This lab prepares the documentation repository and creates the empty implementation repositories used by later labs.
 
 | File | Why it matters |
 |------|----------------|

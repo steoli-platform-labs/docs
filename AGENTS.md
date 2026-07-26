@@ -78,7 +78,6 @@ Use this canonical lab section order:
 - `## Introduction`
 - `## Outcome`
 - `## Prerequisites`
-- `## Repository Changes`
 - `## Files to Review`
 - `## Step-by-Step Implementation`
 - `## Expected Results`

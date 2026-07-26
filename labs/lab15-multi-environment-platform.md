@@ -32,9 +32,6 @@ Before starting this lab:
 - AWS CLI, Terraform, kubectl and Helm installed
 - Repository URLs configured
 
-## Repository Changes
-Primary implementation: `platform-config/environments/namespaces.yaml` plus environment-specific GitOps Applications and values as they are introduced.
-
 ## Files to Review
 Review these files before validation:
 

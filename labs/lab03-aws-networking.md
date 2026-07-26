@@ -152,35 +152,9 @@ platform-labs/
 
 `platform-live` and `platform-modules` must be sibling directories because the Development stack initially consumes the module through a local relative path. A future release workflow can replace the relative path with an immutable Git tag.
 
-## Repository Changes
-
-This lab introduces two repositories.
-
-### `platform-modules`
-
-```text
-platform-modules/
-├── modules/core/
-├── scripts/validate.sh
-├── .terraform-version
-├── Makefile
-├── README.md
-└── LICENSE
-```
-
-### `platform-live`
-
-```text
-platform-live/
-├── environments/dev/
-├── scripts/validate.sh
-├── .terraform-version
-├── Makefile
-├── README.md
-└── LICENSE
-```
-
 ## Files to Review
+
+This lab uses `platform-modules` for reusable Terraform logic and `platform-live` for the deployable Development environment.
 
 | File | Why it matters |
 |------|----------------|

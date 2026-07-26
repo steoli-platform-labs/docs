@@ -27,13 +27,9 @@ Do not add separate `Objectives` or `Learning Objectives` sections; use `Outcome
 
 List the previous lab range, required tools and required platform state.
 
-## Repository Changes
-
-List only the repositories that are changed or reviewed in this lab.
-
 ## Files to Review
 
-List the important files and explain why each one matters.
+List the important files and explain why each one matters. Include repository ownership context here when it helps the reader understand where the reviewed resources live.
 
 ## Step-by-Step Implementation
 

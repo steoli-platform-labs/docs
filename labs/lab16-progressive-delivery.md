@@ -32,9 +32,6 @@ Before starting this lab:
 - AWS CLI, Terraform, kubectl and Helm installed
 - Repository URLs configured
 
-## Repository Changes
-Primary implementation: the sample API Rollout chart template, Argo Rollouts controller Application and environment-specific image values.
-
 ## Files to Review
 Review these files before validation:
 

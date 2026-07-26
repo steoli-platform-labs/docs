@@ -99,14 +99,6 @@ This lab consists of the following high-level tasks.
 8. Correlate metrics, logs and traces
 9. Validate end-to-end tracing
 
-## Repository Changes
-
-Primary implementation: `platform-config/clusters/dev/tempo.yaml` and `platform-config/clusters/dev/opentelemetry.yaml`.
-
-`tempo.yaml` deploys Grafana Tempo, the trace storage and query backend.
-
-`opentelemetry.yaml` deploys the OpenTelemetry Collector, the component that receives traces from instrumented workloads and exports them to Tempo.
-
 ## Files to Review
 
 Review these files before validation:
@@ -114,6 +106,8 @@ Review these files before validation:
 - `platform-config/clusters/dev/tempo.yaml`: Tempo chart repository, chart version, release name and monitoring namespace target.
 - `platform-config/clusters/dev/opentelemetry.yaml`: OpenTelemetry Collector chart repository, chart version, collector mode, image and trace pipeline configuration.
 - `platform-config/bootstrap/root-application.yaml`: root Argo CD Application that discovers `clusters/dev/*.yaml`.
+
+`tempo.yaml` deploys Grafana Tempo, the trace storage and query backend. `opentelemetry.yaml` deploys the OpenTelemetry Collector, the component that receives traces from instrumented workloads and exports them to Tempo.
 
 ## Step-by-Step Implementation
 

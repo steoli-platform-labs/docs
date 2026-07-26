@@ -32,17 +32,6 @@ After this lab, the project repositories have GitHub Actions workflows that vali
 - GitHub repositories connected to the local workspace
 - `sample-api` repository allowed to publish packages to GitHub Container Registry using `GITHUB_TOKEN`
 
-## Repository Changes
-
-| Repository | Responsibility |
-|------------|----------------|
-| `sample-api` | Runs application tests, builds the container image and publishes to GHCR |
-| `helm-charts` | Lints the reusable Helm chart |
-| `platform-modules` | Checks Terraform formatting for reusable modules |
-| `platform-live` | Checks Terraform formatting for live environments |
-| `platform-config` | Provides namespace manifests used for a client-side dry run |
-| `docs` | Documents the lab workflow |
-
 ## Files to Review
 
 GitHub Actions are defined inside a `.github/workflows` directory at the root of each repository. Each YAML file in that directory becomes a workflow in that repository's **Actions** tab.

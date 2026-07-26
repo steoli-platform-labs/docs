@@ -32,15 +32,9 @@ After this lab, the Development Terraform root module manages an active Amazon E
 - The Development root module is already applied with networking enabled.
 - Terraform can run from `platform-live/environments/dev`.
 
-## Repository Changes
-
-| Repository | Responsibility |
-|------------|----------------|
-| `platform-live` | Enables EKS in `environments/dev` |
-| `platform-modules` | Provides the reusable EKS module |
-| `docs` | Documents the lab workflow |
-
 ## Files to Review
+
+This lab reviews the reusable EKS module in `platform-modules` and the Development environment composition in `platform-live`.
 
 | File | Why it matters |
 |------|----------------|

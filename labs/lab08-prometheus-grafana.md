@@ -94,13 +94,9 @@ This lab consists of the following high-level tasks.
 8. Verify metrics collection
 9. Explore the Grafana interface
 
-## Repository Changes
-
-Primary implementation: `platform-config/clusters/dev/prometheus.yaml`.
-
 ## Files to Review
 
-Review the observability desired-state files and update any environment-specific values before validation.
+Review the Prometheus and Grafana desired state in `platform-config/clusters/dev/prometheus.yaml` and update any environment-specific values before validation.
 
 ## Step-by-Step Implementation
 
