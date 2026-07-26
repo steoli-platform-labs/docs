@@ -173,7 +173,7 @@ Review these files before validation:
    kubectl -n karpenter logs deployment/karpenter --since=15m --tail=300
    ```
 
-   The controller pod being ready only proves Karpenter is installed. `NodePool` and `EC2NodeClass` must also report ready before provisioning can work.
+   The controller pod being ready only proves Karpenter is installed. `NodePool` and `EC2NodeClass` must also report ready before provisioning can work. The lab NodePool uses on-demand capacity so the first run does not depend on EC2 Spot service-linked-role setup or current Spot availability.
 
 9. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
 
@@ -191,7 +191,7 @@ Review these files before validation:
    kubectl -n karpenter logs deployment/karpenter -f
    ```
 
-   Expected behavior: pods become pending first, Karpenter creates a `NodeClaim`, a new node joins the cluster and the pending pods schedule.
+   Expected behavior: pods become pending first, Karpenter creates a `NodeClaim`, a new node joins the cluster and the pending pods schedule. Seeing three nodes is normal after this point: the original managed node group still has two nodes, and Karpenter has added one more node for the extra capacity.
 
 10. Clean up the temporary namespace after validation:
 
