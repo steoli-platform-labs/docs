@@ -106,12 +106,33 @@ Review the observability desired-state files and update any environment-specific
 
 1. Review `platform-config/clusters/dev/prometheus.yaml` and confirm the chart, namespace and values match the lab environment.
 
-   The Application should use `skipCrds: true`, `crds.upgradeJob.enabled: true`, `SkipDryRunOnMissingResource=true`, `ServerSideApply=true` and `Replace=true`. This lets the chart's CRD upgrade job apply Prometheus Operator CRDs server-side before Argo CD validates Prometheus custom resources, avoiding oversized client-side apply annotations on large CRDs and the CRD bundle ConfigMap.
+   The Application should use a pinned `targetRevision`, `skipCrds: true`, `crds.upgradeJob.enabled: true`, `SkipDryRunOnMissingResource=true`, `ServerSideApply=true` and `Replace=true`. This lets the chart's CRD upgrade job apply Prometheus Operator CRDs server-side before Argo CD validates Prometheus custom resources, avoiding oversized client-side apply annotations on large CRDs and the CRD bundle ConfigMap.
 
    In this lab, CRDs are the API extensions that make resources such as `kind: Prometheus` and `kind: ServiceMonitor` valid Kubernetes objects. If those CRDs are missing, Kubernetes cannot create the Prometheus custom resource, the Prometheus Operator cannot create the Prometheus StatefulSet and the Prometheus service will have no endpoints.
 
-2. Commit and push any required `platform-config` changes.
-3. Let Argo CD reconcile the `prometheus` Application from Git:
+2. Compare the configured chart version with the latest available chart version:
+
+   ```bash
+   cd "$WORKSPACE/platform-config"
+   echo "Configured Prometheus chart: $(yq -r '.spec.source.targetRevision' clusters/dev/prometheus.yaml)"
+   helm show chart kube-prometheus-stack --repo https://prometheus-community.github.io/helm-charts | yq '.version'
+   ```
+
+   The pinned version in `clusters/dev/prometheus.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
+3. Render the chart before relying on Argo CD:
+
+   ```bash
+   helm template prometheus kube-prometheus-stack \
+     --repo https://prometheus-community.github.io/helm-charts \
+     --version "$(yq -r '.spec.source.targetRevision' clusters/dev/prometheus.yaml)" \
+     --namespace monitoring \
+     --values <(yq -r '.spec.source.helm.values' clusters/dev/prometheus.yaml) \
+     >/dev/null
+   ```
+
+   No output means the chart rendered successfully. Any Helm error here will also fail in Argo CD.
+4. Commit and push any required `platform-config` changes.
+5. Let Argo CD reconcile the `prometheus` Application from Git:
 
    ```bash
    cd "$WORKSPACE"
@@ -120,7 +141,7 @@ Review the observability desired-state files and update any environment-specific
    kubectl -n argocd get application prometheus -o wide
    ```
 
-4. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
+6. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
 
    ```bash
    kubectl -n argocd get application prometheus -o wide
@@ -134,13 +155,13 @@ Review the observability desired-state files and update any environment-specific
 
    A missing Prometheus endpoint usually means one of two things: the Prometheus CRD is missing, so Kubernetes rejected the `Prometheus` resource, or the Prometheus Operator has not reconciled that resource into a running StatefulSet yet.
 
-5. Start a local Prometheus port-forward in a separate terminal:
+7. Start a local Prometheus port-forward in a separate terminal:
 
    ```bash
    kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
    ```
 
-6. Validate metrics ingestion through Prometheus from another terminal:
+8. Validate metrics ingestion through Prometheus from another terminal:
 
    ```bash
    curl -fsS http://localhost:9090/-/ready
@@ -150,7 +171,7 @@ Review the observability desired-state files and update any environment-specific
 
    Open `http://localhost:9090/targets` and confirm that Kubernetes, kube-state-metrics and node-exporter targets are present. Some managed-control-plane targets may be unavailable on EKS depending on endpoint access, but the node, kubelet and kube-state-metrics targets should be active.
 
-7. Get the chart-generated Grafana credentials:
+9. Get the chart-generated Grafana credentials:
 
    ```bash
    kubectl -n monitoring get secret prometheus-grafana \
@@ -159,17 +180,17 @@ Review the observability desired-state files and update any environment-specific
      -o jsonpath='{.data.admin-password}' | base64 --decode; printf '\n'
    ```
 
-8. Start a local Grafana port-forward in a separate terminal:
+10. Start a local Grafana port-forward in a separate terminal:
 
    ```bash
    kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
    ```
 
-9. Open `http://localhost:3000` and log in with the username and password from the secret.
+11. Open `http://localhost:3000` and log in with the username and password from the secret.
 
    Confirm the Prometheus data source is healthy from **Connections** -> **Data sources** -> **Prometheus** -> **Save & test**.
 
-10. Review the preloaded Kubernetes dashboards in Grafana.
+12. Review the preloaded Kubernetes dashboards in Grafana.
 
     Open **Dashboards** and inspect dashboards such as:
 

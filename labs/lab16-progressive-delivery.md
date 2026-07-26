@@ -62,7 +62,16 @@ Review these files before validation:
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
    ```
 
-   Confirm Argo Rollouts is installed before relying on `Rollout` resources, and confirm `sample-api` uses an image tag that can be changed through Git.
+   Confirm Argo Rollouts is installed before relying on `Rollout` resources, confirm `targetRevision` is pinned to the tested chart version and confirm `sample-api` uses an image tag that can be changed through Git.
+
+   Compare the configured chart version with the latest available chart version:
+
+   ```bash
+   echo "Configured Argo Rollouts chart: $(yq -r '.spec.source.targetRevision' platform-config/clusters/dev/argo-rollouts.yaml)"
+   helm show chart argo-rollouts --repo https://argoproj.github.io/argo-helm | yq '.version'
+   ```
+
+   The pinned version in `platform-config/clusters/dev/argo-rollouts.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
 3. Render the chart locally with Rollout enabled before committing changes:
 

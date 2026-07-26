@@ -212,7 +212,7 @@ Key files:
    kubectl -n sample-api-dev delete pod -l app.kubernetes.io/name=sample-api
    ```
 4. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
-5. Confirm kubectl points at the intended EKS cluster and install Argo CD:
+5. Confirm kubectl points at the intended EKS cluster, compare the Argo CD chart version and install Argo CD:
 
    ```bash
    cd "$WORKSPACE"
@@ -220,13 +220,19 @@ Key files:
    kubectl config current-context
    kubectl get nodes
 
+   echo "Configured Argo CD chart: $(yq -r '.spec.source.targetRevision' platform-config/clusters/dev/argocd.yaml)"
+   helm show chart argo-cd --repo https://argoproj.github.io/argo-helm | yq '.version'
+
    helm repo add argo https://argoproj.github.io/argo-helm
    helm repo update
    helm upgrade --install argocd argo/argo-cd \
-     --namespace argocd \
-     --create-namespace \
-     --wait
+      --version "$(yq -r '.spec.source.targetRevision' platform-config/clusters/dev/argocd.yaml)" \
+      --namespace argocd \
+      --create-namespace \
+      --wait
    ```
+
+   The pinned version in `platform-config/clusters/dev/argocd.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
 6. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`:
 

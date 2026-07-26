@@ -53,7 +53,16 @@ Review these files before validation:
    yq '.spec.destination' clusters/dev/external-secrets.yaml
    ```
 
-   Confirm the chart repository is `https://charts.external-secrets.io`, the chart is `external-secrets`, the chart version is pinned and the destination namespace is `external-secrets`. The Application should use `ServerSideApply=true` because some External Secrets Operator CRDs are too large for Kubernetes client-side apply annotations.
+   Confirm the chart repository is `https://charts.external-secrets.io`, the chart is `external-secrets`, `targetRevision` is pinned to the tested chart version and the destination namespace is `external-secrets`. The Application should use `ServerSideApply=true` because some External Secrets Operator CRDs are too large for Kubernetes client-side apply annotations.
+
+   Compare the configured chart version with the latest available chart version:
+
+   ```bash
+   echo "Configured External Secrets chart: $(yq -r '.spec.source.targetRevision' clusters/dev/external-secrets.yaml)"
+   helm show chart external-secrets --repo https://charts.external-secrets.io | yq '.version'
+   ```
+
+   The pinned version in `clusters/dev/external-secrets.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
 2. Check whether the SecretStore desired state exists:
 
