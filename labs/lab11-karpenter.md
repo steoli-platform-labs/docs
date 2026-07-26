@@ -33,14 +33,16 @@ Before starting this lab:
 - Repository URLs configured
 
 ## Repository Changes
-Primary implementation: `platform-config/clusters/dev/karpenter.yaml` plus the Karpenter provisioning resources that define cluster capacity.
+Primary implementation: `platform-config/clusters/dev/karpenter.yaml`, `platform-config/clusters/dev/karpenter-provisioning.yaml`, the Karpenter provisioning resources that define cluster capacity and the EKS Terraform IAM resources that let Karpenter call AWS APIs.
 
 ## Files to Review
 Review these files before validation:
 
 - `platform-config/clusters/dev/karpenter.yaml`: Argo CD Application for the Karpenter Helm chart.
-- Karpenter `NodePool` and `EC2NodeClass` manifests, if present in the repo. These are required for Karpenter to create nodes.
+- `platform-config/clusters/dev/karpenter-provisioning.yaml`: Argo CD Application for Karpenter `NodePool` and `EC2NodeClass` resources.
+- `platform-config/addons/karpenter/nodepool.yaml` and `platform-config/addons/karpenter/ec2nodeclass.yaml`: provisioning resources required for Karpenter to create nodes.
 - `platform-live/environments/dev`: Terraform outputs and tags that Karpenter depends on, such as cluster name, private subnets, security groups and node IAM role details.
+- `platform-modules/modules/eks/karpenter.tf`: Karpenter controller IAM role, node IAM role, EKS Pod Identity association and node access entry.
 
 ## Step-by-Step Implementation
 
@@ -82,11 +84,23 @@ Review these files before validation:
      --output table
    ```
 
-   `AWS_PAGER=""` disables the AWS CLI pager so these commands return directly to the terminal when pasted as a block. `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment and stores it in `CLUSTER_NAME` for the AWS CLI commands. `SUBNET_FILTER_VALUES` uses the Terraform subnet outputs instead of assuming a tag filter, so the command prints the subnets that the EKS cluster actually uses. Karpenter needs discoverable private subnets, security groups and an IAM role or instance profile for nodes.
+   `AWS_PAGER=""` disables the AWS CLI pager so these commands return directly to the terminal when pasted as a block. `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment and stores it in `CLUSTER_NAME` for the AWS CLI commands. `SUBNET_FILTER_VALUES` uses the Terraform subnet outputs instead of assuming a tag filter, so the command prints the subnets that the EKS cluster actually uses. Karpenter needs discoverable private subnets, security groups, a controller IAM role connected through EKS Pod Identity and a node IAM role for created instances.
 
    The Terraform network module tags subnets with the cluster name for Kubernetes discovery. If `aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/cluster/$CLUSTER_NAME,Values=shared,owned"` returns no subnets, pull the latest `platform-live` changes and run Terraform plan/apply for the dev environment so the subnet discovery tag matches the actual EKS cluster name.
 
-4. Render or validate the Karpenter desired state before relying on Argo CD:
+4. Apply the Terraform IAM resources required by Karpenter:
+
+   ```bash
+   cd "$WORKSPACE/platform-live/environments/dev"
+   terraform plan
+   terraform apply
+   terraform output -raw karpenter_controller_role_arn
+   terraform output -raw karpenter_node_role_name
+   ```
+
+   Expected result: Terraform creates or confirms the Karpenter controller role, the Karpenter node role, the EKS Pod Identity association for `karpenter/karpenter` and an EKS access entry for Karpenter-created nodes. The node role output should match the `role` value in `platform-config/addons/karpenter/ec2nodeclass.yaml`.
+
+5. Render or validate the Karpenter desired state before relying on Argo CD:
 
    ```bash
    cd "$WORKSPACE/platform-config"
@@ -100,28 +114,32 @@ Review these files before validation:
      >/dev/null
 
    kubectl apply --dry-run=client -f clusters/dev/karpenter.yaml
+   kubectl apply --dry-run=client -f clusters/dev/karpenter-provisioning.yaml
+   kubectl apply --dry-run=client -f addons/karpenter/nodepool.yaml
+   kubectl apply --dry-run=client -f addons/karpenter/ec2nodeclass.yaml
    ```
 
    No output from `helm template` means the chart rendered successfully. Any Helm error here will also fail in Argo CD. The `targetRevision` value should be pinned to a tested Karpenter chart version so future chart changes do not unexpectedly change this lab. The Helm value `settings.clusterName` must match the Terraform `cluster_name` output from the dev environment.
 
-5. Commit and push the desired state if you changed it:
+6. Commit and push the desired state if you changed it:
 
    ```bash
    git status --short
-   git add clusters/dev/karpenter.yaml
+   git add clusters/dev/karpenter.yaml clusters/dev/karpenter-provisioning.yaml addons/karpenter/
    git commit -m "feat: configure karpenter"
    git push
    ```
 
-   If you created separate `NodePool` or `EC2NodeClass` manifests, stage those actual paths before committing. If `git status --short` prints no files, there is nothing to commit.
+   If `git status --short` prints no files, there is nothing to commit.
 
-6. Refresh the root Argo CD Application, then reconcile `karpenter`:
+7. Refresh the root Argo CD Application, then reconcile `karpenter`:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application karpenter -o wide
    kubectl -n argocd annotate application karpenter argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application karpenter -o wide
+   kubectl -n argocd get application karpenter-provisioning -o wide
    kubectl -n argocd describe application karpenter
    kubectl -n karpenter get deployment,pod -o wide
    kubectl -n karpenter get events --sort-by=.lastTimestamp
@@ -135,10 +153,11 @@ Review these files before validation:
 
    If the child Application stays on an old revision, inspect `platform-root` before troubleshooting the child Application.
 
-7. Validate Karpenter readiness and configuration:
+8. Validate Karpenter readiness and configuration:
 
    ```bash
    kubectl -n argocd get application karpenter -o wide
+   kubectl -n argocd get application karpenter-provisioning -o wide
    kubectl -n karpenter get pods
    kubectl get nodepool,ec2nodeclass
    kubectl describe nodepool default
@@ -148,7 +167,7 @@ Review these files before validation:
 
    The controller pod being ready only proves Karpenter is installed. `NodePool` and `EC2NodeClass` must also report ready before provisioning can work.
 
-8. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
+9. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
 
    ```bash
    kubectl create namespace karpenter-test
@@ -166,7 +185,7 @@ Review these files before validation:
 
    Expected behavior: pods become pending first, Karpenter creates a `NodeClaim`, a new node joins the cluster and the pending pods schedule.
 
-9. Clean up the temporary namespace after validation:
+10. Clean up the temporary namespace after validation:
 
    ```bash
    kubectl delete namespace karpenter-test
