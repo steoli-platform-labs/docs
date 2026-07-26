@@ -175,7 +175,39 @@ Review these files before validation:
 
    The controller pod being ready only proves Karpenter is installed. `NodePool` and `EC2NodeClass` must also report ready before provisioning can work. The lab NodePool uses on-demand capacity so the first run does not depend on EC2 Spot service-linked-role setup or current Spot availability.
 
-9. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
+9. Configure the instance types Karpenter may launch:
+
+   ```bash
+   cd "$WORKSPACE/platform-config"
+
+   yq '.spec.template.spec.requirements' addons/karpenter/nodepool.yaml
+
+   if ! yq -e '.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type")' addons/karpenter/nodepool.yaml >/dev/null 2>&1; then
+     yq -i '.spec.template.spec.requirements += [{"key":"node.kubernetes.io/instance-type","operator":"In","values":["t3.small","t3.medium","c7a.medium"]}]' addons/karpenter/nodepool.yaml
+   fi
+
+   yq -i '(.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type")).operator = "In"' addons/karpenter/nodepool.yaml
+   yq -i '(.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type")).values = ["t3.small", "t3.medium", "c7a.medium"]' addons/karpenter/nodepool.yaml
+
+   yq '.spec.template.spec.requirements' addons/karpenter/nodepool.yaml
+   kubectl apply --dry-run=client -f addons/karpenter/nodepool.yaml
+   ```
+
+   This keeps the lab predictable by limiting Karpenter to a small set of inexpensive instance types. Prefer a short list over a single instance type, because one exact type may be temporarily unavailable in an Availability Zone. If you changed the file, commit and push it, then refresh `karpenter-provisioning` before creating the test workload:
+
+   ```bash
+   git status --short
+   git add addons/karpenter/nodepool.yaml
+   git commit -m "configure karpenter instance types"
+   git push
+   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd annotate application karpenter-provisioning argocd.argoproj.io/refresh=hard --overwrite
+   kubectl describe nodepool default
+   ```
+
+   If `git status --short` prints no files, the instance-type requirement is already configured and there is nothing to commit.
+
+10. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
 
    ```bash
    kubectl create namespace karpenter-test
@@ -211,7 +243,7 @@ Review these files before validation:
    kubectl get nodeclaim -o wide
    ```
 
-10. Clean up the temporary namespace after validation:
+11. Clean up the temporary namespace after validation:
 
    ```bash
    kubectl delete namespace karpenter-test
