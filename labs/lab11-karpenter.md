@@ -202,7 +202,14 @@ Review these files before validation:
    kubectl -n karpenter logs deployment/karpenter -f
    ```
 
-   Expected behavior: pods become pending first, Karpenter creates a `NodeClaim`, a new node joins the cluster and the pending pods schedule. Seeing three nodes is normal after this point: the original managed node group still has two nodes, and Karpenter has added one more node for the extra capacity.
+   Expected behavior: pods become pending first, Karpenter creates one or more `NodeClaim` resources, one or more new nodes join the cluster and the pending pods schedule. The exact number of nodes depends on current free capacity, selected instance types, daemonset overhead and how many test pods you created. Do not expect exactly three nodes.
+
+   The `kubectl get node -w` command is a watch stream. It can print the same node multiple times as status changes from `NotReady` to `Ready`, so repeated lines do not mean Kubernetes created duplicate nodes with the same name. To see the current unique nodes, run a normal non-watch query in another terminal:
+
+   ```bash
+   kubectl get nodes -o wide
+   kubectl get nodeclaim -o wide
+   ```
 
 10. Clean up the temporary namespace after validation:
 
