@@ -53,7 +53,7 @@ Review these files before validation:
    yq '.spec.destination' clusters/dev/external-secrets.yaml
    ```
 
-   Confirm the chart repository is `https://charts.external-secrets.io`, the chart is `external-secrets` and the destination namespace is `external-secrets`.
+   Confirm the chart repository is `https://charts.external-secrets.io`, the chart is `external-secrets`, the chart version is pinned and the destination namespace is `external-secrets`. The Application should use `ServerSideApply=true` because some External Secrets Operator CRDs are too large for Kubernetes client-side apply annotations.
 
 2. Check whether the SecretStore desired state exists:
 
@@ -139,6 +139,8 @@ Review these files before validation:
    kubectl -n argocd get application external-secrets -o wide
    ```
 
+   Expected behavior: after the latest `platform-config` commit is reconciled, `external-secrets` should move toward `Synced / Healthy`. If it shows `OutOfSync / Degraded`, describe the Application and check for sync errors before continuing.
+
 8. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
 
    ```bash
@@ -192,6 +194,8 @@ If the operator is healthy but no Kubernetes Secret appears:
 - Confirm the remote AWS secret exists and the remote key/property names match.
 - Check operator logs for authentication or `AccessDenied` errors.
 - Do not troubleshoot by printing decoded secret values.
+
+If the Application is `OutOfSync / Degraded` and the sync error mentions `metadata.annotations: Too long`, Argo CD tried to apply large CRDs using client-side apply. Confirm `platform-config/clusters/dev/external-secrets.yaml` includes `ServerSideApply=true`, commit and push the change, refresh `platform-root`, then refresh `external-secrets` again.
 
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
