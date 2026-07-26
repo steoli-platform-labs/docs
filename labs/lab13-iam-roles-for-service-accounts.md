@@ -21,20 +21,6 @@ IRSA integrates Kubernetes service accounts with AWS IAM through the Amazon EKS 
 
 Concepts introduced in this lab include IAM roles, IAM policies, trust policies, Kubernetes service accounts, OIDC federation, AWS STS and temporary credentials. See the [Concepts Reference](../concepts/README.md) for how IRSA avoids static AWS keys in pods.
 
-## Outcome
-
-Implement and validate IRSA in the complete platform reference implementation.
-
-## Prerequisites
-
-Before starting this lab:
-
-- Lab 01 - Lab 12 completed
-- Amazon EKS operational
-- OIDC provider configured
-- AWS Secrets Manager operational
-- AWS CLI, Terraform, kubectl and Helm installed, with repository URLs configured
-
 The request flow for IRSA is:
 
 ```text
@@ -61,6 +47,21 @@ The following AWS resources are introduced during this lab.
 | IAM Policy | Least privilege permissions |
 | IAM Trust Policy | OIDC federation |
 | AWS STS | Temporary credentials |
+
+## Outcome
+
+Implement and validate IRSA in the complete platform reference implementation.
+
+## Prerequisites
+
+Before starting this lab:
+
+- Lab 01 - Lab 12 completed.
+- `kubectl` points at the Development EKS cluster.
+- Argo CD and the GitOps root Application are operational.
+- The Development Terraform environment has been applied from the current repositories.
+- External Secrets Operator and Karpenter are already healthy from earlier labs.
+- AWS CLI, Terraform, kubectl and Helm are installed, with repository URLs configured.
 
 The platform follows AWS security best practices.
 
