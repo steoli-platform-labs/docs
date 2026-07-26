@@ -9,7 +9,7 @@
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-60 minutes |
 | **Estimated Cost** | Low |
-| **Terraform** | No |
+| **Terraform** | Yes |
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
@@ -33,7 +33,7 @@ Before starting this lab:
 - Repository URLs configured
 
 ## Repository Changes
-Primary implementation: `platform-config/clusters/dev/external-secrets.yaml`, `platform-config/clusters/dev/external-secrets-config.yaml`, the SecretStore manifests and the ExternalSecret resources used by workloads.
+Primary implementation: External Secrets IAM/Pod Identity resources in Terraform, `platform-config/clusters/dev/external-secrets.yaml`, `platform-config/clusters/dev/external-secrets-config.yaml`, the SecretStore manifests and the ExternalSecret resources used by workloads.
 
 ## Files to Review
 Review these files before validation:
@@ -41,6 +41,8 @@ Review these files before validation:
 - `platform-config/clusters/dev/external-secrets.yaml`: Argo CD Application for the External Secrets Operator Helm chart.
 - `platform-config/clusters/dev/external-secrets-config.yaml`: Argo CD Application that applies the External Secrets configuration under `addons/external-secrets`.
 - `platform-config/addons/external-secrets/cluster-secret-store.yaml`: `ClusterSecretStore` for AWS Secrets Manager.
+- `platform-modules/modules/eks/external-secrets.tf`: IAM role, policy and EKS Pod Identity association for External Secrets Operator.
+- `platform-live/environments/dev/outputs.tf`: exposes the External Secrets IAM role ARN for validation.
 - `helm-charts/charts/sample-api/templates/externalsecret.yaml`: optional workload-level ExternalSecret template.
 - `platform-config/clusters/dev/sample-api.yaml`: values that enable or disable the sample API ExternalSecret.
 
@@ -112,7 +114,22 @@ Review these files before validation:
 
    `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. By default, it comes from the sample API chart's `secret.remoteKey` value. The command creates a deliberately non-sensitive JSON test value if the secret does not exist, then confirms only the secret metadata. Do not run commands that print secret values during the lab.
 
-5. Render the relevant charts before relying on Argo CD:
+5. Apply the External Secrets IAM and Pod Identity prerequisites:
+
+   ```bash
+   cd "$WORKSPACE"
+   terraform -chdir=platform-modules fmt -recursive
+   terraform -chdir=platform-live fmt -recursive
+   terraform -chdir=platform-live/environments/dev validate
+   terraform -chdir=platform-live/environments/dev plan
+   terraform -chdir=platform-live/environments/dev apply
+
+   terraform -chdir=platform-live/environments/dev output external_secrets_role_arn
+   ```
+
+   Terraform creates a least-privilege IAM role that can read the lab secret path and associates it with the `external-secrets/external-secrets` Kubernetes service account through EKS Pod Identity. Without this step, the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
+
+6. Render the relevant charts before relying on Argo CD:
 
    ```bash
    helm template external-secrets external-secrets \
@@ -129,7 +146,7 @@ Review these files before validation:
 
    A render failure here means Argo CD will also fail to generate manifests.
 
-6. Commit and push the desired state if you changed it:
+7. Commit and push the desired state if you changed it:
 
    ```bash
    cd "$WORKSPACE/platform-config"
@@ -141,7 +158,7 @@ Review these files before validation:
 
    If you added different SecretStore manifests or Argo CD wiring files, stage those actual paths too. If there are no changed files, skip the commit.
 
-7. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api`:
+8. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api`:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
@@ -154,7 +171,7 @@ Review these files before validation:
 
    Expected behavior: after the latest `platform-config` commit is reconciled, `external-secrets`, `external-secrets-config` and `sample-api` should move toward `Synced / Healthy`. If any Application shows `OutOfSync / Degraded`, describe that Application and check for sync errors before continuing.
 
-8. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
+9. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
 
    ```bash
    kubectl -n argocd get application external-secrets -o wide

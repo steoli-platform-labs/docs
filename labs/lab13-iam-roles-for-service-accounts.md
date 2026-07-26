@@ -74,7 +74,7 @@ The platform follows AWS security best practices.
 
 - **GitOps deployment:** All Kubernetes manifests are managed through ArgoCD. Terraform provisions the required IAM resources.
 
-- **Platform migration:** Existing platform services, including External Secrets Operator and Karpenter, are migrated from static credentials to IRSA.
+- **Platform migration:** Workloads that need AWS access should use dedicated workload identity. Earlier labs use EKS Pod Identity for controllers such as Karpenter and External Secrets Operator; this lab focuses on the IRSA pattern and how to validate service-account-to-IAM trust.
 
 This lab consists of the following high-level tasks.
 
@@ -83,8 +83,8 @@ This lab consists of the following high-level tasks.
 3. Create IAM policies
 4. Configure trust relationships
 5. Update Kubernetes Service Accounts
-6. Migrate External Secrets Operator
-7. Migrate Karpenter
+6. Validate existing controller workload identity
+7. Add IRSA to workloads that need it
 8. Verify AWS authentication
 9. Remove static credentials
 
@@ -98,8 +98,8 @@ Review these files before validation:
 
 - `platform-live/environments/dev`: Terraform composition and outputs for the EKS OIDC provider and IAM roles.
 - `platform-modules`: reusable IAM or EKS module code if IRSA support is implemented there.
-- `platform-config/clusters/dev/external-secrets.yaml` and `platform-config/clusters/dev/karpenter.yaml`: GitOps Applications for AWS-integrated controllers.
-- Helm values or Kubernetes manifests that render service accounts for External Secrets Operator, Karpenter and other AWS-integrated workloads.
+- `platform-config/clusters/dev/external-secrets.yaml` and `platform-config/clusters/dev/karpenter.yaml`: GitOps Applications for AWS-integrated controllers that already use EKS Pod Identity.
+- Helm values or Kubernetes manifests that render service accounts for workloads using IRSA.
 
 ## Step-by-Step Implementation
 
@@ -126,7 +126,7 @@ Review these files before validation:
    kubectl -n karpenter get serviceaccount karpenter -o yaml
    ```
 
-   External Secrets needs permission to read selected AWS Secrets Manager paths. Karpenter needs permission to provision and manage EC2 capacity. These should be separate IAM roles.
+   External Secrets needs permission to read selected AWS Secrets Manager paths. Karpenter needs permission to provision and manage EC2 capacity. In this platform, those controllers already use separate EKS Pod Identity roles from earlier labs. Use this lab to inspect that pattern and to add IRSA for workloads that specifically need OIDC-based role assumption.
 
 3. Review Terraform for IAM roles, trust policies and policies:
 
@@ -136,7 +136,7 @@ Review these files before validation:
      platform-live platform-modules || true
    ```
 
-   Confirm each trust policy restricts `sub` to the exact Kubernetes namespace and service account, such as `system:serviceaccount:external-secrets:external-secrets`.
+   For IRSA roles, confirm each trust policy restricts `sub` to the exact Kubernetes namespace and service account, such as `system:serviceaccount:<namespace>:<service-account>`.
 
 4. Apply Terraform changes first if IAM roles or trust policies changed. Before applying, run the Terraform validation checks:
 
@@ -155,7 +155,7 @@ Review these files before validation:
 
    Terraform must create IAM roles before Kubernetes workloads are configured to use them.
 
-5. Review and add service-account annotations in GitOps-managed desired state:
+5. Review and add service-account annotations in GitOps-managed desired state for workloads using IRSA:
 
    ```bash
    grep -R "eks.amazonaws.com/role-arn" -n platform-config helm-charts || true
@@ -169,17 +169,14 @@ Review these files before validation:
 
    Add annotations through Helm values or service-account manifests, not by manually patching live service accounts.
 
-6. Commit and push GitOps annotation changes after the IAM roles exist:
+6. Commit and push GitOps annotation changes after any new IRSA roles exist:
 
    ```bash
    cd "$WORKSPACE/platform-config"
    git status --short
-   git add clusters/dev/external-secrets.yaml clusters/dev/karpenter.yaml addons/external-secrets/cluster-secret-store.yaml
-   git commit -m "feat: configure irsa service accounts"
-   git push
    ```
 
-   If annotations were added in different GitOps or Helm values files, stage those actual paths instead. Skip the commit if there are no changed files.
+   If GitOps files changed, stage those actual paths, commit them and push. Skip the commit if there are no changed files.
 
 7. Refresh the root Argo CD Application and reconcile affected Applications:
 
@@ -188,20 +185,21 @@ Review these files before validation:
    kubectl -n argocd get applications.argoproj.io -o wide
    ```
 
-   If only specific apps changed, refresh those apps too, such as `external-secrets` or `karpenter`.
+    If only specific apps changed, refresh those apps too.
 
 8. Validate that pods use the annotated service accounts:
 
    ```bash
-   kubectl -n external-secrets get serviceaccount external-secrets -o yaml
-   kubectl -n karpenter get serviceaccount karpenter -o yaml
+    kubectl -n external-secrets get serviceaccount external-secrets -o yaml
+    kubectl -n karpenter get serviceaccount karpenter -o yaml
+    aws eks list-pod-identity-associations --cluster-name "$(terraform -chdir=platform-live/environments/dev output -raw cluster_name)"
    kubectl -n external-secrets get pod -l app.kubernetes.io/name=external-secrets \
      -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
    kubectl -n karpenter get pod -l app.kubernetes.io/name=karpenter \
      -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
    ```
 
-   Verify each service account contains the expected annotation:
+    Controllers that use EKS Pod Identity do not need `eks.amazonaws.com/role-arn` service-account annotations. Workloads using IRSA should contain the expected annotation:
 
    ```text
    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<role-name>
