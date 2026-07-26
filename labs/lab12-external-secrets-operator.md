@@ -77,10 +77,16 @@ Review these files before validation:
 
    ```bash
    export AWS_PAGER=""
-   aws secretsmanager describe-secret --secret-id <test-secret-name-or-arn>
+
+   CHART_SECRET_ID="$(yq -r '.secret.remoteKey // ""' "$WORKSPACE/helm-charts/charts/sample-api/values.yaml")"
+   APP_SECRET_ID="$(yq -r '.spec.source.helm.values | from_yaml | .secret.remoteKey // ""' "$WORKSPACE/platform-config/clusters/dev/sample-api.yaml")"
+   SECRET_ID="${APP_SECRET_ID:-$CHART_SECRET_ID}"
+
+   printf 'Using AWS Secrets Manager secret id: %s\n' "$SECRET_ID"
+   aws secretsmanager describe-secret --secret-id "$SECRET_ID"
    ```
 
-   This confirms the secret metadata exists. Do not run commands that print secret values during the lab.
+   `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. With the current defaults this resolves to `solab/sample-api`. This confirms the secret metadata exists. Do not run commands that print secret values during the lab.
 
 5. Render the relevant charts before relying on Argo CD:
 
