@@ -67,14 +67,22 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
    CLUSTER_NAME=$(terraform output -raw cluster_name)
+   SUBNET_FILTER_VALUES=$(terraform output -json eks_private_subnet_ids | yq -r 'join(",")')
+
+   if [ -z "$SUBNET_FILTER_VALUES" ]; then
+     SUBNET_FILTER_VALUES=$(terraform output -json platform_private_subnet_ids | yq -r 'join(",")')
+   fi
 
    aws sts get-caller-identity
    aws eks describe-cluster --name "$CLUSTER_NAME" --query 'cluster.name' --output text
-   aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/cluster/$CLUSTER_NAME,Values=shared,owned" \
-     --query 'Subnets[*].[SubnetId,AvailabilityZone,Tags]' --output table
+   aws ec2 describe-subnets --filters "Name=subnet-id,Values=$SUBNET_FILTER_VALUES" \
+     --query 'Subnets[*].[SubnetId,AvailabilityZone,CidrBlock,Tags[?Key==`Name`].Value|[0]]' \
+     --output table
    ```
 
-   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment and stores it in `CLUSTER_NAME` for the AWS CLI commands. Karpenter needs discoverable private subnets, security groups and an IAM role or instance profile for nodes.
+   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment and stores it in `CLUSTER_NAME` for the AWS CLI commands. `SUBNET_FILTER_VALUES` uses the Terraform subnet outputs instead of assuming a tag filter, so the command prints the subnets that the EKS cluster actually uses. Karpenter needs discoverable private subnets, security groups and an IAM role or instance profile for nodes.
+
+   The Terraform network module tags subnets with the cluster name for Kubernetes discovery. If `aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/cluster/$CLUSTER_NAME,Values=shared,owned"` returns no subnets, pull the latest `platform-live` changes and run Terraform plan/apply for the dev environment so the subnet discovery tag matches the actual EKS cluster name.
 
 4. Render or validate the Karpenter desired state before relying on Argo CD:
 
