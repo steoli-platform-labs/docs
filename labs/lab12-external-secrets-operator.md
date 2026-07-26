@@ -114,13 +114,12 @@ Review these files before validation:
 
    `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. By default, it comes from the sample API chart's `secret.remoteKey` value. The command creates a deliberately non-sensitive JSON test value if the secret does not exist, then confirms only the secret metadata. Do not run commands that print secret values during the lab.
 
-5. Verify the External Secrets IAM and Pod Identity prerequisites:
+5. Confirm the External Secrets IAM and Pod Identity prerequisites from the earlier Terraform labs:
 
    ```bash
    cd "$WORKSPACE"
-   terraform -chdir=platform-live/environments/dev validate
-
    CLUSTER_NAME="$(terraform -chdir=platform-live/environments/dev output -raw cluster_name)"
+
    terraform -chdir=platform-live/environments/dev output external_secrets_role_arn
 
    aws eks list-pod-identity-associations \
@@ -129,18 +128,7 @@ Review these files before validation:
      --service-account external-secrets
    ```
 
-   These resources are Terraform-managed platform prerequisites. A fresh run of the earlier infrastructure labs may already have created them from the current repository state. The role should be present and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account.
-
-   If the output or association is missing, reconcile the Terraform live environment before continuing:
-
-   ```bash
-   terraform -chdir=platform-modules fmt -recursive
-   terraform -chdir=platform-live fmt -recursive
-   terraform -chdir=platform-live/environments/dev plan
-   terraform -chdir=platform-live/environments/dev apply
-   ```
-
-   Without this prerequisite, the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
+   These Terraform-managed resources were created when you applied the current Development infrastructure in the earlier Terraform labs. The role output should exist and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account. If either check is missing, stop and reconcile `platform-live/environments/dev` before continuing; otherwise the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
 
 6. Render the relevant charts before relying on Argo CD:
 
