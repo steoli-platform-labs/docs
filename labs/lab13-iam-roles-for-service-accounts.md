@@ -48,21 +48,6 @@ The following AWS resources are introduced during this lab.
 | IAM Trust Policy | OIDC federation |
 | AWS STS | Temporary credentials |
 
-## Outcome
-
-Implement and validate IRSA in the complete platform reference implementation.
-
-## Prerequisites
-
-Before starting this lab:
-
-- Lab 01 - Lab 12 completed.
-- `kubectl` points at the Development EKS cluster.
-- Argo CD and the GitOps root Application are operational.
-- The Development Terraform environment has been applied from the current repositories.
-- External Secrets Operator and Karpenter are already healthy from earlier labs.
-- AWS CLI, Terraform, kubectl and Helm are installed, with repository URLs configured.
-
 The platform follows AWS security best practices.
 
 - **Workload identity:** Each Kubernetes workload authenticates using its own IAM role.
@@ -88,6 +73,21 @@ This lab consists of the following high-level tasks.
 7. Add IRSA to workloads that need it
 8. Verify AWS authentication
 9. Remove static credentials
+
+## Outcome
+
+Implement and validate IRSA in the complete platform reference implementation.
+
+## Prerequisites
+
+Before starting this lab:
+
+- Lab 01 - Lab 12 completed.
+- `kubectl` points at the Development EKS cluster.
+- Argo CD and the GitOps root Application are operational.
+- The Development Terraform environment has been applied from the current repositories.
+- External Secrets Operator and Karpenter are already healthy from earlier labs.
+- AWS CLI, Terraform, kubectl and Helm are installed, with repository URLs configured.
 
 ## Files to Review
 
