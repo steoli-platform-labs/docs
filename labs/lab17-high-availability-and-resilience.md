@@ -53,7 +53,7 @@ Review these files before validation:
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
    ```
 
-   Confirm the dev environment has enough replicas for disruption tests. A `PodDisruptionBudget` with `minAvailable: 2` requires at least two healthy pods before voluntary disruptions can succeed.
+   Confirm the dev environment keeps a small steady-state replica count while still allowing controlled maintenance. The chart uses a `PodDisruptionBudget` with `maxUnavailable: 1`, which protects the service from losing both replicas during voluntary disruption without requiring an extra baseline pod.
 
 2. Review the sample API chart templates for probes and disruption protection:
 
@@ -148,7 +148,7 @@ The sample API has health probes, disruption protection and scheduling rules tha
 - Pods are spread across more than one node and, when capacity exists, more than one zone.
 - Readiness, liveness and startup probes behave as intended.
 - Deleting a pod causes automatic replacement without sustained service failure.
-- PDB blocks voluntary disruption that would violate `minAvailable`.
+- PDB allows one voluntary disruption at a time and blocks disruption beyond `maxUnavailable`.
 - Graceful termination completes within the configured grace period.
 - HPA and scheduling constraints do not conflict with the PDB or available capacity.
 
@@ -165,7 +165,7 @@ kubectl get nodes -L topology.kubernetes.io/zone
 If the PDB blocks a drain:
 
 - Confirm the current replica count and ready pod count.
-- Confirm `minAvailable` is not higher than the environment can satisfy.
+- Confirm `maxUnavailable` still allows the intended maintenance action.
 - This may be correct behavior; a PDB should block voluntary disruption that would reduce availability too far.
 
 If all pods schedule on one node:

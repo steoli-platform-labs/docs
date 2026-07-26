@@ -19,7 +19,7 @@ This lab validates the reusable `sample-api` Helm chart.
 
 Application deployment remains GitOps-driven in later labs. This lab only lints and renders the chart locally.
 
-Concepts introduced in this lab include Helm charts, values, templates, rendered manifests, Kubernetes Deployments, Services, probes and client-side dry runs. See the [Concepts Reference](../concepts/README.md) for the role each item plays.
+Concepts introduced in this lab include Helm charts, values, templates, rendered manifests, Kubernetes Deployments, Services, probes, PodDisruptionBudgets and client-side dry runs. See the [Concepts Reference](../concepts/README.md) for the role each item plays.
 
 ## Outcome
 
@@ -46,6 +46,7 @@ After this lab, the reusable `sample-api` Helm chart has been linted and rendere
 | `helm-charts/charts/sample-api/values.yaml` | Defines configurable chart defaults |
 | `helm-charts/charts/sample-api/templates/deployment.yaml` | Renders the default workload |
 | `helm-charts/charts/sample-api/templates/service.yaml` | Exposes the workload internally |
+| `helm-charts/charts/sample-api/templates/pdb.yaml` | Allows one voluntary disruption at a time without increasing baseline replicas |
 | `helm-charts/charts/sample-api/templates/_helpers.tpl` | Centralizes common labels and names |
 
 ## Step-by-Step Implementation
@@ -113,6 +114,7 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 - CPU and memory requests are present.
 - `imagePullSecrets` can be configured when the image registry requires authentication.
 - Optional ExternalSecret resources render only when enabled.
+- PDB renders with `maxUnavailable: 1` so node maintenance can proceed without adding steady-state pods.
 - Rendered resources pass Kubernetes client-side schema validation.
 
 ## Troubleshooting
