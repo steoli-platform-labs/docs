@@ -168,7 +168,7 @@ Review these files before validation:
    kubectl -n argocd get application karpenter-provisioning -o wide
    kubectl -n karpenter get pods
    kubectl get nodepool,ec2nodeclass
-   kubectl describe nodepool default
+   kubectl describe nodepool karpenter
    kubectl describe ec2nodeclass default
    kubectl -n karpenter logs deployment/karpenter --since=15m --tail=300
    ```
@@ -202,7 +202,7 @@ Review these files before validation:
    git push
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application karpenter-provisioning argocd.argoproj.io/refresh=hard --overwrite
-   kubectl describe nodepool default
+   kubectl describe nodepool karpenter
    ```
 
    If `git status --short` prints no files, the instance-type requirement is already configured and there is nothing to commit.
