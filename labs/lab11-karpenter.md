@@ -88,17 +88,25 @@ Review these files before validation:
 
    The Terraform network module tags subnets with the cluster name for Kubernetes discovery. If `aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/cluster/$CLUSTER_NAME,Values=shared,owned"` returns no subnets, pull the latest `platform-live` changes and run Terraform plan/apply for the dev environment so the subnet discovery tag matches the actual EKS cluster name.
 
-4. Apply the Terraform IAM resources required by Karpenter:
+4. Verify the Terraform resources required by Karpenter:
 
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
-   terraform plan
-   terraform apply
    terraform output -raw karpenter_controller_role_arn
    terraform output -raw karpenter_node_role_name
    ```
 
-   Expected result: Terraform creates or confirms the Karpenter controller role, the Karpenter node role, the EKS Pod Identity association for `karpenter/karpenter` and an EKS access entry for Karpenter-created nodes. The node role output should match the `role` value in `platform-config/addons/karpenter/ec2nodeclass.yaml`.
+   Expected result: both outputs print values. These resources are part of the EKS Terraform configuration and should already exist because the earlier Terraform labs applied the current platform configuration. The node role output should match the `role` value in `platform-config/addons/karpenter/ec2nodeclass.yaml`.
+
+   If either output is missing, pull the latest `platform-modules` and `platform-live` repos, then return to the EKS Terraform lab flow and apply the dev environment before continuing. Do not treat Lab 11 as a place to make new Terraform changes unless you are upgrading an older already-created lab environment.
+
+   Optional drift check:
+
+   ```bash
+   terraform plan -detailed-exitcode
+   ```
+
+   Exit code `0` means the environment already matches the Terraform configuration. Exit code `2` means Terraform found unapplied changes; review the plan before applying anything.
 
 5. Render or validate the Karpenter desired state before relying on Argo CD:
 
