@@ -65,13 +65,16 @@ Review these files before validation:
 3. Confirm the AWS inputs that Karpenter needs:
 
    ```bash
+   cd "$WORKSPACE/platform-live/environments/dev"
+   CLUSTER_NAME=$(terraform output -raw cluster_name)
+
    aws sts get-caller-identity
-   aws eks describe-cluster --name <cluster-name> --query 'cluster.name' --output text
-   aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/cluster/<cluster-name>,Values=shared,owned" \
+   aws eks describe-cluster --name "$CLUSTER_NAME" --query 'cluster.name' --output text
+   aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/cluster/$CLUSTER_NAME,Values=shared,owned" \
      --query 'Subnets[*].[SubnetId,AvailabilityZone,Tags]' --output table
    ```
 
-   Karpenter needs discoverable private subnets, security groups and an IAM role or instance profile for nodes. Use your actual cluster name from the Terraform outputs.
+   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment and stores it in `CLUSTER_NAME` for the AWS CLI commands. Karpenter needs discoverable private subnets, security groups and an IAM role or instance profile for nodes.
 
 4. Render or validate the Karpenter desired state before relying on Argo CD:
 

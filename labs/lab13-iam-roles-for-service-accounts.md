@@ -108,12 +108,14 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
    terraform output
-   aws eks describe-cluster --name <cluster-name> \
+   CLUSTER_NAME=$(terraform output -raw cluster_name)
+
+   aws eks describe-cluster --name "$CLUSTER_NAME" \
      --query 'cluster.identity.oidc.issuer' \
      --output text
    ```
 
-   IRSA requires the EKS OIDC issuer. If the output is empty or the IAM OIDC provider has not been created, create that infrastructure before annotating service accounts.
+   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment. IRSA requires the EKS OIDC issuer. If the output is empty or the IAM OIDC provider has not been created, create that infrastructure before annotating service accounts.
 
 2. Identify which workloads need AWS permissions:
 
