@@ -99,7 +99,7 @@ Review these files before validation:
    aws secretsmanager describe-secret --secret-id "$SECRET_ID"
    ```
 
-   `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. With the current defaults this resolves to `solab/sample-api`. The command creates a deliberately non-sensitive JSON test value if the secret does not exist, then confirms only the secret metadata. Do not run commands that print secret values during the lab.
+   `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. By default, it comes from the sample API chart's `secret.remoteKey` value. The command creates a deliberately non-sensitive JSON test value if the secret does not exist, then confirms only the secret metadata. Do not run commands that print secret values during the lab.
 
 5. Render the relevant charts before relying on Argo CD:
 
