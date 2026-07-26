@@ -73,20 +73,33 @@ Review these files before validation:
 
    Confirm whether the sample API chart should create an `ExternalSecret`. Do not commit real secret values. Only commit references such as secret names, remote keys and property names.
 
-4. Confirm the AWS test secret exists without printing its value:
+4. Create or confirm the AWS test secret without printing its value:
 
    ```bash
    export AWS_PAGER=""
+   export AWS_REGION="$(yq -r '.spec.provider.aws.region' "$WORKSPACE/platform-config/addons/external-secrets/cluster-secret-store.yaml")"
 
    CHART_SECRET_ID="$(yq -r '.secret.remoteKey // ""' "$WORKSPACE/helm-charts/charts/sample-api/values.yaml")"
    APP_SECRET_ID="$(yq -r '.spec.source.helm.values | from_yaml | .secret.remoteKey // ""' "$WORKSPACE/platform-config/clusters/dev/sample-api.yaml")"
    SECRET_ID="${APP_SECRET_ID:-$CHART_SECRET_ID}"
 
    printf 'Using AWS Secrets Manager secret id: %s\n' "$SECRET_ID"
+
+   if aws secretsmanager describe-secret --secret-id "$SECRET_ID" >/dev/null 2>&1; then
+     printf 'Secret already exists.\n'
+   else
+     aws secretsmanager create-secret \
+       --name "$SECRET_ID" \
+       --description "Non-sensitive test secret for the External Secrets Operator lab" \
+       --secret-string '{"EXAMPLE_CONFIG":"external-secrets-lab"}' \
+       >/dev/null
+     printf 'Created non-sensitive lab secret.\n'
+   fi
+
    aws secretsmanager describe-secret --secret-id "$SECRET_ID"
    ```
 
-   `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. With the current defaults this resolves to `solab/sample-api`. This confirms the secret metadata exists. Do not run commands that print secret values during the lab.
+   `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. With the current defaults this resolves to `solab/sample-api`. The command creates a deliberately non-sensitive JSON test value if the secret does not exist, then confirms only the secret metadata. Do not run commands that print secret values during the lab.
 
 5. Render the relevant charts before relying on Argo CD:
 
