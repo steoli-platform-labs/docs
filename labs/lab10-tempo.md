@@ -124,7 +124,7 @@ Review these files before validation:
 
    Confirm these values are intentional for the lab:
 
-   - `repoURL` points to the Grafana Helm chart repository.
+   - `repoURL` points to the Grafana Community Helm chart repository.
    - `chart` is `tempo`.
    - `targetRevision` is pinned to the tested chart version.
    - `releaseName` is `tempo`.
@@ -155,7 +155,7 @@ Review these files before validation:
 
    ```bash
    echo "Configured Tempo chart: $(yq -r '.spec.source.targetRevision' clusters/dev/tempo.yaml)"
-   helm show chart tempo --repo https://grafana.github.io/helm-charts | yq '.version'
+   helm show chart tempo --repo https://grafana-community.github.io/helm-charts | yq '.version'
 
    echo "Configured OpenTelemetry chart: $(yq -r '.spec.source.targetRevision' clusters/dev/opentelemetry.yaml)"
    helm show chart opentelemetry-collector \
@@ -169,7 +169,7 @@ Review these files before validation:
 
    ```bash
    helm template tempo tempo \
-     --repo https://grafana.github.io/helm-charts \
+     --repo https://grafana-community.github.io/helm-charts \
      --version "$(yq -r '.spec.source.targetRevision' clusters/dev/tempo.yaml)" \
      --namespace monitoring \
      >/dev/null
@@ -182,7 +182,7 @@ Review these files before validation:
      >/dev/null
    ```
 
-   No output is expected when rendering succeeds because the rendered manifests are redirected to `/dev/null`. A Helm error here means Argo CD will also fail to generate manifests.
+   No output is expected when rendering succeeds because the rendered manifests are redirected to `/dev/null`. A Helm error here means Argo CD will also fail to generate manifests. A deprecation warning means the lab is pointing at an old chart repository or chart version; use the pinned Grafana Community chart in `clusters/dev/tempo.yaml`.
 
    If the OpenTelemetry render fails with a message such as `image.repository must be set`, the chart version requires explicit values. Fix the desired state in `clusters/dev/opentelemetry.yaml`, render again, then commit and push the tested configuration.
 
