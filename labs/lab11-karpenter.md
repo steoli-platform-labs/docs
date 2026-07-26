@@ -187,7 +187,18 @@ Review these files before validation:
    In another terminal, watch Karpenter and nodes:
 
    ```bash
-   kubectl get nodeclaim,node -w
+   kubectl get nodeclaim -w
+   ```
+
+   In another terminal, watch nodes separately because `kubectl get --watch` accepts only one resource type:
+
+   ```bash
+   kubectl get node -w
+   ```
+
+   In another terminal, follow Karpenter logs:
+
+   ```bash
    kubectl -n karpenter logs deployment/karpenter -f
    ```
 
