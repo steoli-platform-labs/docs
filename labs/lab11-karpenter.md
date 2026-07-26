@@ -206,6 +206,13 @@ If Karpenter is installed but no nodes are created:
 - Confirm the node IAM role or instance profile exists.
 - Check controller logs for IAM, pricing, AMI, subnet or security-group errors.
 
+If the controller is in `CrashLoopBackOff` and logs mention `failed to refresh cached credentials` or `no EC2 IMDS role found`:
+
+- Karpenter does not have AWS credentials.
+- Confirm the Karpenter ServiceAccount is connected to an IAM role through EKS Pod Identity or IRSA.
+- Confirm that IAM role allows Karpenter to call the required EC2, SSM, IAM, EKS and pricing APIs for node provisioning.
+- After fixing the IAM binding, refresh the Argo CD Application and watch the controller Deployment again.
+
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 
