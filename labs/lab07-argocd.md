@@ -19,7 +19,7 @@ This lab introduces ArgoCD as the GitOps deployment platform for Kubernetes.
 
 ArgoCD continuously monitors Git repositories and automatically synchronizes the desired platform state with the Amazon EKS cluster. From this point onward, Git becomes the single source of truth for Kubernetes deployments.
 
-Concepts introduced in this lab include GitOps, Argo CD Applications, desired state, actual state, reconciliation, sync status, health status, drift, self-heal and pruning. See the [Concepts Reference](../concepts/README.md) for the meaning of each term.
+Concepts introduced in this lab include GitOps, Argo CD Applications, app-of-apps, desired state, actual state, reconciliation, sync status, health status, drift, self-heal and pruning. See the [Concepts Reference](../concepts/README.md) for the meaning of each term, including when to refresh `platform-root` versus a child Application.
 
 ## Outcome
 

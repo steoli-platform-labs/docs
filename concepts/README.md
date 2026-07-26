@@ -94,6 +94,7 @@ The labs remain the hands-on implementation path. Use this page when a lab intro
 - **Argo CD:** A GitOps controller and UI for Kubernetes.
 - **Argo CD Application:** A custom resource that tells Argo CD where to read desired state from and where to deploy it.
 - **App-of-apps:** A pattern where one root Application creates child Applications for individual components.
+- **Root and child Application refreshes:** In these labs, `platform-root` is the root Application that reads `platform-config/clusters/dev` and creates or updates child Applications such as `sample-api`, `external-secrets`, `karpenter` and `tempo`. Refresh `platform-root` after changing child Application manifests under `platform-config/clusters/dev` so Argo CD picks up the latest child Application spec. Then refresh the affected child Application so it reconciles its own source. If only a child Application's existing source changed, such as a Helm chart template or image tag, refreshing the child Application is usually enough.
 - **Sync status:** Whether live resources match Git. Common values are `Synced` and `OutOfSync`.
 - **Health status:** Whether resources are operational. Common values are `Healthy`, `Progressing`, `Degraded` and `Unknown`.
 
