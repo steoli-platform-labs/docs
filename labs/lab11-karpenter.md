@@ -122,9 +122,18 @@ Review these files before validation:
    kubectl -n argocd get application karpenter -o wide
    kubectl -n argocd annotate application karpenter argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application karpenter -o wide
+   kubectl -n argocd describe application karpenter
+   kubectl -n karpenter get deployment,pod -o wide
+   kubectl -n karpenter get events --sort-by=.lastTimestamp
    ```
 
-   `karpenter` should become `Synced / Healthy`. If it stays on an old revision, inspect `platform-root` before troubleshooting the child Application.
+   `karpenter` should become `Synced / Healthy`. `Progressing` usually means the Deployment is still creating pods. `Degraded` means Argo CD synced the desired state but one or more Kubernetes resources are unhealthy. Use `describe application` to see the resource tree, `get deployment,pod` to see whether the controller is ready, and namespace events to see scheduling or image-pull failures. If a controller pod is in `CrashLoopBackOff`, check the previous container logs before the next restart overwrites the useful error:
+
+   ```bash
+   kubectl -n karpenter logs deployment/karpenter --previous --tail=200
+   ```
+
+   If the child Application stays on an old revision, inspect `platform-root` before troubleshooting the child Application.
 
 7. Validate Karpenter readiness and configuration:
 
@@ -183,8 +192,11 @@ Start with the Argo CD Application, Karpenter controller and provisioning resour
 ```bash
 kubectl -n argocd describe application karpenter
 kubectl -n karpenter get pods -o wide
+kubectl -n karpenter describe deployment karpenter
+kubectl -n karpenter get events --sort-by=.lastTimestamp
 kubectl get nodepool,ec2nodeclass,nodeclaim
 kubectl -n karpenter logs deployment/karpenter --since=15m --tail=300
+kubectl -n karpenter logs deployment/karpenter --previous --tail=200
 ```
 
 If Karpenter is installed but no nodes are created:
