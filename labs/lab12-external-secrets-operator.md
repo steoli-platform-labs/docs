@@ -114,20 +114,33 @@ Review these files before validation:
 
    `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. By default, it comes from the sample API chart's `secret.remoteKey` value. The command creates a deliberately non-sensitive JSON test value if the secret does not exist, then confirms only the secret metadata. Do not run commands that print secret values during the lab.
 
-5. Apply the External Secrets IAM and Pod Identity prerequisites:
+5. Verify the External Secrets IAM and Pod Identity prerequisites:
 
    ```bash
    cd "$WORKSPACE"
-   terraform -chdir=platform-modules fmt -recursive
-   terraform -chdir=platform-live fmt -recursive
    terraform -chdir=platform-live/environments/dev validate
-   terraform -chdir=platform-live/environments/dev plan
-   terraform -chdir=platform-live/environments/dev apply
 
+   CLUSTER_NAME="$(terraform -chdir=platform-live/environments/dev output -raw cluster_name)"
    terraform -chdir=platform-live/environments/dev output external_secrets_role_arn
+
+   aws eks list-pod-identity-associations \
+     --cluster-name "$CLUSTER_NAME" \
+     --namespace external-secrets \
+     --service-account external-secrets
    ```
 
-   Terraform creates a least-privilege IAM role that can read the lab secret path and associates it with the `external-secrets/external-secrets` Kubernetes service account through EKS Pod Identity. Without this step, the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
+   These resources are Terraform-managed platform prerequisites. A fresh run of the earlier infrastructure labs may already have created them from the current repository state. The role should be present and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account.
+
+   If the output or association is missing, reconcile the Terraform live environment before continuing:
+
+   ```bash
+   terraform -chdir=platform-modules fmt -recursive
+   terraform -chdir=platform-live fmt -recursive
+   terraform -chdir=platform-live/environments/dev plan
+   terraform -chdir=platform-live/environments/dev apply
+   ```
+
+   Without this prerequisite, the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
 
 6. Render the relevant charts before relying on Argo CD:
 
