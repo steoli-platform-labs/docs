@@ -89,18 +89,20 @@ Review these files before validation:
 4. Render or validate the Karpenter desired state before relying on Argo CD:
 
    ```bash
+   cd "$WORKSPACE/platform-config"
+
    yq -r '.spec.source.targetRevision' clusters/dev/karpenter.yaml
 
-   helm template karpenter karpenter \
-     --repo public.ecr.aws/karpenter \
+   helm template karpenter oci://public.ecr.aws/karpenter/karpenter \
      --version "$(yq -r '.spec.source.targetRevision' clusters/dev/karpenter.yaml)" \
      --namespace karpenter \
+     --values <(yq -r '.spec.source.helm.values' clusters/dev/karpenter.yaml) \
      >/dev/null
 
    kubectl apply --dry-run=client -f clusters/dev/karpenter.yaml
    ```
 
-   No output from `helm template` means the chart rendered successfully. Any Helm error here will also fail in Argo CD. If `targetRevision` is still `*`, pin a tested Karpenter chart version before committing so future chart changes do not unexpectedly change this lab.
+   No output from `helm template` means the chart rendered successfully. Any Helm error here will also fail in Argo CD. The `targetRevision` value should be pinned to a tested Karpenter chart version so future chart changes do not unexpectedly change this lab. The Helm value `settings.clusterName` must match the Terraform `cluster_name` output from the dev environment.
 
 5. Commit and push the desired state if you changed it:
 
