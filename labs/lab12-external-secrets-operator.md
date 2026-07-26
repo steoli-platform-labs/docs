@@ -76,6 +76,7 @@ Review these files before validation:
 4. Confirm the AWS test secret exists without printing its value:
 
    ```bash
+   export AWS_PAGER=""
    aws secretsmanager describe-secret --secret-id <test-secret-name-or-arn>
    ```
 

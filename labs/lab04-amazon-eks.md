@@ -63,6 +63,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 2. Check the EKS versions available in your AWS region:
 
    ```bash
+   export AWS_PAGER=""
+
    aws eks describe-cluster-versions \
      --region "$AWS_REGION" \
      --query 'clusterVersions[?status==`STANDARD_SUPPORT`].clusterVersion' \
@@ -96,6 +98,7 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 5. Configure kubectl:
 
    ```bash
+   export AWS_PAGER=""
    CLUSTER="$(terraform output -raw cluster_name)"
    aws eks update-kubeconfig --name "$CLUSTER" --region "$AWS_REGION"
    ```
@@ -103,6 +106,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 6. Verify the cluster:
 
    ```bash
+   export AWS_PAGER=""
+
    aws eks describe-cluster \
      --name "$CLUSTER" \
      --query 'cluster.{status:status,version:version,endpoint:endpoint,subnets:resourcesVpcConfig.subnetIds}'

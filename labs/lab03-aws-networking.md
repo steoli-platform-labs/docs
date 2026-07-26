@@ -314,12 +314,15 @@ Follow the steps below to configure the remote backend, review the network desig
 8. Verify the remote state object:
 
    ```bash
+   export AWS_PAGER=""
+
    aws s3api head-object   --bucket "$(awk -F'"' '/bucket/ {print $2}' backend.hcl)"   --key "platform-live/dev/terraform.tfstate"
    ```
 
 9. Inspect the AWS resource configuration:
 
    ```bash
+   export AWS_PAGER=""
    VPC_ID="$(terraform output -raw vpc_id)"
    aws ec2 describe-vpcs   --vpc-ids "${VPC_ID}"   --query 'Vpcs[0].{VpcId:VpcId,Cidr:CidrBlock,DnsSupport:EnableDnsSupport,DnsHostnames:EnableDnsHostnames}'
    aws ec2 describe-subnets   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'Subnets[].{SubnetId:SubnetId,AZ:AvailabilityZone,Cidr:CidrBlock,PublicIpOnLaunch:MapPublicIpOnLaunch}'   --output table
@@ -330,6 +333,8 @@ Follow the steps below to configure the remote backend, review the network desig
 10. Check EKS subnet discovery tags:
 
    ```bash
+   export AWS_PAGER=""
+
    aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json public_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/elb"
 
    aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json private_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/internal-elb"
@@ -377,6 +382,7 @@ Terraform provisions the Development VPC, public subnets, private platform subne
 - **Backend initialization fails:** Confirm the bucket name, Region and AWS profile in `backend.hcl`:
 
    ```bash
+   export AWS_PAGER=""
    aws s3api head-bucket --bucket "your-state-bucket"
    ```
 
@@ -391,12 +397,14 @@ Terraform provisions the Development VPC, public subnets, private platform subne
 - **NAT Gateway remains pending:** Wait several minutes and inspect it:
 
    ```bash
+   export AWS_PAGER=""
    aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=${VPC_ID}"
    ```
 
    The expected state is `available`. If private workloads cannot reach AWS APIs or the internet, inspect route tables and subnet associations before changing resources:
 
    ```bash
+   export AWS_PAGER=""
    aws ec2 describe-route-tables \
      --filters "Name=vpc-id,Values=${VPC_ID}" \
      --query 'RouteTables[].{RouteTable:RouteTableId,Associations:Associations[].SubnetId,Routes:Routes}'

@@ -74,6 +74,7 @@ later labs
    export AWS_REGION="<your-aws-region>"
    export PROJECT_NAME="<project-name>"
    export AWS_DEFAULT_REGION="$AWS_REGION"
+   export AWS_PAGER=""
    ```
 
 2. Confirm AWS access:

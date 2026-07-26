@@ -107,6 +107,8 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
+   export AWS_PAGER=""
+
    terraform output
    CLUSTER_NAME=$(terraform output -raw cluster_name)
 
@@ -208,6 +210,8 @@ Review these files before validation:
 9. Inspect the role trust policy and permissions:
 
    ```bash
+   export AWS_PAGER=""
+
    aws iam get-role --role-name <role-name>
    aws iam list-attached-role-policies --role-name <role-name>
    aws iam list-role-policies --role-name <role-name>

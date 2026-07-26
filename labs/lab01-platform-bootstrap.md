@@ -262,6 +262,7 @@ Complete the setup steps below in order. This is the only lab that requires manu
    Run:
 
    ```bash
+   export AWS_PAGER=""
    aws sts get-caller-identity --profile "$AWS_PROFILE"
    ```
 
@@ -275,7 +276,7 @@ Complete the setup steps below in order. This is the only lab that requires manu
    }
    ```
 
-   Record the account ID privately for later configuration, but do not add it to public documentation unless it is intentionally anonymized.
+   `AWS_PAGER=""` disables the AWS CLI pager so identity checks return directly to the terminal. Record the account ID privately for later configuration, but do not add it to public documentation unless it is intentionally anonymized.
 
    Confirm the selected region:
 
@@ -524,6 +525,7 @@ Complete the setup steps below in order. This is the only lab that requires manu
 
    ```bash
    set -e
+   export AWS_PAGER=""
 
    git --version
    aws --version

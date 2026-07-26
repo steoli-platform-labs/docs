@@ -66,6 +66,8 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
+   export AWS_PAGER=""
+
    CLUSTER_NAME=$(terraform output -raw cluster_name)
    SUBNET_FILTER_VALUES=$(terraform output -json eks_private_subnet_ids | yq -r 'join(",")')
 
@@ -80,7 +82,7 @@ Review these files before validation:
      --output table
    ```
 
-   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment and stores it in `CLUSTER_NAME` for the AWS CLI commands. `SUBNET_FILTER_VALUES` uses the Terraform subnet outputs instead of assuming a tag filter, so the command prints the subnets that the EKS cluster actually uses. Karpenter needs discoverable private subnets, security groups and an IAM role or instance profile for nodes.
+   `AWS_PAGER=""` disables the AWS CLI pager so these commands return directly to the terminal when pasted as a block. `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment and stores it in `CLUSTER_NAME` for the AWS CLI commands. `SUBNET_FILTER_VALUES` uses the Terraform subnet outputs instead of assuming a tag filter, so the command prints the subnets that the EKS cluster actually uses. Karpenter needs discoverable private subnets, security groups and an IAM role or instance profile for nodes.
 
    The Terraform network module tags subnets with the cluster name for Kubernetes discovery. If `aws ec2 describe-subnets --filters "Name=tag:kubernetes.io/cluster/$CLUSTER_NAME,Values=shared,owned"` returns no subnets, pull the latest `platform-live` changes and run Terraform plan/apply for the dev environment so the subnet discovery tag matches the actual EKS cluster name.
 
