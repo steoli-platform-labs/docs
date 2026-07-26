@@ -194,10 +194,19 @@ Review these files before validation:
    kubectl -n sample-api-dev get secret sample-api -o go-template='{{range $key, $_ := .data}}{{printf "%s\n" $key}}{{end}}'
    ```
 
+   Expected output:
+
+   ```text
+   sample-api
+   EXAMPLE_CONFIG
+   ```
+
+   This is the expected successful ending for the secret synchronization path. It proves that External Secrets Operator read the `platform-labs/sample-api` test secret from AWS Secrets Manager and created the `sample-api-dev/sample-api` Kubernetes Secret with the expected key. The sample application does not consume `EXAMPLE_CONFIG` yet; this lab validates the platform secret-management capability without introducing a real application credential.
+
    Do not decode, print or screenshot real secret values in terminals, issue comments, pull requests or CI logs.
 
 ## Expected Results
-The `external-secrets` Argo CD Application reconciles successfully and the operator can read from the configured AWS Secrets Manager store.
+The `external-secrets` and `external-secrets-config` Argo CD Applications reconcile successfully, the operator can read from the configured AWS Secrets Manager store and the sample API namespace contains a Kubernetes Secret named `sample-api` with the key `EXAMPLE_CONFIG`.
 
 ## Validation
 - The operator application is `Synced / Healthy`.
@@ -245,4 +254,4 @@ The implementation remains GitOps-driven and mergeable to `main`.
 Keep External Secrets Operator installed for later security and application labs. Remove only temporary non-sensitive test secrets created during validation.
 
 ## Next Steps
-Continue with [Lab 13 - IRSA](./lab13-iam-roles-for-service-accounts.md).
+Continue with [Lab 13 - IRSA](./lab13-iam-roles-for-service-accounts.md). Later labs keep this secret-management foundation in place: Lab 13 validates workload identity patterns, Lab 15 checks that environment-specific workloads include `ExternalSecret` resources where configured and future application changes can replace the non-sensitive test key with real configuration references without committing secret values to Git.
