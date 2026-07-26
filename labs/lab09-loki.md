@@ -302,6 +302,18 @@ Review these files before validation:
    kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
    ```
 
+   > [!INFO]
+   > Get the Grafana login credentials from the `prometheus-grafana` Secret:
+   >
+   > ```bash
+   > kubectl -n monitoring get secret prometheus-grafana \
+   >   -o jsonpath='{.data.admin-user}' | base64 --decode; echo
+   > kubectl -n monitoring get secret prometheus-grafana \
+   >   -o jsonpath='{.data.admin-password}' | base64 --decode; echo
+   > ```
+   >
+   > The first command prints the username. The second command prints the password.
+
    In Grafana:
 
    - Open `http://localhost:3000`.
@@ -309,6 +321,8 @@ Review these files before validation:
    - Add a Loki data source.
    - Use `http://loki.monitoring.svc.cluster.local:3100` as the URL.
    - Save and test the data source.
+
+   This lab adds the data source manually so you learn where Grafana data sources live. In the current lightweight lab setup, manually added Grafana data sources may disappear if the Grafana pod is recreated and Grafana persistence is not enabled. That is acceptable for the lab, but not for a durable platform. A production-ready setup should provision Grafana data sources through the `kube-prometheus-stack` Helm values in GitOps and enable persistent Grafana storage if users create dashboards or settings through the UI.
 
 14. Query logs in Grafana Explore:
 
@@ -379,6 +393,12 @@ If Alloy is healthy but Loki has no application logs:
 - Confirm the application namespace has recent logs with `kubectl -n sample-api-dev logs -l app.kubernetes.io/name=sample-api --tail=20`.
 - Generate the smoke-test log line again if the sample application has not emitted recent logs.
 - Retry the Loki query with a wider time range, such as 30 minutes.
+
+If the Loki data source is missing after reopening Grafana:
+
+- Re-add the data source manually for this lab using `http://loki.monitoring.svc.cluster.local:3100`.
+- This usually means the Grafana pod was recreated and manual UI state was not persisted.
+- Long-term, provision Grafana data sources through GitOps and enable Grafana persistence for dashboards and UI-created settings.
 
 ## Final Repository State
 

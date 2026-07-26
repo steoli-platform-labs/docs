@@ -276,6 +276,18 @@ Review these files before validation:
    kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
    ```
 
+   > [!INFO]
+   > Get the Grafana login credentials from the `prometheus-grafana` Secret:
+   >
+   > ```bash
+   > kubectl -n monitoring get secret prometheus-grafana \
+   >   -o jsonpath='{.data.admin-user}' | base64 --decode; echo
+   > kubectl -n monitoring get secret prometheus-grafana \
+   >   -o jsonpath='{.data.admin-password}' | base64 --decode; echo
+   > ```
+   >
+   > The first command prints the username. The second command prints the password.
+
    In Grafana:
 
    - Open `http://localhost:3000`.
@@ -284,11 +296,30 @@ Review these files before validation:
    - Use `http://tempo.monitoring.svc.cluster.local:3200` as the URL.
    - Save and test the data source.
 
+   This manual data source is enough for the lab, but it is not durable platform configuration. If the Grafana pod is recreated and Grafana persistence is not enabled, manually added data sources can disappear. For a production-ready platform, provision Loki and Tempo data sources through the `kube-prometheus-stack` Helm values in GitOps and enable persistent Grafana storage for dashboards and UI-created settings.
+
 13. Understand what is required for end-to-end trace validation:
 
-   Deployment health only proves that Tempo and the collector are running. End-to-end tracing also requires an instrumented application or a trace generator that sends spans to the collector.
+   Deployment health only proves that Tempo and the collector are running. End-to-end tracing also requires an instrumented application or a trace generator that sends spans to the collector. At this point in the lab series, the sample API may not emit OpenTelemetry traces yet, so use a temporary trace-generator Job to prove the collector-to-Tempo pipeline works.
 
-   To pass end-to-end validation, confirm all of the following are true:
+   Create a one-off `telemetrygen` Job in the `monitoring` namespace:
+
+   ```bash
+   kubectl -n monitoring create job telemetrygen-traces \
+     --image=ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:0.165.0 \
+     -- traces \
+     --otlp-endpoint opentelemetry-opentelemetry-collector.monitoring.svc.cluster.local:4317 \
+     --otlp-insecure \
+     --service telemetrygen \
+     --traces 20
+
+   kubectl -n monitoring wait --for=condition=complete job/telemetrygen-traces --timeout=120s
+   kubectl -n monitoring logs job/telemetrygen-traces
+   ```
+
+   Expected result: the Job completes successfully and its logs show that traces were generated and exported to the OpenTelemetry Collector. This validates the telemetry path from generator to collector to Tempo, even before the sample API is instrumented.
+
+   To pass end-to-end validation with a real application later, confirm all of the following are true:
 
    - The application includes OpenTelemetry instrumentation or an OpenTelemetry auto-instrumentation mechanism.
    - The application has `OTEL_EXPORTER_OTLP_ENDPOINT` or equivalent configuration pointing to the collector.
@@ -298,7 +329,22 @@ Review these files before validation:
 
 14. Generate traces and inspect them in Grafana:
 
-   Send traffic to the instrumented sample API, then use Grafana Explore with the Tempo data source to search by service name and inspect a trace.
+   Open Grafana Explore and search for the generated traces:
+
+   - Open `http://localhost:3000` while the Grafana port-forward from step 12 is running.
+   - Go to `Explore`.
+   - Select the Tempo data source.
+   - Choose `Search` or `TraceQL`, depending on the Grafana UI version.
+   - Set the time range to `Last 15 minutes`.
+   - Search for service name `telemetrygen`, or run this TraceQL query if the UI supports it:
+
+   ```traceql
+   { resource.service.name = "telemetrygen" }
+   ```
+
+   Open one returned trace. If the query returns no traces, widen the time range and check the OpenTelemetry Collector logs from step 10.
+
+   After the sample API is instrumented in a future application change, repeat the same process with real application traffic: send requests to the sample API, search for the sample API service name in Tempo and inspect one request trace.
 
    A useful trace should show:
 
@@ -307,7 +353,13 @@ Review these files before validation:
    - Child spans for meaningful downstream work, if the application performs any.
    - Span durations that line up with the request timing.
 
-   If no traces appear, first validate deployment health, then validate that the application is actually emitting spans. Tempo cannot display traces that were never generated or exported.
+   Clean up the temporary generator Job after validation:
+
+   ```bash
+   kubectl -n monitoring delete job telemetrygen-traces
+   ```
+
+   If no traces appear, first validate deployment health, then validate that traces are actually being generated and exported. Tempo cannot display traces that were never generated or exported.
 
 ## Expected Results
 
@@ -342,11 +394,17 @@ If `opentelemetry` shows `Unknown`:
 
 If Tempo is healthy but Grafana shows no traces:
 
-- Confirm the application is instrumented; non-instrumented applications do not produce traces automatically.
+- Confirm the `telemetrygen-traces` Job completed successfully, or confirm the application is instrumented; non-instrumented applications do not produce traces automatically.
 - Confirm the application points to the OpenTelemetry Collector endpoint.
 - Confirm collector logs show spans being received and exported.
 - Confirm the Grafana Tempo data source URL is `http://tempo.monitoring.svc.cluster.local:3200`.
 - Widen the Grafana time range and search by the expected service name.
+
+If the Tempo or Loki data source is missing after reopening Grafana:
+
+- Re-add the data source manually for this lab.
+- This usually means the Grafana pod was recreated and manual UI state was not persisted.
+- Long-term, provision Grafana data sources through GitOps and enable Grafana persistence for dashboards and UI-created settings.
 
 If the OpenTelemetry Collector pod is `Pending` with `Too many pods`:
 
