@@ -197,6 +197,15 @@ If the operator is healthy but no Kubernetes Secret appears:
 
 If the Application is `OutOfSync / Degraded` and the sync error mentions `metadata.annotations: Too long`, Argo CD tried to apply large CRDs using client-side apply. Confirm `platform-config/clusters/dev/external-secrets.yaml` includes `ServerSideApply=true`, commit and push the change, refresh `platform-root`, then refresh `external-secrets` again.
 
+If the Application becomes `Synced` but the main `external-secrets` pod remains in `CrashLoopBackOff` with log messages such as `no matches for kind "ClusterSecretStore"`, the controller may have started before the CRDs were fully available. After confirming the CRDs exist, restart the controller deployment:
+
+```bash
+kubectl get crd clustersecretstores.external-secrets.io secretstores.external-secrets.io externalsecrets.external-secrets.io
+kubectl -n external-secrets rollout restart deployment/external-secrets
+kubectl -n external-secrets rollout status deployment/external-secrets --timeout=180s
+kubectl -n argocd get application external-secrets -o wide
+```
+
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 
