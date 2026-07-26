@@ -153,7 +153,7 @@ Review these files before validation:
    kubectl -n karpenter get events --sort-by=.lastTimestamp
    ```
 
-   `karpenter` should become `Synced / Healthy`. `Progressing` usually means the Deployment is still creating pods. `Degraded` means Argo CD synced the desired state but one or more Kubernetes resources are unhealthy. Use `describe application` to see the resource tree, `get deployment,pod` to see whether the controller is ready, and namespace events to see scheduling or image-pull failures. If a controller pod is in `CrashLoopBackOff`, check the previous container logs before the next restart overwrites the useful error:
+   `karpenter` should become `Synced / Healthy`. `Progressing` usually means the Deployment is still creating pods. `Degraded` means Argo CD synced the desired state but one or more Kubernetes resources are unhealthy. Use `describe application` to see the resource tree, `get deployment,pod` to see whether the controller is ready, and namespace events to see scheduling or image-pull failures. If `kubectl -n karpenter get events --sort-by=.lastTimestamp` prints `No resources found`, that is normal when no recent events exist in the namespace. If a controller pod is in `CrashLoopBackOff`, check the previous container logs before the next restart overwrites the useful error:
 
    ```bash
    kubectl -n karpenter logs deployment/karpenter --previous --tail=200
