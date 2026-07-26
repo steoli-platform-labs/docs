@@ -298,72 +298,48 @@ Review these files before validation:
 
    This manual data source is enough for the lab, but it is not durable platform configuration. If the Grafana pod is recreated and Grafana persistence is not enabled, manually added data sources can disappear. For a production-ready platform, provision Loki and Tempo data sources through the `kube-prometheus-stack` Helm values in GitOps and enable persistent Grafana storage for dashboards and UI-created settings.
 
-13. Understand what is required for end-to-end trace validation:
+13. Generate test traces without creating another pod:
 
-   Deployment health only proves that Tempo and the collector are running. End-to-end tracing also requires an instrumented application or a trace generator that sends spans to the collector. At this point in the lab series, the sample API may not emit OpenTelemetry traces yet, so use a temporary trace-generator Job to prove the collector-to-Tempo pipeline works.
+   Deployment health only proves that Tempo and the collector are running. End-to-end tracing also requires an instrumented application or a trace generator that sends spans to the collector. At this point in the lab series, the sample API may not emit OpenTelemetry traces yet, so use `telemetrygen` to prove the collector-to-Tempo pipeline works.
 
-   First confirm the cluster has room for one short-lived test pod:
-
-   ```bash
-   kubectl get nodes
-   kubectl -n monitoring get pods -o wide
-   kubectl -n sample-api-dev get hpa
-   ```
-
-   A small pre-Karpenter cluster can be at its pod limit. If a previous `telemetrygen-traces` Job is still present, remove it before retrying:
+   The development cluster is intentionally small before Lab 11 introduces Karpenter. Creating a separate generator Job can fail with `Too many pods`, so this lab runs `telemetrygen` as an ephemeral container inside the existing OpenTelemetry Collector pod. That reuses an already scheduled pod and avoids changing any GitOps-managed replica counts.
 
    ```bash
-   kubectl -n monitoring delete job telemetrygen-traces --ignore-not-found
-   ```
+   COLLECTOR_POD=$(kubectl -n monitoring get pod \
+     -l app.kubernetes.io/name=opentelemetry-collector \
+     -o jsonpath='{.items[0].metadata.name}')
 
-   Then create a one-off `telemetrygen` Job in the `monitoring` namespace:
-
-   ```bash
-   kubectl -n monitoring create job telemetrygen-traces \
-     --image=ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:0.165.0 \
-     -- traces \
+   kubectl -n monitoring debug "$COLLECTOR_POD" \
+     --container=telemetrygen \
+     --image=ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:v0.156.0 \
+     --target=opentelemetry-collector \
+     -- /telemetrygen traces \
      --otlp-endpoint opentelemetry-opentelemetry-collector.monitoring.svc.cluster.local:4317 \
      --otlp-insecure \
      --service telemetrygen \
-     --traces 20
-
-   kubectl -n monitoring wait --for=condition=complete job/telemetrygen-traces --timeout=120s
-   kubectl -n monitoring logs job/telemetrygen-traces
+     --traces 3 \
+     --batch=false
    ```
 
-   Expected result: the Job completes successfully and its logs show that traces were generated and exported to the OpenTelemetry Collector. This validates the telemetry path from generator to collector to Tempo, even before the sample API is instrumented.
-
-   If the wait command times out, check whether the Job pod was scheduled:
+   Check the generator result:
 
    ```bash
-   kubectl -n monitoring get pods -l job-name=telemetrygen-traces -o wide
-   kubectl -n monitoring describe job telemetrygen-traces
-   kubectl -n monitoring get events --sort-by=.lastTimestamp
+   kubectl -n monitoring get pod "$COLLECTOR_POD" \
+     -o jsonpath='{range .status.ephemeralContainerStatuses[*]}{.name}{" terminated="}{.state.terminated.reason}{" exit="}{.state.terminated.exitCode}{"\n"}{end}'
+
+   kubectl -n monitoring logs "$COLLECTOR_POD" -c telemetrygen
    ```
 
-   If the event says `Too many pods`, the Job did not run and `kubectl logs job/telemetrygen-traces` will be empty. Do not troubleshoot Tempo yet; first free one pod slot or add capacity. Scaling `sample-api` directly may not work because its HPA has `minReplicas: 2` and Argo CD self-heal restores the Git-defined replica count.
+   Expected result: the ephemeral container reports `terminated=Completed exit=0`, and its logs include `traces generated`. This validates the telemetry path from generator to collector to Tempo, even before the sample API is instrumented.
 
-   For a short Lab 10 validation only, temporarily scale down a controller that is not required for tracing, run the generator, then restore it. For example, if External Secrets Operator is installed already, it is not required for Lab 10:
+   Ephemeral containers cannot be removed from a running pod after they complete. This is harmless for the lab. If you want to remove the completed debug container from the pod status, restart the collector pod and wait for Kubernetes to recreate it:
 
    ```bash
-   kubectl -n external-secrets scale deployment external-secrets --replicas=0
-   kubectl -n monitoring delete job telemetrygen-traces --ignore-not-found
-
-   kubectl -n monitoring create job telemetrygen-traces \
-     --image=ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:0.165.0 \
-     -- traces \
-     --otlp-endpoint opentelemetry-opentelemetry-collector.monitoring.svc.cluster.local:4317 \
-     --otlp-insecure \
-     --service telemetrygen \
-     --traces 20
-
-   kubectl -n monitoring wait --for=condition=complete job/telemetrygen-traces --timeout=120s
-   kubectl -n monitoring logs job/telemetrygen-traces
-   kubectl -n monitoring delete job telemetrygen-traces
-   kubectl -n external-secrets scale deployment external-secrets --replicas=1
+   kubectl -n monitoring delete pod "$COLLECTOR_POD"
+   kubectl -n monitoring wait --for=condition=Ready pod \
+     -l app.kubernetes.io/name=opentelemetry-collector \
+     --timeout=180s
    ```
-
-   This is a temporary live-cluster workaround, not GitOps desired state. If Argo CD self-heal restores the scaled deployment before the Job schedules, repeat the test after Lab 11 installs Karpenter or add another worker node to the development node group. Moving from `t3.medium` to a larger instance type or adding a third node both work; adding capacity is the durable fix because the observability stack is already near the pod limit of the two-node development cluster.
 
    To pass end-to-end validation with a real application later, confirm all of the following are true:
 
@@ -398,12 +374,6 @@ Review these files before validation:
    - A root span for the incoming request.
    - Child spans for meaningful downstream work, if the application performs any.
    - Span durations that line up with the request timing.
-
-   Clean up the temporary generator Job after validation:
-
-   ```bash
-   kubectl -n monitoring delete job telemetrygen-traces
-   ```
 
    If no traces appear, first validate deployment health, then validate that traces are actually being generated and exported. Tempo cannot display traces that were never generated or exported.
 
@@ -440,7 +410,7 @@ If `opentelemetry` shows `Unknown`:
 
 If Tempo is healthy but Grafana shows no traces:
 
-- Confirm the `telemetrygen-traces` Job completed successfully, or confirm the application is instrumented; non-instrumented applications do not produce traces automatically.
+- Confirm the `telemetrygen` ephemeral container completed with exit code `0`, or confirm the application is instrumented; non-instrumented applications do not produce traces automatically.
 - Confirm the application points to the OpenTelemetry Collector endpoint.
 - Confirm collector logs show spans being received and exported.
 - Confirm the Grafana Tempo data source URL is `http://tempo.monitoring.svc.cluster.local:3200`.
@@ -458,12 +428,11 @@ If the OpenTelemetry Collector pod is `Pending` with `Too many pods`:
 - Confirm the dev `sample-api` desired state uses a small replica count before Lab 11 introduces node autoscaling.
 - Reconcile `sample-api`, then refresh `opentelemetry` after capacity is available.
 
-If the `telemetrygen-traces` Job times out:
+If a separate trace-generator Job is used and times out:
 
 - Check `kubectl -n monitoring get pods -l job-name=telemetrygen-traces -o wide`.
 - If the pod is `Pending` and events say `Too many pods`, the generator never ran and empty logs are expected.
-- Delete the stuck Job with `kubectl -n monitoring delete job telemetrygen-traces` before retrying.
-- Free one temporary pod slot, run the Job again, then restore the scaled workload.
+- Use the ephemeral-container command in step 13 instead of creating another pod.
 - Do not rely on `kubectl -n sample-api-dev scale rollout sample-api --replicas=1` while the sample API HPA has `minReplicas: 2`; the HPA and Argo CD self-heal can bring it back to two replicas.
 - The durable fix is to add capacity with Karpenter in Lab 11, add another worker node or use larger worker nodes for the development cluster.
 
