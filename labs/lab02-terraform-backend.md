@@ -212,7 +212,8 @@ The backend bucket exists with versioning, encryption and Block Public Access en
    For native S3 lock issues, confirm no active Terraform process owns the lock before running:
 
    ```bash
-   terraform force-unlock <LOCK_ID>
+   LOCK_ID="<copy-from-terraform-error-after-confirming-no-active-run>"
+   terraform force-unlock "$LOCK_ID"
    ```
 
 ## Final Repository State

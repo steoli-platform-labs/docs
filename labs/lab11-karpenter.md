@@ -9,7 +9,7 @@
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45-75 minutes |
 | **Estimated Cost** | Medium |
-| **Terraform** | No |
+| **Terraform** | Read-only validation |
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
@@ -22,7 +22,7 @@ Karpenter watches unschedulable pods and provisions right-sized compute capacity
 Concepts introduced in this lab include Karpenter, unschedulable pods, NodePools, EC2NodeClasses, NodeClaims and consolidation. See the [Concepts Reference](../concepts/README.md) for the Kubernetes and AWS concepts behind cluster autoscaling.
 
 ## Outcome
-Implement and validate Karpenter in the complete platform reference implementation.
+Validate Karpenter in the complete platform reference implementation and demonstrate that it can create workload capacity.
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ Review these files before validation:
    grep -R "kind: NodePool\|kind: EC2NodeClass" -n . || true
    ```
 
-   The Helm chart installs the Karpenter controller, but the controller cannot provision nodes until a `NodePool` and `EC2NodeClass` exist. If this command finds no resources, add the required manifests before expecting autoscaling to work.
+   The Helm chart installs the Karpenter controller, but the controller cannot provision nodes until a `NodePool` and `EC2NodeClass` exist. These manifests should already be present in the current `platform-config` repository.
 
 3. Confirm the AWS inputs that Karpenter needs:
 
@@ -126,16 +126,13 @@ Review these files before validation:
 
    No output from `helm template` means the chart rendered successfully. Any Helm error here will also fail in Argo CD. The `targetRevision` value should be pinned to a tested Karpenter chart version so future chart changes do not unexpectedly change this lab. The Helm value `settings.clusterName` must match the Terraform `cluster_name` output from the dev environment.
 
-6. Commit and push the desired state if you changed it:
+6. Confirm there are no unexpected local desired-state changes:
 
    ```bash
    git status --short
-   git add clusters/dev/karpenter.yaml clusters/dev/karpenter-provisioning.yaml addons/karpenter/
-   git commit -m "feat: configure karpenter"
-   git push
    ```
 
-   If `git status --short` prints no files, there is nothing to commit.
+   A fresh lab run should not require edits here. If `git status --short` shows changes, review whether they are intentional before continuing.
 
 7. Refresh the root Argo CD Application, then reconcile `karpenter`:
 
@@ -172,37 +169,25 @@ Review these files before validation:
 
    The controller pod being ready only proves Karpenter is installed. `NodePool` and `EC2NodeClass` must also report ready before provisioning can work. The lab NodePool uses on-demand capacity so the first run does not depend on EC2 Spot service-linked-role setup or current Spot availability.
 
-9. Configure the instance types Karpenter may launch:
+9. Confirm the instance types Karpenter may launch:
 
    ```bash
    cd "$WORKSPACE/platform-config"
 
    yq '.spec.template.spec.requirements' addons/karpenter/nodepool.yaml
-
-   if ! yq -e '.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type")' addons/karpenter/nodepool.yaml >/dev/null 2>&1; then
-     yq -i '.spec.template.spec.requirements += [{"key":"node.kubernetes.io/instance-type","operator":"In","values":["t3.small","t3.medium","c7a.medium"]}]' addons/karpenter/nodepool.yaml
-   fi
-
-   yq -i '(.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type")).operator = "In"' addons/karpenter/nodepool.yaml
-   yq -i '(.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type")).values = ["t3.small", "t3.medium", "c7a.medium"]' addons/karpenter/nodepool.yaml
-
-   yq '.spec.template.spec.requirements' addons/karpenter/nodepool.yaml
+   yq -e '.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type" and .operator == "In" and (.values | contains(["t3.small", "t3.medium", "c7a.medium"])))' addons/karpenter/nodepool.yaml
    kubectl apply --dry-run=client -f addons/karpenter/nodepool.yaml
    ```
 
-   This keeps the lab predictable by limiting Karpenter to a small set of inexpensive instance types. Prefer a short list over a single instance type, because one exact type may be temporarily unavailable in an Availability Zone. If you changed the file, commit and push it, then refresh `karpenter-provisioning` before creating the test workload:
+   This keeps the lab predictable by limiting Karpenter to a small set of inexpensive instance types. Prefer a short list over a single instance type, because one exact type may be temporarily unavailable in an Availability Zone. If this check fails, pull the latest `platform-config` repository before creating the test workload.
+
+   Refresh `karpenter-provisioning` before creating the test workload:
 
    ```bash
-   git status --short
-   git add addons/karpenter/nodepool.yaml
-   git commit -m "configure karpenter instance types"
-   git push
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application karpenter-provisioning argocd.argoproj.io/refresh=hard --overwrite
    kubectl describe nodepool karpenter
    ```
-
-   If `git status --short` prints no files, the instance-type requirement is already configured and there is nothing to commit.
 
 10. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
 
@@ -283,7 +268,7 @@ If Karpenter is installed but no nodes are created:
 If the controller is in `CrashLoopBackOff` and logs mention `failed to refresh cached credentials` or `no EC2 IMDS role found`:
 
 - Karpenter does not have AWS credentials.
-- Confirm the Karpenter ServiceAccount is connected to an IAM role through EKS Pod Identity or IRSA.
+- Confirm the Karpenter ServiceAccount is connected to an IAM role through EKS Pod Identity.
 - Confirm that IAM role allows Karpenter to call the required EC2, SSM, IAM, EKS and pricing APIs for node provisioning.
 - After fixing the IAM binding, refresh the Argo CD Application and watch the controller Deployment again.
 

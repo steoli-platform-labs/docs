@@ -31,7 +31,7 @@ Concepts introduced in this lab include traces, spans, Tempo, OpenTelemetry, col
 
 ## Outcome
 
-Implement and validate Tempo and OpenTelemetry in the complete platform reference implementation.
+Validate distributed tracing with Tempo and OpenTelemetry in the complete platform reference implementation.
 
 ## Prerequisites
 

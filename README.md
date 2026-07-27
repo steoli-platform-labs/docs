@@ -76,7 +76,7 @@ Secure the Kubernetes platform and workloads.
 Core technologies:
 
 - External Secrets Operator
-- IAM Roles for Service Accounts (IRSA)
+- Workload identity with EKS Pod Identity and IRSA patterns
 - Network Policies
 
 ---

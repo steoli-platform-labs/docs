@@ -21,7 +21,7 @@ If repository ownership, architecture, or user intent is unclear, stop and ask. 
 
 AWS Platform Labs is a public, multi-repository lab series that incrementally builds a production-inspired Internal Developer Platform on AWS.
 
-Core technologies include Terraform, Amazon EKS, Kubernetes, Helm, GitHub Actions, GitOps, Argo CD, IRSA, Karpenter, External Secrets Operator, Prometheus, Grafana, Loki and Tempo.
+Core technologies include Terraform, Amazon EKS, Kubernetes, Helm, GitHub Actions, GitOps, Argo CD, workload identity through EKS Pod Identity and IRSA where appropriate, Karpenter, External Secrets Operator, Prometheus, Grafana, Loki and Tempo.
 
 Every completed lab should leave the platform in a deployable and understandable state.
 
@@ -66,13 +66,13 @@ Respect repository boundaries. Make changes in the repository that owns the beha
 - Argo CD owns Kubernetes application deployment after Lab 07.
 - Do not use manual `kubectl apply`, `helm install` or `helm upgrade` for GitOps-managed applications, except for documented bootstrap, dry-run validation, temporary test resources or local-only troubleshooting.
 - Lab 07 requires hands-on Argo CD UI access through local port-forwarding so users learn the UI exists; do not require public exposure of Argo CD.
-- Private GHCR pulls are the default for `sample-api`; use a least-privilege `read:packages` token and a Kubernetes image pull secret until later secret-management labs replace that pattern.
+- Private GHCR pulls are the default for `sample-api`; use a least-privilege `read:packages` token and a Kubernetes image pull secret until later secret-management labs improve that pattern.
 
 ## Documentation Rules
 
 Documentation is part of the implementation. Update docs when behavior, validation, user flow or learning context changes.
 
-Use this canonical lab section order:
+Use this canonical lab section order for the core hands-on flow:
 
 - `## Lab Information`
 - `## Introduction`
@@ -86,6 +86,8 @@ Use this canonical lab section order:
 - `## Final Repository State`
 - `## Cleanup`
 - `## Next Steps`
+
+Longer foundation labs may include extra deep-dive sections such as `Architecture`, `AWS Resources`, `Design Decisions`, `Implementation Overview`, `Best Practices` or `References`. Keep those sections purposeful, and prefer moving reusable conceptual material to `docs/concepts/README.md`.
 
 Lab writing rules:
 

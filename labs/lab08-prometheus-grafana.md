@@ -25,7 +25,7 @@ Concepts introduced in this lab include metrics, Prometheus, Grafana, dashboards
 
 ## Outcome
 
-Implement and validate Prometheus and Grafana in the complete platform reference implementation.
+Validate the Prometheus and Grafana observability foundation in the complete platform reference implementation.
 
 ## Prerequisites
 

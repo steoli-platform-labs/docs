@@ -200,7 +200,7 @@ Key files:
    kubectl -n sample-api-dev get secret ghcr-pull
    ```
 
-   This secret is a bootstrap exception for Lab 07. Later labs replace ad hoc secret handling with External Secrets Operator and IRSA patterns.
+   This secret is a bootstrap exception for Lab 07. Later secret-management labs improve application secret handling with External Secrets Operator and workload identity patterns, but the private GHCR pull secret remains in place until a registry-specific replacement is introduced.
 
    If Argo CD has already created `sample-api` pods before the secret existed, delete the stuck pods after creating the secret so Kubernetes retries the image pull:
 

@@ -1,4 +1,4 @@
-# Lab 13 - IRSA
+# Lab 13 - Workload Identity
 
 ## Lab Information
 
@@ -6,8 +6,8 @@
 |----------|-------|
 | **Phase** | Platform Security |
 | **Lab** | 13 |
-| **Difficulty** | Advanced |
-| **Estimated Time** | 45–75 minutes |
+| **Difficulty** | Intermediate |
+| **Estimated Time** | 30-45 minutes |
 | **Estimated Cost** | Low |
 | **Terraform** | Read-only validation |
 | **Kubernetes** | Yes |
@@ -88,7 +88,7 @@ Review these files before validation:
 
 ## Step-by-Step Implementation
 
-1. Confirm the EKS cluster has an OIDC issuer:
+1. Confirm the EKS cluster has an OIDC issuer and matching IAM OIDC provider:
 
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
@@ -96,12 +96,18 @@ Review these files before validation:
 
    CLUSTER_NAME=$(terraform output -raw cluster_name)
 
-   aws eks describe-cluster --name "$CLUSTER_NAME" \
+   OIDC_ISSUER=$(aws eks describe-cluster --name "$CLUSTER_NAME" \
      --query 'cluster.identity.oidc.issuer' \
+     --output text)
+   OIDC_PROVIDER_HOSTPATH=${OIDC_ISSUER#https://}
+
+   printf 'OIDC issuer: %s\n' "$OIDC_ISSUER"
+   aws iam list-open-id-connect-providers \
+     --query "OpenIDConnectProviderList[?contains(Arn, '$OIDC_PROVIDER_HOSTPATH')].Arn" \
      --output text
    ```
 
-   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment. IRSA requires the EKS OIDC issuer. If the output is empty, stop and reconcile the Development Terraform environment before continuing.
+   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment. IRSA requires both the EKS OIDC issuer URL and a matching IAM OIDC provider. If either output is empty, stop and reconcile the Development Terraform environment before continuing.
 
 2. Inspect the existing AWS-integrated controller service accounts:
 
@@ -145,13 +151,17 @@ Review these files before validation:
    grep -R "eks.amazonaws.com/role-arn" -n platform-config helm-charts || true
    ```
 
+   No output is expected in the current platform. Karpenter and External Secrets Operator already have AWS access, but they use EKS Pod Identity associations created by Terraform instead of IRSA service-account annotations in Kubernetes YAML.
+
+   This check is still useful because it shows where an IRSA-based workload would declare its IAM role if the platform used that pattern for a future controller or application. With IRSA, the Kubernetes service account carries an annotation that points to an IAM role. AWS STS then exchanges the projected service-account token for temporary AWS credentials scoped to that role.
+
    The annotation format is:
 
    ```yaml
    eks.amazonaws.com/role-arn: arn:aws:iam::<account-id>:role/<role-name>
    ```
 
-   If a future workload uses IRSA instead of EKS Pod Identity, add this annotation through Helm values or a GitOps-managed service account manifest. Do not manually patch live service accounts.
+   If a future workload uses IRSA instead of EKS Pod Identity, add this annotation through Helm values or a GitOps-managed service account manifest. The IAM role, IAM policy and OIDC trust relationship still belong in Terraform. Do not manually patch live service accounts, because Argo CD would not have that change in desired state.
 
 6. Validate that controller pods use the expected service accounts and AWS access works:
 

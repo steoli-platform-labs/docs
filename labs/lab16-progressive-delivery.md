@@ -22,7 +22,7 @@ Progressive delivery makes releases safer by shifting traffic gradually and keep
 Concepts introduced in this lab include progressive delivery, Argo Rollouts, Rollouts, canary releases, ReplicaSets, image promotion and rollback. See the [Concepts Reference](../concepts/README.md) for how these concepts reduce release risk.
 
 ## Outcome
-Implement and validate Progressive Delivery in the complete platform reference implementation.
+Validate progressive delivery for the sample API in the complete platform reference implementation.
 
 ## Prerequisites
 
@@ -114,12 +114,25 @@ Review these files before validation:
 7. Change the sample API image tag through Git and observe the canary rollout:
 
    ```bash
-   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   cd "$WORKSPACE/platform-config"
+   yq '.spec.source.helm.values' clusters/dev/sample-api.yaml
+
+   printf 'New image tag: '
+   read -r NEW_IMAGE_TAG
+   export NEW_IMAGE_TAG
+   yq -i '.spec.source.helm.values = ((.spec.source.helm.values | from_yaml | .image.tag = strenv(NEW_IMAGE_TAG)) | to_yaml)' clusters/dev/sample-api.yaml
+
+   git status --short
+   git diff -- clusters/dev/sample-api.yaml
    ```
 
-   Change the image tag to a known new immutable tag, commit and push the GitOps change, then watch the rollout:
+   Enter a known new immutable tag, such as a commit-SHA image tag published by the `sample-api` CI workflow. If the diff is correct, commit and push the GitOps change, then watch the rollout:
 
    ```bash
+   git add clusters/dev/sample-api.yaml
+   git commit -m "chore: update sample api image"
+   git push
+
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application sample-api -o wide
    kubectl argo rollouts get rollout sample-api -n sample-api-dev --watch

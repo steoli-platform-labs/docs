@@ -22,7 +22,7 @@ The platform starts separating environment-specific desired state so development
 Concepts introduced in this lab include environment separation, namespace boundaries, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
 
 ## Outcome
-Implement and validate Multi-Environment Platform in the complete platform reference implementation.
+Validate the multi-environment GitOps layout in the complete platform reference implementation.
 
 ## Prerequisites
 

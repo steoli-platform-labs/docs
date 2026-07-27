@@ -22,7 +22,7 @@ The lab validates probes, disruption handling and scheduling rules so the worklo
 Concepts introduced in this lab include high availability, resilience, readiness probes, liveness probes, startup probes, PodDisruptionBudgets, anti-affinity and topology spread constraints. See the [Concepts Reference](../concepts/README.md) for why each setting matters.
 
 ## Outcome
-Implement and validate High Availability and Resilience in the complete platform reference implementation.
+Validate the sample API's availability and resilience controls in the complete platform reference implementation.
 
 ## Prerequisites
 
@@ -130,9 +130,16 @@ Review these files before validation:
 9. Drain one worker only when the lab environment has enough spare capacity:
 
    ```bash
-   kubectl drain <test-node> --ignore-daemonsets --delete-emptydir-data
-   kubectl -n sample-api-dev get pods -w
-   kubectl uncordon <test-node>
+   SAMPLE_POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
+   TEST_NODE=$(kubectl -n sample-api-dev get pod "$SAMPLE_POD" -o jsonpath='{.spec.nodeName}')
+
+   printf 'Draining node: %s\n' "$TEST_NODE"
+   kubectl drain "$TEST_NODE" --ignore-daemonsets --delete-emptydir-data
+   kubectl -n sample-api-dev wait --for=condition=Ready pod \
+     -l app.kubernetes.io/name=sample-api \
+     --timeout=5m
+   kubectl -n sample-api-dev get pods -o wide
+   kubectl uncordon "$TEST_NODE"
    ```
 
    Run repeated requests during each test and record error rate and recovery time.

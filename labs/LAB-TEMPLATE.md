@@ -67,7 +67,7 @@ Link to the next lab.
 
 ## Optional Deep-Dive Sections
 
-Use these only when they add clarity:
+Use these only when they add practical clarity to a foundation lab. Prefer moving reusable conceptual material to `docs/concepts/README.md`.
 
 - `## Required Software`
 - `## Project Repository Structure`

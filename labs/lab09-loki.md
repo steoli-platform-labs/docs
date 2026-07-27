@@ -23,7 +23,7 @@ Concepts introduced in this lab include logs, log aggregation, Loki, Alloy, Daem
 
 ## Outcome
 
-Implement and validate Loki and Alloy in the complete platform reference implementation.
+Validate centralized log collection with Loki and Alloy in the complete platform reference implementation.
 
 ## Prerequisites
 

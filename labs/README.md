@@ -18,7 +18,7 @@ Use the shared [Concepts Reference](../concepts/README.md) for short explanation
 10. [Lab 10 - Tempo and OpenTelemetry](./lab10-tempo.md)
 11. [Lab 11 - Karpenter](./lab11-karpenter.md)
 12. [Lab 12 - External Secrets Operator](./lab12-external-secrets-operator.md)
-13. [Lab 13 - IRSA](./lab13-iam-roles-for-service-accounts.md)
+13. [Lab 13 - Workload Identity](./lab13-iam-roles-for-service-accounts.md)
 14. [Lab 14 - Network Policies](./lab14-network-policies.md)
 15. [Lab 15 - Multi-Environment Platform](./lab15-multi-environment-platform.md)
 16. [Lab 16 - Progressive Delivery](./lab16-progressive-delivery.md)

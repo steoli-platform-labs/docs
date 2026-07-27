@@ -22,7 +22,7 @@ The goal is to run controlled failure tests against the sample application and v
 Concepts introduced in this lab include chaos engineering, controlled failure injection, steady state, recovery objectives, Kubernetes Jobs and least-privilege RBAC for test automation. See the [Concepts Reference](../concepts/README.md) for how chaos validation fits into platform operations.
 
 ## Outcome
-Implement and validate Chaos Engineering in the complete platform reference implementation.
+Validate controlled chaos engineering in the complete platform reference implementation.
 
 ## Prerequisites
 
@@ -48,7 +48,7 @@ Review these files before validation:
    test -f platform-config/chaos/delete-pod.yaml
    ```
 
-   If the file does not exist, create the chaos experiment manifest first. It should include a ServiceAccount, Role, RoleBinding and one Job that deletes only one matching sample API pod.
+   If the file does not exist, stop and pull the latest `platform-config` repository before continuing. This lab expects the chaos experiment manifest to already exist.
 
 2. Review the chaos manifest target and RBAC:
 

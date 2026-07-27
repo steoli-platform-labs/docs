@@ -9,7 +9,7 @@
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-60 minutes |
 | **Estimated Cost** | Low |
-| **Terraform** | Yes |
+| **Terraform** | Read-only validation |
 | **Kubernetes** | Yes |
 | **GitOps** | Yes |
 
@@ -22,7 +22,7 @@ The goal is to keep real secret values outside Git while still managing the secr
 Concepts introduced in this lab include External Secrets Operator, ExternalSecrets, ClusterSecretStores, AWS Secrets Manager, Kubernetes Secrets and secret synchronization. See the [Concepts Reference](../concepts/README.md) for how secret values stay outside Git.
 
 ## Outcome
-Implement and validate External Secrets Operator in the complete platform reference implementation.
+Validate External Secrets Operator in the complete platform reference implementation and confirm it syncs a test AWS Secrets Manager value into Kubernetes.
 
 ## Prerequisites
 
@@ -144,17 +144,14 @@ Review these files before validation:
 
    A render failure here means Argo CD will also fail to generate manifests.
 
-7. Commit and push the desired state if you changed it:
+7. Confirm there are no unexpected local desired-state changes:
 
    ```bash
    cd "$WORKSPACE/platform-config"
    git status --short
-   git add clusters/dev/external-secrets.yaml clusters/dev/external-secrets-config.yaml clusters/dev/sample-api.yaml addons/external-secrets/cluster-secret-store.yaml
-   git commit -m "feat: configure external secrets"
-   git push
    ```
 
-   If you added different SecretStore manifests or Argo CD wiring files, stage those actual paths too. If there are no changed files, skip the commit.
+   A fresh lab run should not require edits here. If `git status --short` shows changes, review whether they are intentional before continuing.
 
 8. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api`:
 
@@ -251,4 +248,4 @@ The implementation remains GitOps-driven and mergeable to `main`.
 Keep External Secrets Operator installed for later security and application labs. Remove only temporary non-sensitive test secrets created during validation.
 
 ## Next Steps
-Continue with [Lab 13 - IRSA](./lab13-iam-roles-for-service-accounts.md). Later labs keep this secret-management foundation in place: Lab 13 validates workload identity patterns, Lab 15 checks that environment-specific workloads include `ExternalSecret` resources where configured and future application changes can replace the non-sensitive test key with real configuration references without committing secret values to Git.
+Continue with [Lab 13 - Workload Identity](./lab13-iam-roles-for-service-accounts.md). Later labs keep this secret-management foundation in place: Lab 13 validates workload identity patterns, Lab 15 checks that environment-specific workloads include `ExternalSecret` resources where configured and future application changes can replace the non-sensitive test key with real configuration references without committing secret values to Git.
