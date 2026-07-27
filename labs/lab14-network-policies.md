@@ -54,10 +54,15 @@ Review these files before validation:
 
    ```bash
    kubectl -n kube-system get pods -l k8s-app=aws-node
-   kubectl -n kube-system get daemonset aws-node -o yaml | grep -i network
+   kubectl -n kube-system get daemonset aws-node \
+     -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{"\n"}{end}'
+   kubectl -n kube-system get daemonset aws-node \
+     -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{" "}{range .env[*]}{.name}{"="}{.value}{"\n"}{end}{end}' | grep ENABLE_NETWORK_POLICY || true
    ```
 
-   A NetworkPolicy object can exist without being enforced if the CNI is not configured for policy enforcement. Treat that as a failed validation, not as a successful deny test.
+   Expected result: the `aws-node` pods are `Running`, the DaemonSet includes the AWS VPC CNI containers and the output shows `ENABLE_NETWORK_POLICY=true`. Some EKS versions also show an `aws-network-policy-agent` container. That agent is what turns Kubernetes `NetworkPolicy` objects into enforced dataplane rules on the nodes.
+
+   If the last command prints no `ENABLE_NETWORK_POLICY=true` line, the cluster can still accept `NetworkPolicy` YAML, but the rules may not actually block traffic. Treat that as a failed validation for this lab, not as a successful deny test. In that case, stop and fix CNI network policy enforcement before relying on the positive and negative connectivity tests later in the lab.
 
 3. Run `helm lint` and render the chart:
 
