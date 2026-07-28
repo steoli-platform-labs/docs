@@ -138,6 +138,20 @@ Review these files before validation:
 
    In a dev-only cluster, this loop will query only `sample-api-dev` and skip staging and production because their `sample-api` Services do not exist. That is expected when those environments are not wired yet. In a completed multi-environment setup, each environment should return its own response, image tag and environment-specific values.
 
+8. Understand what is required to activate multiple environments:
+
+   This lab does not create staging or production. To turn the current dev-only platform into an active multi-environment setup, the platform needs additional GitOps desired state.
+
+   At minimum, a complete multi-environment setup needs:
+
+   - A reconciled namespace source, such as an Argo CD Application that applies `platform-config/environments/namespaces.yaml`.
+   - One workload Application per environment, for example `sample-api-dev`, `sample-api-staging` and `sample-api-production`, each targeting the correct namespace.
+   - Environment-specific Helm values for each workload, such as replica counts, image tags, secret remote keys, resource settings and rollout settings.
+   - A promotion process that moves a tested image tag from dev to staging to production through Git changes, not by reusing mutable state across environments.
+   - Environment-scoped security and operations settings, such as NetworkPolicies, ExternalSecrets, quotas, disruption budgets and service accounts.
+
+   A common layout is to keep shared chart logic in `helm-charts`, environment-specific desired state in `platform-config`, and promotion history in Git commits or pull requests. The important rule is that Argo CD must be told about every environment path that should be reconciled; files that exist in Git but are not under an Argo CD Application path are only documentation until they are wired into GitOps.
+
 ## Expected Results
 The lab identifies whether the platform is still dev-only or whether each environment is represented by explicit GitOps desired state rather than ad hoc manual deployment.
 
@@ -150,24 +164,29 @@ The lab identifies whether the platform is still dev-only or whether each enviro
 - In a completed multi-environment setup, dev, staging and production each have namespace labels, GitOps Applications, environment-specific values and traceable promotion history.
 
 ## Troubleshooting
-Start with namespace labels and Argo CD Applications:
+Start by confirming what Argo CD is actually configured to read:
 
 ```bash
+cd "$WORKSPACE/platform-config"
+yq '.spec.source.path' bootstrap/root-application.yaml
+grep -R "environments/namespaces.yaml\|path: environments\|sample-api-staging\|sample-api-production" -n . || true
 kubectl get namespaces -L environment
 kubectl -n argocd get applications.argoproj.io -o wide
-kubectl get events -A --sort-by=.lastTimestamp
 ```
 
-If namespaces exist but workloads do not:
+If staging or production namespaces are missing:
 
-- Confirm Argo CD has an Application for that environment.
-- Confirm the Application path is under a reconciled root Application.
-- Confirm environment-specific values exist and point to the intended namespace.
+- Confirm `environments/namespaces.yaml` defines those namespaces.
+- Confirm an Argo CD Application references that file or its parent directory.
+- Do not manually apply the namespace file as a workaround; that bypasses the GitOps check this lab is validating.
 
-If a dev change affects staging or production unexpectedly:
+If staging or production namespaces exist but have no workloads:
 
-- Confirm environments do not share the same mutable values file.
-- Confirm promotion is a Git change, not an implicit side effect of `latest` or shared mutable tags.
+- Confirm Argo CD has workload Applications for those environments.
+- Confirm each Application points at the intended chart and target namespace.
+- Confirm each environment has its own Helm values instead of accidentally reusing the dev values unchanged.
+
+If only dev exists, the lab has still produced a useful result: the current platform is healthy but not yet an active multi-environment deployment.
 
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
