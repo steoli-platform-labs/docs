@@ -144,11 +144,21 @@ Review these files before validation:
 
    At minimum, a complete multi-environment setup needs:
 
-   - A reconciled namespace source. For example, add a child Argo CD Application under `platform-config/clusters/dev` that points at `platform-config/environments`, or move the namespace manifests under an already reconciled path. The goal is that `sample-api-dev`, `sample-api-staging` and `sample-api-production` are created by Argo CD, not by a one-off `kubectl apply`.
-   - One workload Application per environment. For example, keep separate Argo CD Applications named `sample-api-dev`, `sample-api-staging` and `sample-api-production`, each pointing at the same Helm chart but targeting a different namespace and values block.
-   - Environment-specific Helm values. At minimum, each environment needs its own namespace, image tag policy, replica/autoscaling settings, secret remote key, rollout behavior and resource settings. Staging and production should not silently inherit every dev value unchanged.
-   - A promotion process. A typical flow is: CI publishes an immutable image tag, dev uses it first, a pull request promotes the same tag to staging after validation, and a later reviewed pull request promotes that exact tag to production. Avoid relying on `latest` for staging or production because it hides what was promoted.
-   - Environment-scoped security and operations settings. NetworkPolicies, ExternalSecrets, service accounts, resource quotas, limit ranges and disruption budgets should be scoped per namespace so changing dev does not accidentally change staging or production behavior.
+   - A reconciled namespace source.
+
+     For example, add a child Argo CD Application under `platform-config/clusters/dev` that points at `platform-config/environments`, or move the namespace manifests under an already reconciled path. The Application should create `sample-api-dev`, `sample-api-staging` and `sample-api-production` from Git, include clear `environment` labels and avoid one-off `kubectl apply` namespace creation.
+   - One workload Application per environment.
+
+     For example, keep separate Argo CD Applications named `sample-api-dev`, `sample-api-staging` and `sample-api-production`, each pointing at the same Helm chart but targeting a different namespace and values block. Each Application should have an explicit destination namespace, sync status and Git revision so you can tell which environment is running which desired state.
+   - Environment-specific Helm values.
+
+     For example, each environment needs its own namespace, image tag policy, replica/autoscaling settings, secret remote key, rollout behavior and resource settings. Staging and production should not silently inherit every dev value unchanged; production might use stricter resources, more replicas, different secret paths and immutable image tags only.
+   - A promotion process.
+
+     For example, CI publishes an immutable image tag, dev uses it first, a pull request promotes the same tag to staging after validation, and a later reviewed pull request promotes that exact tag to production. Avoid relying on `latest` for staging or production because it hides what was promoted and makes rollback harder to reason about.
+   - Environment-scoped security and operations settings.
+
+     For example, NetworkPolicies, ExternalSecrets, service accounts, resource quotas, limit ranges and disruption budgets should be scoped per namespace. Each environment should be able to change access, secrets, quotas or disruption settings without accidentally changing another environment's behavior.
 
    A common layout is to keep shared chart logic in `helm-charts`, environment-specific desired state in `platform-config`, and promotion history in Git commits or pull requests. The important rule is that Argo CD must be told about every environment path that should be reconciled; files that exist in Git but are not under an Argo CD Application path are only documentation until they are wired into GitOps.
 
