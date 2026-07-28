@@ -80,7 +80,7 @@ The labs remain the hands-on implementation path. Use this page when a lab intro
 - **Image tag:** A label pointing at an image version. Release tags such as `1.0.0` are readable and traceable; `latest` is convenient but mutable.
 - **Digest:** A content-addressed image identifier such as `sha256:...`. Digests prove exactly which image content was pulled.
 - **GHCR:** GitHub Container Registry, used here to publish the `sample-api` image.
-- **Image pull secret:** A Kubernetes secret that lets nodes authenticate to a private registry such as GHCR.
+- **Image pull secret:** A Kubernetes secret that lets nodes authenticate to a private registry such as GHCR. Public images do not need one. Private production images commonly use an `imagePullSecrets` reference in the workload pod template that points to a registry credential secret in the same namespace.
 
 ## GitOps and Argo CD
 

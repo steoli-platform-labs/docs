@@ -114,6 +114,15 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 
 If rendering fails, inspect `charts/sample-api/values.yaml` and the relevant template under `charts/sample-api/templates/`.
 
+The reference `sample-api` image is public, so the lab values leave `imagePullSecrets` empty. In a real platform with private application images, create a registry credential secret in the workload namespace and set chart values like this:
+
+```yaml
+imagePullSecrets:
+  - name: ghcr-pull
+```
+
+The secret name must exist in the same namespace as the pod. Keep registry tokens out of Git and manage them through an approved secret-management process.
+
 ## Final Repository State
 
 At completion, `helm-charts` contains the reusable `sample-api` chart and no workload has been deployed outside GitOps.

@@ -167,6 +167,8 @@ Key files:
 
    The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`, the public release image tag published in Lab 06. No image pull secret is required for the reference image.
 
+   Real platforms often keep application images private. In that case, each workload namespace needs a registry credential secret, and the Helm values should set `imagePullSecrets` to reference that secret name. The reference lab does not require this because the published `sample-api` package is public.
+
 3. Confirm kubectl points at the intended EKS cluster, compare the Argo CD chart version and install Argo CD:
 
    ```bash

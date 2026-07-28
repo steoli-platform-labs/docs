@@ -66,7 +66,7 @@ Respect repository boundaries. Make changes in the repository that owns the beha
 - Argo CD owns Kubernetes application deployment after Lab 07.
 - Do not use manual `kubectl apply`, `helm install` or `helm upgrade` for GitOps-managed applications, except for documented bootstrap, dry-run validation, temporary test resources or local-only troubleshooting.
 - Lab 07 requires hands-on Argo CD UI access through local port-forwarding so users learn the UI exists; do not require public exposure of Argo CD.
-- The reference `sample-api` GHCR package is public so learners can pull release images without registry credentials. Keep Helm chart `imagePullSecrets` configurable for real private-registry deployments.
+- The reference `sample-api` GHCR package is public so learners can pull release images without registry credentials. Real platforms commonly keep application packages private; keep Helm chart `imagePullSecrets` configurable and explain private-registry usage as context, not as a required reference/demo lab step.
 
 ## Documentation Rules
 
