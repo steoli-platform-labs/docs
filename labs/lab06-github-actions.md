@@ -28,7 +28,7 @@ After this lab, the project repositories have GitHub Actions workflows that vali
 - Lab 01 - Lab 05 completed
 - Git, Terraform, Helm, kubectl, Python 3 and Docker Desktop or another Docker daemon installed
 - GitHub repositories connected to the local workspace
-- `sample-api` repository allowed to publish packages to GitHub Container Registry using `GITHUB_TOKEN`
+- Public `sample-api` package available in GitHub Container Registry
 
 ## Files to Review
 
@@ -137,21 +137,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 6. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 
-   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. For public reference/demo use, the image package must either be public or your GitHub user must have package access. If the package is private, configure Kubernetes image pull credentials in Lab 07.
-
-   If the package is private, authenticate Docker to GHCR first. Prefer a short-lived, least-privilege GitHub token with `read:packages` permission:
-
-   > **Info:** Store the token only in your shell session or a local password manager. Do not write it to repository files, shell history snippets, screenshots or CI logs. Revoke it when local package access is no longer required.
-
-   ```bash
-   export GITHUB_USER="<your-github-username>"
-   read -r -s GITHUB_TOKEN
-
-   printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-   unset GITHUB_TOKEN
-   ```
-
-   Paste the token at the hidden prompt. Do not store it in a committed file.
+   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. The reference package is public, so no Docker or Kubernetes registry credentials are required for this image.
 
    Verify the image tag:
 
@@ -162,15 +148,13 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    The `docker pull` command confirms that the release image exists and is readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the tag resolves to a concrete image artifact. Later rollout and promotion labs compare GitOps release tags, for example `1.0.0` and `1.0.1`.
 
-   If you use GitHub CLI to inspect the package, your `gh` token must include package scopes. Unset `GITHUB_TOKEN` first because that environment variable overrides the credentials stored by `gh auth login`:
+   You can also inspect the public package metadata with GitHub CLI:
 
    ```bash
-   unset GITHUB_TOKEN
-   gh auth refresh --hostname github.com --scopes read:packages,write:packages
    gh api "/orgs/${GITHUB_ORG}/packages/container/sample-api" --jq '{name,visibility,url}'
    ```
 
-   If `docker pull` returns `unauthorized`, confirm that the token has `read:packages`, that your GitHub user can access the `sample-api` package, and that the package exists under the expected organization.
+   If `docker pull` returns `unauthorized`, confirm the package is still public and that the image tag exists under the expected organization.
 
    This lab does not apply infrastructure or deploy workloads. GitHub Actions validate, test and publish artifacts only; deployment remains a GitOps responsibility in later labs.
 
@@ -182,8 +166,8 @@ Local validation commands pass, GitHub Actions workflows run successfully, pull 
 
 - Pull requests run tests and validation without publishing an image.
 - A Git tag such as `v1.0.0` publishes a matching release-style image tag such as `1.0.0`.
-- The image tags can be pulled using the expected package permissions.
-- The `sample-api` package is private by default, and Kubernetes image pull credentials are planned for Lab 07.
+- The image tags can be pulled without registry authentication.
+- The `sample-api` package is public for reference/demo use.
 - CI does not deploy directly to Kubernetes.
 - Workflow permissions are limited to what each job requires.
 - A published image alone does not update GitOps desired state; verify that the documented image-update process exists before calling end-to-end delivery complete.
@@ -207,9 +191,8 @@ Common issues:
 | `helm lint` fails | Chart metadata, values or templates are invalid | Run `helm lint charts/sample-api` locally in `helm-charts` and fix the reported chart issue |
 | Python tests fail | Application dependency or test failure | Run the local `sample-api` virtualenv commands and fix the failing test |
 | Docker build fails | Dockerfile or dependency issue | Run `docker build -t sample-api:lab06 .` locally with Docker running |
-| GHCR pull returns `unauthorized` | Docker is not logged in to GHCR or token lacks `read:packages` | Run `docker login ghcr.io` with a token that has `read:packages` |
-| `gh auth refresh` says `GITHUB_TOKEN` is being used | `GITHUB_TOKEN` is set in the current shell and overrides stored GitHub CLI credentials | Run `unset GITHUB_TOKEN`, then rerun `gh auth refresh --hostname github.com --scopes read:packages,write:packages` |
-| `gh api` package lookup returns `403` | GitHub CLI token lacks package scopes | Unset `GITHUB_TOKEN`, then run `gh auth refresh --hostname github.com --scopes read:packages,write:packages` and approve the browser/device prompt |
+| GHCR pull returns `unauthorized` | Package visibility is not public or the package path is wrong | Confirm the package is public and the image path is `ghcr.io/steoli-platform-labs/sample-api` |
+| `gh api` package lookup returns `403` | GitHub CLI cannot read package metadata | Confirm GitHub CLI authentication or use the GitHub web UI to inspect the public package |
 
 ## Final Repository State
 

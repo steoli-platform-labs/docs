@@ -33,7 +33,6 @@ Before starting this lab:
 - AWS CLI, kubectl, Helm and yq installed
 - Argo CD running in the dev cluster
 - `sample-api:1.0.0` published to GHCR by Lab 06
-- A GitHub token with `read:packages` for the private GHCR image pull secret
 - AWS credentials that can read and write the lab Secrets Manager secret values
 
 ## Files to Review
@@ -126,27 +125,7 @@ Review these files before activation:
 
    The chart creates an `ExternalSecret` per environment. External Secrets Operator reads these paths from AWS Secrets Manager and writes Kubernetes Secrets into the target namespace.
 
-5. Create the private GHCR image pull secret in staging and production:
-
-   ```bash
-   export GITHUB_USER="<your-github-username>"
-   read -r -s GHCR_READ_TOKEN
-
-   for ns in sample-api-staging sample-api-production; do
-     kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
-     kubectl -n "$ns" create secret docker-registry ghcr-pull \
-       --docker-server=ghcr.io \
-       --docker-username="$GITHUB_USER" \
-       --docker-password="$GHCR_READ_TOKEN" \
-       --dry-run=client -o yaml | kubectl apply -f -
-   done
-
-   unset GHCR_READ_TOKEN
-   ```
-
-   This is the same private image-pull bootstrap pattern used in Lab 07. Do not commit the token value to Git.
-
-6. Run local validation before Argo CD applies the new desired state:
+5. Run local validation before Argo CD applies the new desired state:
 
    ```bash
    cd "$WORKSPACE"
@@ -170,7 +149,7 @@ Review these files before activation:
 
    These checks confirm Kubernetes can parse the bootstrap manifests and the chart can render all three environment values blocks.
 
-7. Apply the environment root Applications:
+6. Apply the environment root Applications:
 
    ```bash
    cd "$WORKSPACE"
@@ -182,7 +161,7 @@ Review these files before activation:
 
    Applying root Applications is a bootstrap exception to the GitOps rule. After these roots exist, Argo CD owns the child Applications and workloads.
 
-8. Refresh and inspect all environment roots and sample API Applications:
+7. Refresh and inspect all environment roots and sample API Applications:
 
     ```bash
     for app in platform-root-dev platform-root-staging platform-root-production; do
@@ -200,9 +179,9 @@ Review these files before activation:
       -o wide
     ```
 
-    Expected result: each root is `Synced / Healthy`, `platform-namespaces` is `Synced / Healthy`, and the three sample API Applications are created. Workload health depends on the GHCR pull secrets, AWS secret values and cluster capacity being ready.
+    Expected result: each root is `Synced / Healthy`, `platform-namespaces` is `Synced / Healthy`, and the three sample API Applications are created. Workload health depends on the public GHCR image, AWS secret values and cluster capacity being ready.
 
-9. Validate namespace separation and workload state:
+8. Validate namespace separation and workload state:
 
     ```bash
     kubectl get namespaces -L environment
@@ -215,7 +194,7 @@ Review these files before activation:
 
     Each namespace should show its own sample API resources. If staging or production pods are pending, inspect the pod events before changing GitOps desired state.
 
-10. Query each environment's API:
+9. Query each environment's API:
 
     ```bash
     for ns in sample-api-dev sample-api-staging sample-api-production; do
@@ -264,9 +243,8 @@ If staging or production Applications are missing:
 
 If pods show `ImagePullBackOff`:
 
-- Confirm the `ghcr-pull` secret exists in the affected namespace.
-- Confirm the GitHub token used to create it has `read:packages` permission.
-- Delete the stuck pod after fixing the secret so Kubernetes retries the image pull.
+- Confirm `ghcr.io/steoli-platform-labs/sample-api:1.0.0` can be pulled without Docker login.
+- Confirm the image tag in the affected Argo CD Application values matches a published reference image.
 
 If an `ExternalSecret` is not ready:
 

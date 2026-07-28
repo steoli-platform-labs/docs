@@ -95,10 +95,6 @@ Review these files before validation:
 
    kubectl create namespace sample-api-rollout-demo --dry-run=client -o yaml | kubectl apply -f -
 
-   kubectl -n sample-api-dev get secret ghcr-pull -o yaml \
-     | yq 'del(.metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.managedFields, .metadata.annotations, .metadata.ownerReferences) | .metadata.namespace = "sample-api-rollout-demo"' \
-     | kubectl apply -f -
-
    helm template sample-api-rollout-demo helm-charts/charts/sample-api \
      --namespace sample-api-rollout-demo \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \

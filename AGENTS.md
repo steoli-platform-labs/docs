@@ -66,7 +66,7 @@ Respect repository boundaries. Make changes in the repository that owns the beha
 - Argo CD owns Kubernetes application deployment after Lab 07.
 - Do not use manual `kubectl apply`, `helm install` or `helm upgrade` for GitOps-managed applications, except for documented bootstrap, dry-run validation, temporary test resources or local-only troubleshooting.
 - Lab 07 requires hands-on Argo CD UI access through local port-forwarding so users learn the UI exists; do not require public exposure of Argo CD.
-- Private GHCR pulls are the default for `sample-api`; use a least-privilege `read:packages` token and a Kubernetes image pull secret until later secret-management labs improve that pattern.
+- The reference `sample-api` GHCR package is public so learners can pull release images without registry credentials. Keep Helm chart `imagePullSecrets` configurable for real private-registry deployments.
 
 ## Documentation Rules
 
@@ -113,7 +113,7 @@ Lab writing rules:
 - Lab 02 should not commit `backend.tf`; migration scripts may create ignored local backend config after the backend bucket exists.
 - Lab 03 network examples use a small primary CIDR plus optional EKS-ready private subnets from `100.64.0.0/18`; this must be treated as planned, non-overlapping shared address space.
 - Lab 06 publishes `sample-api` images from Git release tags such as `v1.0.0`, which publish Docker image tags such as `1.0.0`. Use these release-style tags for GitOps deployment and Lab 16 progressive delivery examples.
-- Lab 07 uses private GHCR image pulls through `sample-api-dev/ghcr-pull` until later secret-management labs improve the pattern.
+- Lab 07 deploys the public reference `sample-api` image without a registry pull secret.
 - Lab 08 deploys kube-prometheus-stack through Argo CD. Large Prometheus Operator CRDs require the chart CRD upgrade job plus sync options that avoid client-side apply annotation limits.
 - Lab 15 activates multi-environment GitOps with one root Application per environment: `platform-root-dev`, `platform-root-staging` and `platform-root-production`. The lab uses committed desired state from `platform-config`.
 
