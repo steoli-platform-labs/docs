@@ -13,14 +13,14 @@
 
 ## Introduction
 
-This lab introduces a multi-environment GitOps layout for the platform.
+This lab introduces the checks used to evaluate a multi-environment GitOps layout for the platform.
 
-The platform starts separating environment-specific desired state so development, staging and production-style environments can evolve without mixing namespace, policy or application configuration.
+The current platform may still have only the development workload reconciled. That is acceptable for this lab if the result is treated as a gap assessment: you are checking whether staging and production are represented in GitOps desired state, not manually creating them during validation.
 
 Concepts introduced in this lab include environment separation, namespace boundaries, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
 
 ## Outcome
-Validate the multi-environment GitOps layout in the complete platform reference implementation.
+Validate the current multi-environment GitOps readiness and identify whether staging and production desired state are actually reconciled.
 
 ## Prerequisites
 
@@ -89,7 +89,9 @@ Review these files before validation:
    kubectl -n argocd get applications.argoproj.io -o wide
    ```
 
-   Confirm the root Application revision matches the expected `platform-config` commit before validating child resources.
+   This refresh does not create new environments by itself. It only asks Argo CD to re-read the Git paths it already knows about. If `platform-root` still points at `clusters/dev` and no child Application points at `environments`, Argo CD will continue reconciling the existing dev Applications only.
+
+   Expected result in the current slim platform: the existing Applications remain `Synced / Healthy`, and you may still see only the dev workload Application. That means the platform is healthy, but staging and production have not yet been wired into GitOps.
 
 6. Validate that each namespace has isolated workloads, policies and configuration:
 
@@ -98,17 +100,28 @@ Review these files before validation:
    kubectl get applications.argoproj.io -n argocd
    for ns in sample-api-dev sample-api-staging sample-api-production; do
      echo "===== $ns ====="
+     if ! kubectl get namespace "$ns" >/dev/null 2>&1; then
+       echo "namespace missing"
+       continue
+     fi
      kubectl -n "$ns" get deploy,rollout,svc,pod,externalsecret,networkpolicy,pdb
      kubectl -n "$ns" get resourcequota,limitrange
    done
    ```
 
-   Some environments may initially contain only namespaces until their workload Applications are added. Treat missing staging or production workload desired state as implementation work, not as a successful multi-environment deployment.
+   If `sample-api-dev` contains resources and `sample-api-staging` or `sample-api-production` contain no resources, your cluster is still dev-only from an application perspective. That is the key finding for this lab. It means the namespace file or future environment layout may exist in Git, but staging and production workload Applications are not currently reconciled by Argo CD.
+
+   Also compare this output with `kubectl get namespaces -L environment`. If staging and production namespaces do not appear there, even the namespace desired state is not currently applied. If they appear but contain no workload resources, only the namespace layer exists.
 
 7. Query each environment's API if workloads exist:
 
    ```bash
    for ns in sample-api-dev sample-api-staging sample-api-production; do
+     if ! kubectl get namespace "$ns" >/dev/null 2>&1; then
+       echo "===== $ns ====="
+       echo "namespace missing; skipping API check"
+       continue
+     fi
      if kubectl -n "$ns" get svc sample-api >/dev/null 2>&1; then
        echo "===== $ns ====="
        kubectl -n "$ns" port-forward svc/sample-api 8080:80 >/tmp/$ns-port-forward.log 2>&1 &
@@ -116,24 +129,25 @@ Review these files before validation:
        sleep 2
        curl -fsS http://localhost:8080/health || true
        kill "$PF_PID"
+     else
+       echo "===== $ns ====="
+       echo "sample-api service missing; skipping API check"
      fi
    done
    ```
 
-   Confirm responses, image tags and environment variables match the environment being tested.
+   In a dev-only cluster, this loop will query only `sample-api-dev` and skip staging and production because their `sample-api` Services do not exist. That is expected when those environments are not wired yet. In a completed multi-environment setup, each environment should return its own response, image tag and environment-specific values.
 
 ## Expected Results
-The environment namespaces exist and each environment is represented by explicit GitOps desired state rather than ad hoc manual deployment.
+The lab identifies whether the platform is still dev-only or whether each environment is represented by explicit GitOps desired state rather than ad hoc manual deployment.
 
 ## Validation
-- Dev, staging and production namespaces exist with correct labels.
-- Each environment has an independently managed Argo CD application or equivalent GitOps source.
-- Environment-specific values are visible in workload configuration.
-- A dev change does not automatically alter staging or production.
-- Secrets, service accounts and NetworkPolicies are namespace-scoped as intended.
-- Resource requests, quotas and disruption policies are appropriate for each environment.
-- Promotion is traceable to Git history.
+- Current dev resources remain `Synced / Healthy` after the Argo CD refresh.
+- The lab output clearly shows whether staging and production namespaces exist.
+- The lab output clearly shows whether staging and production workload Applications exist.
+- If only dev resources exist, that is recorded as a multi-environment gap rather than treated as a successful deployment.
 - Namespaces alone do not constitute a multi-environment platform; workloads and environment-specific desired state must also be present.
+- In a completed multi-environment setup, dev, staging and production each have namespace labels, GitOps Applications, environment-specific values and traceable promotion history.
 
 ## Troubleshooting
 Start with namespace labels and Argo CD Applications:
@@ -159,7 +173,7 @@ If a dev change affects staging or production unexpectedly:
 The implementation remains GitOps-driven and mergeable to `main`.
 
 ## Cleanup
-No cleanup is required. Later labs depend on the environment namespaces and GitOps structure.
+No cleanup is required. Do not delete existing dev resources. If staging or production namespaces exist, keep them only if they are part of the GitOps-managed desired state.
 
 ## Next Steps
 Continue with [Lab 16 - Progressive Delivery](./lab16-progressive-delivery.md).
