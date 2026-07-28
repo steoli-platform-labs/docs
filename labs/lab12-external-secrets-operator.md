@@ -193,7 +193,7 @@ Review these files before validation:
    EXAMPLE_CONFIG
    ```
 
-   This is the expected successful ending for the secret synchronization path. It proves that External Secrets Operator read the `platform-labs/sample-api` test secret from AWS Secrets Manager and created the `sample-api-dev/sample-api` Kubernetes Secret with the expected key. The sample application does not consume `EXAMPLE_CONFIG` yet; this lab validates the platform secret-management capability without introducing a real application credential.
+   This is the expected successful ending for the secret synchronization path. It proves that External Secrets Operator read the `platform-labs/sample-api-dev` test secret from AWS Secrets Manager and created the `sample-api-dev/sample-api` Kubernetes Secret with the expected key. The sample application does not consume `EXAMPLE_CONFIG` yet; this lab validates the platform secret-management capability without introducing a real application credential.
 
    Do not decode, print or screenshot real secret values in terminals, issue comments, pull requests or CI logs.
 
