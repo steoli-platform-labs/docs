@@ -132,13 +132,15 @@ Review these files before validation:
      > /tmp/sample-api-rollout-demo.yaml
 
    printf '\n===== Apply demo Rollout =====\n'
-   kubectl apply -f /tmp/sample-api-rollout-demo.yaml
+   kubectl -n sample-api-rollout-demo apply -f /tmp/sample-api-rollout-demo.yaml
 
    printf '\n===== Demo rollout resources =====\n'
    kubectl -n sample-api-rollout-demo get rollout,replicaset,pod
    ```
 
    The demo uses the same chart and Argo Rollouts controller as the GitOps-managed workload, but it is not managed by Argo CD. This keeps the reference repositories unchanged while still giving you a real rollout object to test.
+
+   The `-n sample-api-rollout-demo` flag on `kubectl apply` is required because these chart templates do not set `metadata.namespace` in every rendered manifest. `helm template --namespace` sets the Helm release namespace, but it does not automatically add `metadata.namespace` to templates that omit it.
 
 5. Patch the temporary demo Rollout from `1.0.0` to `1.0.1` and watch the canary:
 
@@ -201,6 +203,7 @@ If no canary happens:
 - Confirm the rendered chart creates a `Rollout`, not a `Deployment`.
 - Confirm the temporary demo Rollout image changed from `1.0.0` to `1.0.1`.
 - Confirm the Rollout controller is healthy.
+- If `kubectl -n sample-api-rollout-demo get rollout,replicaset,pod` prints `No resources found` after `kubectl apply` reported created resources, check the `default` namespace. Re-apply the manifest with `kubectl -n sample-api-rollout-demo apply -f /tmp/sample-api-rollout-demo.yaml` and remove any accidentally created default-namespace demo resources.
 
 If rollout pauses unexpectedly:
 
@@ -215,6 +218,7 @@ The implementation remains GitOps-driven and mergeable to `main`.
 Delete the temporary demo namespace before moving on. Keep Argo Rollouts installed for later resilience validation.
 
 ```bash
+kubectl -n default delete rollout,service,serviceaccount,networkpolicy,pdb sample-api-rollout-demo --ignore-not-found
 kubectl delete namespace sample-api-rollout-demo --ignore-not-found
 rm -f /tmp/sample-api-rollout-demo.yaml
 ```
