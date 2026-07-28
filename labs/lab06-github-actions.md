@@ -137,7 +137,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 6. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 
-   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. Keep the GHCR package private and configure Kubernetes image pull credentials in Lab 07.
+   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. For public reference/demo use, the image package must either be public or your GitHub user must have package access. If the package is private, configure Kubernetes image pull credentials in Lab 07.
 
    If the package is private, authenticate Docker to GHCR first. Prefer a short-lived, least-privilege GitHub token with `read:packages` permission:
 

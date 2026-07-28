@@ -15,15 +15,15 @@
 
 This lab prepares the local development environment and AWS account for the Platform Engineering project.
 
-No cloud infrastructure is provisioned during this lab. Instead, the required development tools, AWS access and Git repositories are prepared for the remainder of the project.
+No cloud infrastructure is provisioned during this lab. Instead, the required development tools, AWS access and local clones of the public reference repositories are prepared for the remainder of the project.
 
 This is the only lab that requires manual setup of the local workstation.
 
-Concepts introduced in this lab include the multi-repository platform layout, local toolchain, AWS CLI authentication and GitHub repository ownership. See the [Concepts Reference](../concepts/README.md) for definitions used across the lab series.
+Concepts introduced in this lab include the multi-repository platform layout, local toolchain, AWS CLI authentication and reference repositories. See the [Concepts Reference](../concepts/README.md) for definitions used across the lab series.
 
 ## Outcome
 
-After completing this guide, you will have a verified local toolchain, authenticated AWS CLI access, a GitHub organization with seven repositories and a local workspace containing all repository clones.
+After completing this guide, you will have a verified local toolchain, authenticated AWS CLI access and a local workspace containing all reference repository clones.
 
 This guide does not provision AWS infrastructure.
 
@@ -34,7 +34,6 @@ Before starting this lab, ensure you have:
 - An AWS account
 - A GitHub account
 - Administrator permissions within the AWS account
-- Permission to create a GitHub organization and repositories
 - A workstation with administrative rights for software installation
 - A terminal using Bash, Zsh or a compatible shell
 
@@ -123,13 +122,13 @@ This lab consists of the following high-level tasks.
 1. Install required software
 2. Configure AWS CLI
 3. Verify AWS connectivity
-4. Create the GitHub repositories
+4. Verify access to the public reference repositories
 5. Clone the repositories locally
 6. Verify the development environment
 
 ## Files to Review
 
-This lab prepares the documentation repository and creates the empty implementation repositories used by later labs.
+This lab prepares local access to the public reference repositories used by later labs.
 
 | File | Why it matters |
 |------|----------------|
@@ -140,10 +139,10 @@ This lab prepares the documentation repository and creates the empty implementat
 
 ## Values Used in This Guide
 
-Choose your values before running commands:
+Use these values before running commands:
 
 ```bash
-export GITHUB_ORG="<your-github-organization>"
+export GITHUB_ORG="steoli-platform-labs"
 export WORKSPACE="$HOME/dev/platform-labs"
 export AWS_PROFILE="<your-aws-profile>"
 export AWS_REGION="<your-aws-region>"
@@ -155,7 +154,7 @@ Do not commit account IDs, credentials or profile files to Git.
 
 ## Step-by-Step Implementation
 
-Complete the setup steps below in order. This is the only lab that requires manual workstation and repository bootstrapping.
+Complete the setup steps below in order. This is the only lab that requires manual workstation setup.
 
 1. Install and verify Git.
 
@@ -165,23 +164,19 @@ Complete the setup steps below in order. This is the only lab that requires manu
    git --version
    ```
 
-   Configure the identity that will appear in commits:
+   Configure the default branch name used by local Git repositories:
 
    ```bash
-   git config --global user.name "<your-name>"
-   git config --global user.email "<your-email>"
    git config --global init.defaultBranch main
    ```
 
    Validate:
 
    ```bash
-   git config --global --get user.name
-   git config --global --get user.email
    git config --global --get init.defaultBranch
    ```
 
-   Expected result: all three commands return the values you configured.
+   Expected result: the command returns `main`.
 
 2. Install Visual Studio Code.
 
@@ -325,7 +320,7 @@ Complete the setup steps below in order. This is the only lab that requires manu
 
 10. Install GitHub CLI.
 
-   GitHub CLI is strongly recommended because it makes repository creation and validation repeatable.
+   GitHub CLI is strongly recommended because it makes repository and package access validation repeatable.
 
    Verify:
 
@@ -347,26 +342,17 @@ Complete the setup steps below in order. This is the only lab that requires manu
    gh auth status
    ```
 
-11. Create the GitHub organization.
+11. Verify access to the reference GitHub organization.
 
-   Create or choose a GitHub organization for your lab repositories. The organization name must be globally unique on GitHub.
+   The public `steoli-platform-labs/*` repositories are reference templates for this lab series. Learners inspect, apply and validate the committed reference state rather than pushing changes to shared repositories.
 
-   When using another name, update the shell variable:
+   Confirm the reference organization value:
 
    ```bash
-   export GITHUB_ORG="<your-github-organization>"
+   export GITHUB_ORG="steoli-platform-labs"
    ```
 
-   Recommended initial settings:
-
-   - Base permissions: Read
-   - Repository creation: restricted to organization owners during bootstrap
-   - Two-factor authentication: required when practical
-   - Discussions and projects: optional
-
-12. Create the repositories.
-
-   Create seven public repositories. Omit `--public` and use `--private` during development when you are not ready to publish.
+   Validate that the expected repositories are visible:
 
    ```bash
    for repo in \
@@ -374,28 +360,17 @@ Complete the setup steps below in order. This is the only lab that requires manu
      platform-bootstrap \
      platform-modules \
      platform-live \
-     platform-config \
-     helm-charts \
-     sample-api
+      platform-config \
+      helm-charts \
+      sample-api
    do
-     gh repo create "$GITHUB_ORG/$repo" \
-    --public \
-    --description "AWS Platform Engineering project - $repo" \
-    --add-readme
-    done
+     gh repo view "$GITHUB_ORG/$repo" --json name,url --jq '.name + " -> " + .url'
+   done
    ```
 
-   If the `docs` repository already exists, remove it from the loop or accept the expected error for that one repository.
+   Expected result: all seven repository names and URLs are printed.
 
-   Validate:
-
-   ```bash
-   gh repo list "$GITHUB_ORG" --limit 20
-   ```
-
-   Expected result: all seven repository names are listed.
-
-13. Create the local workspace.
+12. Create the local workspace.
 
    ```bash
    mkdir -p "$WORKSPACE"
@@ -437,61 +412,21 @@ Complete the setup steps below in order. This is the only lab that requires manu
    └── sample-api/
    ```
 
-14. Add common repository files.
+13. Verify common repository files.
 
-   For each new implementation repository, create a minimal `.gitignore` that prevents accidental commits of local secrets and generated files.
+   Each reference repository already contains baseline repository files. Confirm the local clones include `README.md` and `.gitignore` where expected:
 
    ```bash
    for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
    do
-     cat > "$WORKSPACE/$repo/.gitignore" <<'IGNORE'
-   .DS_Store
-   .vscode/
-   .idea/
-   .env
-   .env.*
-   *.local
-   *.log
-
-   # Terraform
-   .terraform/
-   *.tfstate
-   *.tfstate.*
-   crash.log
-   crash.*.log
-   *.tfplan
-
-   # Kubernetes and credentials
-   kubeconfig
-   *.kubeconfig
-
-   # Keys and certificates
-   *.pem
-   *.key
-   *.p12
-   IGNORE
+     test -f "$WORKSPACE/$repo/README.md"
+     test -f "$WORKSPACE/$repo/.gitignore"
    done
    ```
 
-   The ignore file is intentionally broad at bootstrap. Repositories may refine it when their implementation is introduced.
+   The ignore files are intentionally broad enough to keep local secrets, generated files and Terraform state out of Git.
 
-15. Add initial repository READMEs.
-
-   Create a simple purpose statement in each empty repository. Example for `platform-bootstrap`:
-
-   ```bash
-   cat > "$WORKSPACE/platform-bootstrap/README.md" <<'EOF_BOOTSTRAP'
-   # Platform Bootstrap
-
-   This repository contains the Terraform configuration used to create the remote state foundation for the AWS Platform Engineering project.
-
-   Implementation begins in Lab 02.
-   EOF_BOOTSTRAP
-   ```
-
-   Use equivalent purpose statements for the remaining repositories based on [`../architecture/repository-strategy.md`](../architecture/repository-strategy.md).
-
-   Confirm each implementation repository has its initial README and ignore file:
+14. Confirm the local clones are clean before continuing:
 
    ```bash
    for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
@@ -538,7 +473,7 @@ Complete the setup steps below in order. This is the only lab that requires manu
 
 ## Expected Results
 
-The workstation has the required tools installed, AWS CLI authentication works, all seven repositories exist locally and remotely, and each implementation repository contains an initial `README.md` and `.gitignore`.
+The workstation has the required tools installed, AWS CLI authentication works, all seven reference repositories exist locally and each implementation repository contains a `README.md` and `.gitignore`.
 
 ## Validation
 
@@ -546,7 +481,7 @@ The workstation has the required tools installed, AWS CLI authentication works, 
 - Docker can communicate with its engine.
 - AWS STS returns the intended account and principal.
 - GitHub CLI reports an authenticated session.
-- All seven repositories exist remotely and locally.
+- All seven reference repositories are accessible and cloned locally.
 - `git status --short` produces no output for committed repositories.
 
 ## Troubleshooting
@@ -555,10 +490,9 @@ The workstation has the required tools installed, AWS CLI authentication works, 
 |---------|--------------|------------|
 | `aws sts get-caller-identity` fails | SSO session expired or wrong profile | Run `aws sso login --profile "$AWS_PROFILE"` and verify the profile name |
 | `docker version` shows client only | Docker engine is not running | Start Docker Desktop or the Docker service |
-| `gh repo create` returns already exists | Repository was created previously | Continue and verify it with `gh repo view` |
-| `gh repo clone` fails | Authentication or organization permissions | Run `gh auth status` and confirm organization access |
+| `gh repo view` fails | GitHub CLI is not authenticated or cannot access the reference organization | Run `gh auth status` and confirm access to `steoli-platform-labs` |
+| `gh repo clone` fails | Authentication, network or local directory issue | Run `gh auth status`, confirm repository access and remove any incomplete local clone before retrying |
 | `terraform: command not found` | Installation path is missing | Reinstall using the official package method and restart the shell |
-| Git commit rejects identity | Git name or email is not configured | Configure `user.name` and `user.email` globally or locally |
 | Repository contains secret files | Ignore rules were added too late | Remove files from Git tracking and rotate any exposed credential |
 
 ## Final Repository State

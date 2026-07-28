@@ -136,7 +136,7 @@ Key files:
    sed -n '1,120p' platform-config/bootstrap/root-application-dev.yaml
    ```
 
-   In reference/demo mode, use the committed repository URL and branch as-is. If you maintain your own copy of the platform outside this lab flow, adjust those values in your own repository before running the lab.
+   In reference/demo mode, use the committed repository URL and branch as-is. No repository update is required for this lab.
 2. Review the child Applications in `platform-config/clusters/dev` so you understand what Argo CD will reconcile after the root Application is created.
 
    Each YAML file in this directory is intended to become an Argo CD child Application for one platform component or workload. The root Application does not install those components directly; it points Argo CD at this directory, and Argo CD then reconciles each child Application it finds there.
@@ -165,7 +165,7 @@ Key files:
    grep -A4 'image:' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
-   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`, the release image tag published in Lab 06. The package should remain private by default, so the Application also references an `imagePullSecrets` entry named `ghcr-pull`.
+   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`, the release image tag published in Lab 06. If the package is private, the Application also needs an `imagePullSecrets` entry named `ghcr-pull`.
 
    Confirm the Application values include the pull secret reference:
 

@@ -17,6 +17,8 @@ This lab introduces progressive delivery for the sample application.
 
 Progressive delivery makes releases safer by shifting traffic gradually and keeping image updates explicit, reviewable and traceable.
 
+In a real GitOps platform, promoting from `1.0.0` to `1.0.1` would be a reviewed change to the environment's desired state in `platform-config`. This public lab series treats the reference repositories as read-only templates, so this lab demonstrates the same Argo Rollouts behavior with an isolated temporary Rollout instead of asking learners to push changes to shared repositories.
+
 Concepts introduced in this lab include progressive delivery, Argo Rollouts, Rollouts, canary releases, ReplicaSets, image promotion and rollback. See the [Concepts Reference](../concepts/README.md) for how these concepts reduce release risk.
 
 ## Outcome
