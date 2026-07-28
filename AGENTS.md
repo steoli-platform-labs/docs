@@ -113,7 +113,7 @@ Lab writing rules:
 
 - Lab 02 should not commit `backend.tf`; migration scripts may create ignored local backend config after the backend bucket exists.
 - Lab 03 network examples use a small primary CIDR plus optional EKS-ready private subnets from `100.64.0.0/18`; this must be treated as planned, non-overlapping shared address space.
-- Lab 06 publishes `sample-api` images from Git release tags such as `v1.0.0`, which publish Docker image tags such as `1.0.0`. Use these release-style tags for GitOps deployment and Lab 16 progressive delivery examples.
+- Lab 06 publishes `sample-api` images from Git release tags such as `v1.0.0`, which publish Docker image tags such as `1.0.0`. Use these release-style tags for GitOps deployment and Lab 16 progressive delivery examples. Lab 16 uses release tags that include the `/version` endpoint so learners can observe the application version before and after the rollout.
 - Lab 07 deploys the public reference `sample-api` image without a registry pull secret.
 - Lab 08 deploys kube-prometheus-stack through Argo CD. Large Prometheus Operator CRDs require the chart CRD upgrade job plus sync options that avoid client-side apply annotation limits.
 - Lab 15 activates multi-environment GitOps with one root Application per environment: `platform-root-dev`, `platform-root-staging` and `platform-root-production`. The lab uses committed desired state from `platform-config`.
