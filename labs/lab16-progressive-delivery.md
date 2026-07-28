@@ -46,8 +46,14 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE"
+
+   printf '\n===== Chart rollout defaults =====\n'
    yq '.rollout' helm-charts/charts/sample-api/values.yaml
+
+   printf '\n===== Argo Rollouts Application source =====\n'
    yq '.spec.source' platform-config/clusters/dev/argo-rollouts.yaml
+
+   printf '\n===== sample-api-dev Helm values =====\n'
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
