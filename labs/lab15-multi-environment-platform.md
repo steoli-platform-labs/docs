@@ -180,16 +180,7 @@ Review these files before activation:
 
    Applying root Applications is a bootstrap exception to the GitOps rule. After these roots exist, Argo CD owns the child Applications and workloads.
 
-8. If your cluster still has the old `platform-root` or `sample-api` Applications from earlier labs, remove only those replaced Argo CD Application objects:
-
-   ```bash
-   kubectl -n argocd delete application platform-root --ignore-not-found
-   kubectl -n argocd delete application sample-api --cascade=orphan --ignore-not-found
-   ```
-
-   `platform-root-dev` replaces `platform-root`, and `sample-api-dev` replaces the old dev child Application name. The orphan cascade keeps already-created workload resources in place so `sample-api-dev` can adopt and reconcile them instead of causing an unnecessary outage.
-
-9. Refresh and inspect all environment roots and sample API Applications:
+8. Refresh and inspect all environment roots and sample API Applications:
 
     ```bash
     for app in platform-root-dev platform-root-staging platform-root-production; do
@@ -209,7 +200,7 @@ Review these files before activation:
 
     Expected result: each root is `Synced / Healthy`, `platform-namespaces` is `Synced / Healthy`, and the three sample API Applications are created. Workload health depends on the GHCR pull secrets, AWS secret values and cluster capacity being ready.
 
-10. Validate namespace separation and workload state:
+9. Validate namespace separation and workload state:
 
     ```bash
     kubectl get namespaces -L environment
@@ -222,7 +213,7 @@ Review these files before activation:
 
     Each namespace should show its own sample API resources. If staging or production pods are pending, inspect the pod events before changing GitOps desired state.
 
-11. Query each environment's API:
+10. Query each environment's API:
 
     ```bash
     for ns in sample-api-dev sample-api-staging sample-api-production; do
@@ -268,7 +259,6 @@ If staging or production Applications are missing:
 
 - Confirm the corresponding root Application exists in `argocd`.
 - Confirm the root points at the expected `clusters/<environment>` path.
-- Confirm the `platform-config` changes were committed and pushed to the branch referenced by the root Application.
 
 If pods show `ImagePullBackOff`:
 
@@ -281,12 +271,6 @@ If an `ExternalSecret` is not ready:
 - Confirm `ClusterSecretStore/aws-secrets-manager` is `Ready=True`.
 - Confirm the environment-specific AWS Secrets Manager path exists.
 - Confirm External Secrets Operator has AWS access through the workload identity configured in Lab 13.
-
-If the old `platform-root` or `sample-api` Application still appears:
-
-- Confirm `platform-root-dev` and `sample-api-dev` are healthy first.
-- Delete only the old replaced Application object, using orphan cascade for `sample-api` if it still owns live workload resources.
-- Do not delete namespaces or workloads directly unless you intentionally want Argo CD to recreate them.
 
 ## Final Repository State
 
