@@ -104,12 +104,14 @@ Lab writing rules:
 - Put deeper explanations in `docs/concepts/README.md` and link to it from labs.
 - When a lab introduces important concepts, add a brief `Concepts introduced in this lab...` paragraph in `Introduction`.
 - Use generic public placeholders and relative links.
+- Write labs for the intended final reader flow. Do not include legacy migration, cleanup or compatibility instructions from intermediate authoring iterations unless the lab explicitly teaches a migration concept.
 
 ## Known Lab Decisions
 
 - Lab 02 should not commit `backend.tf`; migration scripts may create ignored local backend config after the backend bucket exists.
 - Lab 03 network examples use a small primary CIDR plus optional EKS-ready private subnets from `100.64.0.0/18`; this must be treated as planned, non-overlapping shared address space.
-- Lab 06 publishes both commit-SHA and `latest` tags for `sample-api`; `latest` is for Development convenience only.
+- Lab 06 publishes `latest` for early dev bootstrap only.
+- Lab 06 also supports Git release tags such as `v1.0.0`, which publish Docker image tags such as `1.0.0`. Prefer these release-style tags for Lab 16 progressive delivery examples.
 - Lab 07 uses private GHCR image pulls through `sample-api-dev/ghcr-pull` until later secret-management labs improve the pattern.
 - Lab 08 deploys kube-prometheus-stack through Argo CD. Large Prometheus Operator CRDs require the chart CRD upgrade job plus sync options that avoid client-side apply annotation limits.
 - Lab 15 activates multi-environment GitOps with one root Application per environment: `platform-root-dev`, `platform-root-staging` and `platform-root-production`. The lab uses committed desired state from `platform-config`; do not include commit/push steps unless the reader is explicitly asked to edit Git-managed files.

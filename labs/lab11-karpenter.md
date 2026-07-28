@@ -93,7 +93,7 @@ Review these files before validation:
 
    Expected result: both outputs print values. These resources are part of the EKS Terraform configuration and should already exist because the earlier Terraform labs applied the current platform configuration. The node role output should match the `role` value in `platform-config/addons/karpenter/ec2nodeclass.yaml`.
 
-   If either output is missing, pull the latest `platform-modules` and `platform-live` repos, then return to the EKS Terraform lab flow and apply the dev environment before continuing. Do not treat Lab 11 as a place to make new Terraform changes unless you are upgrading an older already-created lab environment.
+   If either output is missing, pull the latest `platform-modules` and `platform-live` repos, then return to the EKS Terraform lab flow and apply the dev environment before continuing. Do not treat Lab 11 as a place to make new Terraform changes.
 
    Optional drift check:
 

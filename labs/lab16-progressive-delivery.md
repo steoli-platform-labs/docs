@@ -57,7 +57,7 @@ Review these files before validation:
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
-   Confirm Argo Rollouts is installed before relying on `Rollout` resources, confirm `targetRevision` is pinned to the tested chart version and confirm `sample-api` uses an image tag that can be changed through Git.
+   Confirm Argo Rollouts is installed before relying on `Rollout` resources, confirm `targetRevision` is pinned to the tested chart version and confirm `sample-api` uses an image tag that can be changed through Git. Earlier labs use `latest` for bootstrap convenience, but progressive delivery should use a readable, immutable release tag such as `1.0.0`.
 
    Compare the configured chart version with the latest available chart version:
 
@@ -115,7 +115,7 @@ Review these files before validation:
    git diff -- clusters/dev/sample-api-dev.yaml
    ```
 
-   Enter a known new immutable tag, such as a commit-SHA image tag published by the `sample-api` CI workflow. If the diff is correct, commit and push the GitOps change, then watch the rollout:
+   Enter a known immutable release tag, such as `1.0.0` or `1.0.1`, published by the `sample-api` CI workflow from a Git tag like `v1.0.0`. If the diff is correct, commit and push the GitOps change, then watch the rollout:
 
    ```bash
    git add clusters/dev/sample-api-dev.yaml
@@ -127,7 +127,7 @@ Review these files before validation:
    kubectl argo rollouts get rollout sample-api -n sample-api-dev --watch
    ```
 
-   The Rollout should create a new ReplicaSet and progress through the canary steps. If the image tag does not change, no meaningful progressive delivery event occurs.
+   The Rollout should create a new ReplicaSet and progress through the canary steps. If the image tag does not change, no meaningful progressive delivery event occurs. Avoid using `latest` for this test because it hides which application version is being rolled out and makes rollback harder to reason about.
 
 7. Test abort and rollback with a deliberately bad image only in the dev environment:
 
