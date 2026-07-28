@@ -90,9 +90,9 @@ Review these files before activation:
    yq '.spec.source.helm.releaseName' clusters/staging/sample-api-staging.yaml
    yq '.spec.source.helm.releaseName' clusters/production/sample-api-production.yaml
 
-   yq '.spec.source.helm.values | from_yaml | {environment, replicaCount, autoscaling, secret}' clusters/dev/sample-api-dev.yaml
-   yq '.spec.source.helm.values | from_yaml | {environment, replicaCount, autoscaling, secret}' clusters/staging/sample-api-staging.yaml
-   yq '.spec.source.helm.values | from_yaml | {environment, replicaCount, autoscaling, secret}' clusters/production/sample-api-production.yaml
+   yq '.spec.source.helm.values | from_yaml | {"environment": .environment, "replicaCount": .replicaCount, "autoscaling": .autoscaling, "secret": .secret}' clusters/dev/sample-api-dev.yaml
+   yq '.spec.source.helm.values | from_yaml | {"environment": .environment, "replicaCount": .replicaCount, "autoscaling": .autoscaling, "secret": .secret}' clusters/staging/sample-api-staging.yaml
+   yq '.spec.source.helm.values | from_yaml | {"environment": .environment, "replicaCount": .replicaCount, "autoscaling": .autoscaling, "secret": .secret}' clusters/production/sample-api-production.yaml
    ```
 
    Each Application points at the same reusable Helm chart but targets a different namespace and values block. The Applications keep `releaseName: sample-api` so the Kubernetes resource names stay stable in each namespace even though the Argo CD Application names are environment-scoped.
