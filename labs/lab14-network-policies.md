@@ -56,13 +56,12 @@ Review these files before validation:
    kubectl -n kube-system get pods -l k8s-app=aws-node
    kubectl -n kube-system get daemonset aws-node \
      -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{"\n"}{end}'
-   kubectl -n kube-system get daemonset aws-node \
-     -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{" "}{range .env[*]}{.name}{"="}{.value}{"\n"}{end}{end}' | grep ENABLE_NETWORK_POLICY || true
+   kubectl -n kube-system describe daemonset aws-node | grep -- '--enable-network-policy=true' || true
    ```
 
-   Expected result: the `aws-node` pods are `Running`, the DaemonSet includes the AWS VPC CNI containers and the output shows `ENABLE_NETWORK_POLICY=true`. Some EKS versions also show an `aws-network-policy-agent` container. That agent is what turns Kubernetes `NetworkPolicy` objects into enforced dataplane rules on the nodes.
+   Expected result: the `aws-node` pods are `Running`, the DaemonSet includes the AWS VPC CNI containers and the output shows `--enable-network-policy=true` for the `aws-eks-nodeagent` container. That agent is what turns Kubernetes `NetworkPolicy` objects into enforced dataplane rules on the nodes.
 
-   If the last command prints no `ENABLE_NETWORK_POLICY=true` line, the cluster can still accept `NetworkPolicy` YAML, but the rules may not actually block traffic. Treat that as a failed validation for this lab, not as a successful deny test. In that case, stop and fix CNI network policy enforcement before relying on the positive and negative connectivity tests later in the lab.
+   If the last command prints no `--enable-network-policy=true` line or shows `--enable-network-policy=false`, the cluster can still accept `NetworkPolicy` YAML, but the rules may not actually block traffic. Treat that as a failed validation for this lab, not as a successful deny test. In that case, stop and fix CNI network policy enforcement before relying on the positive and negative connectivity tests later in the lab.
 
 3. Run `helm lint` and render the chart:
 
@@ -119,7 +118,7 @@ Review these files before validation:
 
    The `--` separator matters: everything before it is a `kubectl run` option, and everything after it is the command executed inside the temporary pod. `--max-time=5` must be after `--` so it is passed to `curl`.
 
-   Expected result: this should fail or time out only if NetworkPolicy enforcement is enabled. A timeout, non-zero curl exit or `pod "denied-client" deleted` after a failed request is the intended deny behavior. If it prints the sample API JSON response, either the policy is too permissive or the CNI is not enforcing NetworkPolicy.
+   Expected result: this should fail or time out only if NetworkPolicy enforcement is enabled. A timeout, non-zero curl exit or `pod "denied-client" deleted` after a failed request is the intended deny behavior. If it prints the sample API JSON response, either the policy is too permissive or the CNI is not enforcing NetworkPolicy. Re-run step 2 and confirm the `aws-eks-nodeagent` container is configured with `--enable-network-policy=true`.
 
 8. Validate DNS and required HTTPS egress from an application pod:
 
