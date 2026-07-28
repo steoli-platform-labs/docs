@@ -71,10 +71,12 @@ Review these files before validation:
    helm template sample-api helm-charts/charts/sample-api \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
      > /tmp/sample-api-networkpolicy.yaml
-   grep -A30 '^kind: NetworkPolicy' /tmp/sample-api-networkpolicy.yaml
+   yq 'select(.kind == "NetworkPolicy")' /tmp/sample-api-networkpolicy.yaml
    ```
 
-   Confirm the rendered policy uses the expected namespace selectors and ports. Rendering locally catches template mistakes before Argo CD deploys them.
+   Expected result: only the rendered `NetworkPolicy` is printed. It should select `sample-api` pods, include `policyTypes: [Ingress, Egress]`, allow ingress from the `ingress-nginx` namespace on port `8080`, allow DNS egress to `kube-system` on TCP and UDP port `53` and allow HTTPS egress on TCP port `443`.
+
+   Rendering locally catches template mistakes before Argo CD deploys them. The rendered file contains every manifest from the chart, so use `yq` to extract only the `NetworkPolicy` document instead of showing a fixed number of lines after the match.
 
 4. Commit and push any chart or value changes if you changed them:
 
