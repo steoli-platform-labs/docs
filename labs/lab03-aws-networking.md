@@ -370,6 +370,8 @@ Terraform provisions the Development VPC, public subnets, private platform subne
 
    ```bash
    export AWS_PAGER=""
+   VPC_ID=$(terraform output -raw vpc_id)
+
    aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=${VPC_ID}"
    ```
 
@@ -377,6 +379,8 @@ Terraform provisions the Development VPC, public subnets, private platform subne
 
    ```bash
    export AWS_PAGER=""
+   VPC_ID=$(terraform output -raw vpc_id)
+
    aws ec2 describe-route-tables \
      --filters "Name=vpc-id,Values=${VPC_ID}" \
      --query 'RouteTables[].{RouteTable:RouteTableId,Associations:Associations[].SubnetId,Routes:Routes}'

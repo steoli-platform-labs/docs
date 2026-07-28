@@ -434,13 +434,12 @@ If the OpenTelemetry Collector pod is `Pending` with `Too many pods`:
 - Confirm the dev `sample-api` desired state uses a small replica count before Lab 11 introduces node autoscaling.
 - Reconcile `sample-api`, then refresh `opentelemetry` after capacity is available.
 
-If a separate trace-generator Job is used and times out:
+If the `telemetrygen` ephemeral container fails to start:
 
-- Check `kubectl -n monitoring get pods -l job-name=telemetrygen-traces -o wide`.
-- If the pod is `Pending` and events say `Too many pods`, the generator never ran and empty logs are expected.
-- Use the ephemeral-container command in step 13 instead of creating another pod.
+- Confirm the OpenTelemetry Collector pod is `Running` before adding the debug container.
+- Re-run the command from step 12 and check the ephemeral container status with the validation command in that step.
+- If node capacity is exhausted, wait for Karpenter to add capacity or retry after reducing other temporary workloads.
 - Do not rely on `kubectl -n sample-api-dev scale rollout sample-api --replicas=1` while the sample API HPA has `minReplicas: 2`; the HPA and Argo CD self-heal can bring it back to two replicas.
-- The durable fix is to add capacity with Karpenter in Lab 11, add another worker node or use larger worker nodes for the development cluster.
 
 ## Final Repository State
 

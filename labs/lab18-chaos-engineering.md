@@ -150,7 +150,8 @@ kubectl -n sample-api-dev get pods -o wide
 
 If the chaos Job cannot start:
 
-- Confirm the `chaos-runner` ServiceAccount exists.
+- Confirm the manifest was created with `kubectl create -f platform-config/chaos/delete-pod.yaml` before checking live RBAC resources.
+- Confirm the `chaos-runner` ServiceAccount exists after the manifest is created.
 - Confirm the RoleBinding points to that ServiceAccount.
 - Confirm the namespace in the manifest is `sample-api-dev`.
 

@@ -208,9 +208,12 @@ If a controller reports `AccessDenied`:
 
 If a controller reports missing credentials:
 
-- Confirm the EKS OIDC provider exists in IAM.
-- Confirm the pod was restarted after the workload identity association was applied.
-- Confirm no static credentials are masking or conflicting with IRSA.
+- Confirm the `eks-pod-identity-agent` add-on is installed and healthy.
+- Confirm the EKS Pod Identity association targets the expected namespace and service account.
+- Restart the controller pod after the association is applied so it receives fresh credential wiring.
+- Confirm no static AWS credential environment variables or mounted secrets are masking the Pod Identity credentials.
+
+For future workloads that use IRSA annotations instead of EKS Pod Identity, also confirm the EKS OIDC provider exists in IAM and the service account has the expected `eks.amazonaws.com/role-arn` annotation.
 
 ## Final Repository State
 

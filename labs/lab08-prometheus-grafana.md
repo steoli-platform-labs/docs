@@ -225,7 +225,7 @@ kubectl -n argocd describe application prometheus
 kubectl get crd | grep monitoring.coreos.com
 ```
 
-If the Application events mention `metadata.annotations: Too long`, Argo CD is trying to apply large Prometheus Operator CRDs or the chart's CRD bundle ConfigMap with client-side apply. Configure the Prometheus Application to skip direct Helm CRD rendering, enable the chart's CRD upgrade job and use `ServerSideApply=true` with `Replace=true`. If Argo CD blocks the sync because the Prometheus or Alertmanager resource types are missing, add `SkipDryRunOnMissingResource=true` so the CRD job can run first.
+If the Application events mention `metadata.annotations: Too long`, Argo CD is trying to apply large Prometheus Operator CRDs or the chart's CRD bundle ConfigMap with client-side apply. Confirm the Prometheus Application already skips direct Helm CRD rendering, enables the chart's CRD upgrade job and uses `ServerSideApply=true` with `Replace=true`. If Argo CD blocks the sync because the Prometheus or Alertmanager resource types are missing, confirm `SkipDryRunOnMissingResource=true` is present so the CRD job can run first. If those settings are missing, stop and reconcile the desired state through the normal GitOps review path before refreshing the Application again.
 
 If the Application events mention `no matches for kind "Prometheus"` or `no matches for kind "Alertmanager"`, Kubernetes has not registered those CRDs yet. Wait for the `prometheus-crds-upgrade` hook Job to complete, confirm the CRDs exist and let Argo CD retry the sync.
 
