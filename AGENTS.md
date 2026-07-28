@@ -112,6 +112,7 @@ Lab writing rules:
 - Lab 06 publishes both commit-SHA and `latest` tags for `sample-api`; `latest` is for Development convenience only.
 - Lab 07 uses private GHCR image pulls through `sample-api-dev/ghcr-pull` until later secret-management labs improve the pattern.
 - Lab 08 deploys kube-prometheus-stack through Argo CD. Large Prometheus Operator CRDs require the chart CRD upgrade job plus sync options that avoid client-side apply annotation limits.
+- Lab 15 activates multi-environment GitOps with one root Application per environment: `platform-root-dev`, `platform-root-staging` and `platform-root-production`. The lab uses committed desired state from `platform-config`; do not include commit/push steps unless the reader is explicitly asked to edit Git-managed files.
 
 ## Validation Expectations
 

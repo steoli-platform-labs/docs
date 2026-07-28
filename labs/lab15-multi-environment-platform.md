@@ -168,19 +168,7 @@ Review these files before activation:
 
    These checks confirm Kubernetes can parse the bootstrap manifests and the chart can render all three environment values blocks.
 
-7. Commit and push the `platform-config` changes before refreshing Argo CD:
-
-   ```bash
-   cd "$WORKSPACE/platform-config"
-   git status --short
-   git add bootstrap clusters
-   git commit -m "feat: add multi environment gitops roots"
-   git push
-   ```
-
-   Argo CD reads Git, not your local working tree. If the changes are not pushed to the branch referenced by the root Applications, Argo CD cannot see them.
-
-8. Apply the environment root Applications:
+7. Apply the environment root Applications:
 
    ```bash
    cd "$WORKSPACE"
@@ -192,7 +180,7 @@ Review these files before activation:
 
    Applying root Applications is a bootstrap exception to the GitOps rule. After these roots exist, Argo CD owns the child Applications and workloads.
 
-9. If your cluster still has the old `platform-root` or `sample-api` Applications from earlier labs, remove only those replaced Argo CD Application objects:
+8. If your cluster still has the old `platform-root` or `sample-api` Applications from earlier labs, remove only those replaced Argo CD Application objects:
 
    ```bash
    kubectl -n argocd delete application platform-root --ignore-not-found
@@ -201,7 +189,7 @@ Review these files before activation:
 
    `platform-root-dev` replaces `platform-root`, and `sample-api-dev` replaces the old dev child Application name. The orphan cascade keeps already-created workload resources in place so `sample-api-dev` can adopt and reconcile them instead of causing an unnecessary outage.
 
-10. Refresh and inspect all environment roots and sample API Applications:
+9. Refresh and inspect all environment roots and sample API Applications:
 
     ```bash
     for app in platform-root-dev platform-root-staging platform-root-production; do
@@ -221,7 +209,7 @@ Review these files before activation:
 
     Expected result: each root is `Synced / Healthy`, `platform-namespaces` is `Synced / Healthy`, and the three sample API Applications are created. Workload health depends on the GHCR pull secrets, AWS secret values and cluster capacity being ready.
 
-11. Validate namespace separation and workload state:
+10. Validate namespace separation and workload state:
 
     ```bash
     kubectl get namespaces -L environment
@@ -234,7 +222,7 @@ Review these files before activation:
 
     Each namespace should show its own sample API resources. If staging or production pods are pending, inspect the pod events before changing GitOps desired state.
 
-12. Query each environment's API:
+11. Query each environment's API:
 
     ```bash
     for ns in sample-api-dev sample-api-staging sample-api-production; do
