@@ -60,7 +60,7 @@ Respect repository boundaries. Make changes in the repository that owns the beha
 ## Kubernetes, Helm and GitOps Rules
 
 - Kubernetes resources should use standard labels, resource requests and health probes where applicable.
-- Prefer immutable image tags. `latest` is acceptable only when a lab explicitly treats it as a Development convenience tag and CI publishes it.
+- Prefer immutable image tags. Do not use `latest` for GitOps-managed workloads unless a lab explicitly teaches why a mutable tag is acceptable.
 - Helm charts must be reusable and configurable through values.
 - GitHub Actions validate, test, build and publish artifacts; they must not deploy workloads directly.
 - Argo CD owns Kubernetes application deployment after Lab 07.
@@ -110,8 +110,7 @@ Lab writing rules:
 
 - Lab 02 should not commit `backend.tf`; migration scripts may create ignored local backend config after the backend bucket exists.
 - Lab 03 network examples use a small primary CIDR plus optional EKS-ready private subnets from `100.64.0.0/18`; this must be treated as planned, non-overlapping shared address space.
-- Lab 06 publishes `latest` for early dev bootstrap only.
-- Lab 06 also supports Git release tags such as `v1.0.0`, which publish Docker image tags such as `1.0.0`. Prefer these release-style tags for Lab 16 progressive delivery examples.
+- Lab 06 publishes `sample-api` images from Git release tags such as `v1.0.0`, which publish Docker image tags such as `1.0.0`. Use these release-style tags for GitOps deployment and Lab 16 progressive delivery examples.
 - Lab 07 uses private GHCR image pulls through `sample-api-dev/ghcr-pull` until later secret-management labs improve the pattern.
 - Lab 08 deploys kube-prometheus-stack through Argo CD. Large Prometheus Operator CRDs require the chart CRD upgrade job plus sync options that avoid client-side apply annotation limits.
 - Lab 15 activates multi-environment GitOps with one root Application per environment: `platform-root-dev`, `platform-root-staging` and `platform-root-production`. The lab uses committed desired state from `platform-config`; do not include commit/push steps unless the reader is explicitly asked to edit Git-managed files.

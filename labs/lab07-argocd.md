@@ -165,7 +165,7 @@ Key files:
    grep -A4 'image:' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
-   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:latest` so the first GitOps deployment can follow the newest successful `main` build without editing the image tag manually. The package should remain private by default, so the Application also references an `imagePullSecrets` entry named `ghcr-pull`.
+   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`, the release image tag published in Lab 06. The package should remain private by default, so the Application also references an `imagePullSecrets` entry named `ghcr-pull`.
 
    Confirm the Application values include the pull secret reference:
 
@@ -283,7 +283,7 @@ Argo CD is installed in the `argocd` namespace, the `platform-root-dev` Applicat
 - `platform-root-dev` exists and can read the `platform-config` repository.
 - Child Applications are created from `platform-config/clusters/dev`.
 - `platform-root-dev` and `argocd` are `Synced / Healthy`.
-- `sample-api-dev` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and the `ghcr-pull` image pull secret exists in `sample-api-dev`.
+- `sample-api-dev` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:1.0.0` is published and the `ghcr-pull` image pull secret exists in `sample-api-dev`.
 - If `sample-api-dev` shows `ImagePullBackOff`, the image tag is missing, the `ghcr-pull` secret is missing, or the token cannot read the package.
 - Later-lab Applications may be `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs complete the required configuration.
 - The Argo CD UI is reachable through local port-forwarding and shows the same Application statuses as `kubectl`.
@@ -329,7 +329,7 @@ Common issues:
 | Child Applications are missing | Root Application did not sync or points at the wrong path | Confirm `path: clusters/dev` and inspect `platform-root-dev` events |
 | Application is `OutOfSync` | Desired state differs from cluster state | Review the diff in Argo CD or describe the Application |
 | Application is `Degraded` | Rendered manifests failed or workloads are unhealthy | Inspect the Application events and affected Kubernetes resources |
-| `sample-api` pods show `ImagePullBackOff` | `latest` was not published, `ghcr-pull` is missing, or the token cannot read the package | Confirm Lab 06 CI published `latest`, recreate `ghcr-pull` with `read:packages`, then delete the stuck pods |
+| `sample-api` pods show `ImagePullBackOff` | `1.0.0` was not published, `ghcr-pull` is missing, or the token cannot read the package | Confirm Lab 06 CI published `1.0.0`, recreate `ghcr-pull` with `read:packages`, then delete the stuck pods |
 
 ## Final Repository State
 

@@ -143,9 +143,9 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd ../platform-live && terraform fmt -check -recursive
    ```
 
-6. Verify that the `sample-api` image is published to GHCR after a successful push to `main`. The workflow publishes `latest` for the simple Development GitOps path used in the next lab.
+6. Publish and verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. A Git tag such as `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 
-   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:latest` in Lab 07. Keep the GHCR package private and configure Kubernetes image pull credentials in Lab 07.
+   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. Keep the GHCR package private and configure Kubernetes image pull credentials in Lab 07.
 
    If the package is private, authenticate Docker to GHCR first. Prefer a short-lived, least-privilege GitHub token with `read:packages` permission:
 
@@ -163,16 +163,6 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    ```bash
    cd "$WORKSPACE/sample-api"
-   docker pull ghcr.io/${GITHUB_ORG}/sample-api:latest
-   docker inspect ghcr.io/${GITHUB_ORG}/sample-api:latest --format '{{.RepoDigests}}'
-   ```
-
-   The `docker pull` command confirms that `latest` exists and is readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the tag resolves to a concrete image artifact.
-
-7. Publish a release-style image tag for later rollout labs. Git tags such as `v1.0.0` publish Docker image tags such as `1.0.0`, which are easier to read in GitOps promotion pull requests than mutable tags.
-
-   ```bash
-   cd "$WORKSPACE/sample-api"
 
    git tag v1.0.0
    git push origin v1.0.0
@@ -185,7 +175,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    docker inspect ghcr.io/${GITHUB_ORG}/sample-api:1.0.0 --format '{{.RepoDigests}}'
    ```
 
-   Use release-style tags for progressive delivery and promotion labs. Keep `latest` only as a bootstrap convenience for the early dev GitOps path.
+   The `docker pull` command confirms that the release image exists and is readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the tag resolves to a concrete image artifact. Later rollout and promotion labs update GitOps from one release tag to another, for example from `1.0.0` to `1.0.1`.
 
    If you use GitHub CLI to inspect the package, your `gh` token must include package scopes. Unset `GITHUB_TOKEN` first because that environment variable overrides the credentials stored by `gh auth login`:
 
@@ -201,12 +191,11 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 ## Expected Results
 
-Local validation commands pass, GitHub Actions workflows run successfully, pull requests validate without publishing images, pushes to `main` publish the `latest` `sample-api` image tag to GHCR, and Git release tags publish readable image tags such as `1.0.0`.
+Local validation commands pass, GitHub Actions workflows run successfully, pull requests validate without publishing images and Git release tags publish readable image tags such as `1.0.0`.
 
 ## Validation
 
 - Pull requests run tests and validation without publishing an image.
-- A push to `main` publishes the `latest` image tag to GHCR.
 - A Git tag such as `v1.0.0` publishes a matching release-style image tag such as `1.0.0`.
 - The image tags can be pulled using the expected package permissions.
 - The `sample-api` package is private by default, and Kubernetes image pull credentials are planned for Lab 07.
@@ -239,7 +228,7 @@ Common issues:
 
 ## Final Repository State
 
-At completion, the implementation repositories have validation workflows, `sample-api` publishes `latest` to GHCR on pushes to `main`, Git tags publish release-style image tags, and no workflow deploys directly to Kubernetes.
+At completion, the implementation repositories have validation workflows, Git tags publish release-style `sample-api` image tags to GHCR, and no workflow deploys directly to Kubernetes.
 
 ## Cleanup
 

@@ -40,24 +40,16 @@ Review these files before validation:
 
 ## Step-by-Step Implementation
 
-1. Review the Rollout template and rollout values:
+1. Review the rollout configuration that is already in Git:
 
    ```bash
    cd "$WORKSPACE"
    yq '.rollout' helm-charts/charts/sample-api/values.yaml
-   sed -n '1,180p' helm-charts/charts/sample-api/templates/rollout.yaml
-   ```
-
-   Confirm the Rollout has a selector, pod template, readiness probes and canary steps. Progressive delivery only works if new ReplicaSets can become ready and the controller can manage them.
-
-2. Review the controller and application GitOps state:
-
-   ```bash
    yq '.spec.source' platform-config/clusters/dev/argo-rollouts.yaml
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
-   Confirm Argo Rollouts is installed before relying on `Rollout` resources, confirm `targetRevision` is pinned to the tested chart version and confirm `sample-api` uses an image tag that can be changed through Git. Earlier labs use `latest` for bootstrap convenience, but progressive delivery should use a readable, immutable release tag such as `1.0.0`.
+   Confirm the chart has rollout support, Argo Rollouts is managed by Argo CD and `sample-api-dev` uses the release tag published in Lab 06. Progressive delivery should move from one readable, immutable release tag to another, such as `1.0.0` to `1.0.1`.
 
    Compare the configured chart version with the latest available chart version:
 
@@ -68,7 +60,7 @@ Review these files before validation:
 
    The pinned version in `platform-config/clusters/dev/argo-rollouts.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
-3. Render the chart locally with Rollout enabled before refreshing Argo CD:
+2. Render the chart locally with Rollout enabled:
 
    ```bash
    helm lint helm-charts/charts/sample-api
@@ -79,28 +71,22 @@ Review these files before validation:
    grep -A60 '^kind: Rollout' /tmp/sample-api-rollout.yaml
    ```
 
-   Confirm the rendered output contains a `Rollout` and not only a `Deployment`.
+   Confirm the rendered output contains a `Rollout` and not only a `Deployment`. Rendering locally catches chart mistakes before you change the deployed image tag.
 
-4. Refresh Argo CD and confirm Argo Rollouts and sample API are healthy:
+3. Confirm the current deployed rollout state:
 
    ```bash
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application argo-rollouts sample-api-dev -o wide
    kubectl -n argo-rollouts get pods
    kubectl -n sample-api-dev get rollout sample-api
-   ```
-
-5. Observe the current stable state before changing the image:
-
-   ```bash
    kubectl -n sample-api-dev get rollout,replicaset,pod
    kubectl -n sample-api-dev describe rollout sample-api
-   kubectl argo rollouts get rollout sample-api -n sample-api-dev
    ```
 
-   Record the stable ReplicaSet and current image tag. You need a baseline before validating canary behavior.
+   This confirms the controller and current `sample-api` Rollout are healthy before you make the GitOps image change. Record the current image tag and ReplicaSet names so you can recognize the new ReplicaSet during the rollout.
 
-6. Change the sample API image tag through Git and observe the canary rollout:
+4. Change the sample API image tag through Git and observe the canary rollout:
 
    ```bash
    cd "$WORKSPACE/platform-config"
@@ -115,7 +101,7 @@ Review these files before validation:
    git diff -- clusters/dev/sample-api-dev.yaml
    ```
 
-   Enter a known immutable release tag, such as `1.0.0` or `1.0.1`, published by the `sample-api` CI workflow from a Git tag like `v1.0.0`. If the diff is correct, commit and push the GitOps change, then watch the rollout:
+   Enter a newer immutable release tag, such as `1.0.1`, published by the `sample-api` CI workflow from a Git tag like `v1.0.1`. If the diff is correct, commit and push the GitOps change, then watch the rollout:
 
    ```bash
    git add clusters/dev/sample-api-dev.yaml
@@ -124,20 +110,19 @@ Review these files before validation:
 
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application sample-api-dev -o wide
-   kubectl argo rollouts get rollout sample-api -n sample-api-dev --watch
+   kubectl -n sample-api-dev get rollout sample-api -w
    ```
 
-   The Rollout should create a new ReplicaSet and progress through the canary steps. If the image tag does not change, no meaningful progressive delivery event occurs. Avoid using `latest` for this test because it hides which application version is being rolled out and makes rollback harder to reason about.
+   The Rollout should create a new ReplicaSet and progress through the canary steps. Press `Ctrl-C` after you have observed the status change. If the image tag does not change, no meaningful progressive delivery event occurs.
 
-7. Test abort and rollback with a deliberately bad image only in the dev environment:
+5. Inspect the rollout result:
 
    ```bash
-   kubectl argo rollouts abort sample-api -n sample-api-dev
-   kubectl argo rollouts undo sample-api -n sample-api-dev
-   kubectl argo rollouts get rollout sample-api -n sample-api-dev
+   kubectl -n sample-api-dev get rollout,replicaset,pod -o wide
+   kubectl -n sample-api-dev describe rollout sample-api
    ```
 
-   Use this only for controlled validation. Return Git to the intended image tag after the test so Argo CD does not continuously fight the live rollback.
+   The current Rollout status should show the new image tag and a healthy ReplicaSet. Rollback in this GitOps model is another reviewed Git change that restores the previous known-good image tag, followed by an Argo CD refresh.
 
 ## Expected Results
 Argo Rollouts is installed and the sample API is managed as a Rollout when progressive delivery is enabled.
@@ -148,10 +133,10 @@ Argo Rollouts is installed and the sample API is managed as a Rollout when progr
 - Canary traffic/replica weight progresses through the documented steps.
 - Pause durations are observed.
 - Readiness failures stop progression.
-- A deliberately bad image can be aborted and rolled back to the stable ReplicaSet.
+- Rollback is described as a Git revert or image-tag change back to the previous known-good version.
 - The stable service remains available during progression.
 - Metrics-based analysis is present if the lab claims automated health-based promotion.
-- The CI-to-GitOps handoff is explicit: publishing a GHCR image must result in a reviewable Git update. A chart fixed at `latest` or an unchanged tag does not provide traceable progressive delivery.
+- The CI-to-GitOps handoff is explicit: publishing a GHCR image must result in a reviewable Git update. An unchanged image tag does not provide traceable progressive delivery.
 
 ## Troubleshooting
 Start with the Rollout object and controller status:
@@ -172,7 +157,7 @@ If no canary happens:
 
 If rollout pauses unexpectedly:
 
-- Inspect `kubectl argo rollouts get rollout sample-api -n sample-api-dev`.
+- Inspect `kubectl -n sample-api-dev describe rollout sample-api`.
 - Check pod readiness and image pull errors.
 - Confirm pause steps are part of the configured canary strategy.
 
@@ -180,7 +165,7 @@ If rollout pauses unexpectedly:
 The implementation remains GitOps-driven and mergeable to `main`.
 
 ## Cleanup
-Abort or complete any test rollout before moving on. Keep Argo Rollouts installed for later resilience validation.
+Complete or roll back any test image change through Git before moving on. Keep Argo Rollouts installed for later resilience validation.
 
 ## Next Steps
 Continue with [Lab 17 - High Availability and Resilience](./lab17-high-availability-and-resilience.md).

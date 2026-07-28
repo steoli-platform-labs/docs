@@ -32,7 +32,7 @@ Before starting this lab:
 - Lab 01 - Lab 14 completed
 - AWS CLI, kubectl, Helm and yq installed
 - Argo CD running in the dev cluster
-- `sample-api:latest` published to GHCR by Lab 06
+- `sample-api:1.0.0` published to GHCR by Lab 06
 - A GitHub token with `read:packages` for the private GHCR image pull secret
 - AWS credentials that can read and write the lab Secrets Manager secret values
 
