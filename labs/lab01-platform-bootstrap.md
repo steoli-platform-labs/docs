@@ -491,15 +491,15 @@ Complete the setup steps below in order. This is the only lab that requires manu
 
    Use equivalent purpose statements for the remaining repositories based on [`../architecture/repository-strategy.md`](../architecture/repository-strategy.md).
 
-   Commit and push the initial files in each implementation repository:
+   Confirm each implementation repository has its initial README and ignore file:
 
    ```bash
    for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
    do
-     cd "$WORKSPACE/$repo"
-     git add README.md .gitignore
-     git commit -m "bootstrap repository structure"
-     git push origin main
+      cd "$WORKSPACE/$repo"
+      git status --short
+      test -f README.md
+      test -f .gitignore
    done
    ```
 

@@ -81,7 +81,7 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
    grep -nE 'readinessProbe|livenessProbe|startupProbe|resources:|NetworkPolicy|PodDisruptionBudget' /tmp/sample-api-rendered.yaml
    ```
 
-5. Commit the Helm chart changes only. Do not commit temporary rendered manifests.
+5. Confirm the Helm chart source is clean and temporary rendered manifests are not tracked.
 
    In `helm-charts`:
 
@@ -89,10 +89,10 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
    cd "$WORKSPACE/helm-charts"
    git status
    git diff --check
-   git add charts/sample-api/
-   git commit -m "add sample api helm chart"
-   git push
+   git ls-files /tmp/sample-api-rendered.yaml
    ```
+
+   The final command should print no temporary rendered manifest.
 
 ## Expected Results
 

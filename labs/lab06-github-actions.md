@@ -60,9 +60,9 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    ```
 
    Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
-3. Commit and push workflow changes only if you changed a workflow file. No commit is required if the workflow files already exist and the validation commands pass.
+3. Confirm the reference workflow files are present and clean.
 
-   If you changed a workflow file while completing this lab, commit only the changed workflow file in the repository that owns it. Do not commit virtual environments, local Docker artifacts, tokens or generated files.
+   This lab series uses the public repositories as reference templates. You validate the committed workflow state; you do not push workflow changes to the shared reference repositories.
 
    In `sample-api`:
 
@@ -70,9 +70,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd "$WORKSPACE/sample-api"
    git status
    git diff --check
-   git add .github/workflows/ci.yaml
-   git commit -m "add sample api ci workflow"
-   git push
+   test -f .github/workflows/ci.yaml
    ```
 
    In `helm-charts`:
@@ -81,9 +79,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd "$WORKSPACE/helm-charts"
    git status
    git diff --check
-   git add .github/workflows/helm.yaml
-   git commit -m "add helm chart validation workflow"
-   git push
+   test -f .github/workflows/helm.yaml
    ```
 
    In `platform-modules`:
@@ -92,9 +88,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd "$WORKSPACE/platform-modules"
    git status
    git diff --check
-   git add .github/workflows/terraform.yaml
-   git commit -m "add terraform module validation workflow"
-   git push
+   test -f .github/workflows/terraform.yaml
    ```
 
    In `platform-live`:
@@ -103,16 +97,14 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd "$WORKSPACE/platform-live"
    git status
    git diff --check
-   git add .github/workflows/terraform.yaml
-   git commit -m "add terraform live validation workflow"
-   git push
+   test -f .github/workflows/terraform.yaml
    ```
 
-4. Open each repository in GitHub and inspect the workflow run triggered by the push:
+4. Open each repository in GitHub and inspect a recent workflow run:
 
    1. Open the repository, for example `helm-charts`.
    2. Select the **Actions** tab.
-   3. Open the latest workflow run triggered by your push or pull request.
+   3. Open the latest workflow run for the reference repository.
    4. Confirm the run status is green.
    5. Open each job and expand the command steps.
    6. Confirm the expected validation command ran successfully.
@@ -143,7 +135,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd ../platform-live && terraform fmt -check -recursive
    ```
 
-6. Publish and verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. A Git tag such as `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
+6. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 
    The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. Keep the GHCR package private and configure Kubernetes image pull credentials in Lab 07.
 
@@ -161,21 +153,14 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    Paste the token at the hidden prompt. Do not store it in a committed file.
 
-   ```bash
-   cd "$WORKSPACE/sample-api"
-
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-   Wait for the GitHub Actions run triggered by the tag push to complete, then verify the image tag:
+   Verify the image tag:
 
    ```bash
    docker pull ghcr.io/${GITHUB_ORG}/sample-api:1.0.0
    docker inspect ghcr.io/${GITHUB_ORG}/sample-api:1.0.0 --format '{{.RepoDigests}}'
    ```
 
-   The `docker pull` command confirms that the release image exists and is readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the tag resolves to a concrete image artifact. Later rollout and promotion labs update GitOps from one release tag to another, for example from `1.0.0` to `1.0.1`.
+   The `docker pull` command confirms that the release image exists and is readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the tag resolves to a concrete image artifact. Later rollout and promotion labs compare GitOps release tags, for example `1.0.0` and `1.0.1`.
 
    If you use GitHub CLI to inspect the package, your `gh` token must include package scopes. Unset `GITHUB_TOKEN` first because that environment variable overrides the credentials stored by `gh auth login`:
 
@@ -217,7 +202,7 @@ Common issues:
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Workflow does not run | Workflow file is missing from `.github/workflows` or the change was not pushed | Confirm the file exists in the repository and push to the branch again |
+| Workflow is missing | Workflow file is missing from `.github/workflows` | Pull the latest reference repository and confirm the file exists |
 | `terraform fmt -check -recursive` fails | Terraform files are not formatted | Run `terraform -chdir=platform-live fmt -recursive` or `terraform -chdir=platform-modules fmt -recursive`, then commit the formatting changes |
 | `helm lint` fails | Chart metadata, values or templates are invalid | Run `helm lint charts/sample-api` locally in `helm-charts` and fix the reported chart issue |
 | Python tests fail | Application dependency or test failure | Run the local `sample-api` virtualenv commands and fix the failing test |

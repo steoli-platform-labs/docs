@@ -133,29 +133,15 @@ later labs
 
    `terraform plan -detailed-exitcode` should exit with code `0` when there are no pending changes.
 
-8. Commit only source files and scripts. Do not commit local backend, state, variable or plan files:
+8. Confirm only source files and scripts are tracked. Local backend, state, variable and plan files must remain ignored:
 
    ```bash
    git status
    git diff --check
-   git add \
-     .editorconfig \
-     .gitignore \
-     .terraform.lock.hcl \
-     Makefile \
-     README.md \
-     data.tf \
-     locals.tf \
-     main.tf \
-     outputs.tf \
-     providers.tf \
-     variables.tf \
-     versions.tf \
-     scripts/ \
-     terraform.tfvars.example
-   git commit -m "complete lab 02 terraform backend"
-   git push
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
+
+   The final command should print no local backend, variable, state or plan files.
 
 ## Expected Results
 

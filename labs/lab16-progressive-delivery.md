@@ -9,13 +9,13 @@
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45-75 minutes |
 | **Estimated Cost** | Free |
-| **Primary Tools** | Git, Helm, kubectl, Argo CD, Argo Rollouts |
+| **Primary Tools** | Helm, kubectl, Argo CD, Argo Rollouts |
 
 ## Introduction
 
 This lab introduces progressive delivery for the sample application.
 
-Progressive delivery makes releases safer by shifting traffic gradually and keeping image updates explicit, reviewable and traceable through GitOps.
+Progressive delivery makes releases safer by shifting traffic gradually and keeping image updates explicit, reviewable and traceable.
 
 Concepts introduced in this lab include progressive delivery, Argo Rollouts, Rollouts, canary releases, ReplicaSets, image promotion and rollback. See the [Concepts Reference](../concepts/README.md) for how these concepts reduce release risk.
 
@@ -28,7 +28,7 @@ Before starting this lab:
 
 - Lab 01 - Lab 15 completed
 - AWS CLI, Terraform, kubectl and Helm installed
-- Repository URLs configured
+- `sample-api:1.0.0` and `sample-api:1.0.1` published to GHCR
 
 ## Files to Review
 Review these files before validation:
@@ -84,59 +84,69 @@ Review these files before validation:
    kubectl -n sample-api-dev describe rollout sample-api
    ```
 
-   This confirms the controller and current `sample-api` Rollout are healthy before you make the GitOps image change. Record the current image tag and ReplicaSet names so you can recognize the new ReplicaSet during the rollout.
+   This confirms the controller and current `sample-api` Rollout are healthy before you run the isolated demo. Record the current image tag and ReplicaSet names so you can compare the GitOps-managed workload with the temporary demo workload.
 
-4. Change the sample API image tag through Git and observe the canary rollout:
+4. Create an isolated temporary rollout demo from the same chart:
 
    ```bash
-   cd "$WORKSPACE/platform-config"
-   yq '.spec.source.helm.values' clusters/dev/sample-api-dev.yaml
+   cd "$WORKSPACE"
 
-   printf 'New image tag: '
-   read -r NEW_IMAGE_TAG
-   export NEW_IMAGE_TAG
-   yq -i '.spec.source.helm.values = ((.spec.source.helm.values | from_yaml | .image.tag = strenv(NEW_IMAGE_TAG)) | to_yaml)' clusters/dev/sample-api-dev.yaml
+   kubectl create namespace sample-api-rollout-demo --dry-run=client -o yaml | kubectl apply -f -
 
-   git status --short
-   git diff -- clusters/dev/sample-api-dev.yaml
+   kubectl -n sample-api-dev get secret ghcr-pull -o yaml \
+     | yq 'del(.metadata.uid, .metadata.resourceVersion, .metadata.creationTimestamp, .metadata.managedFields, .metadata.annotations, .metadata.ownerReferences) | .metadata.namespace = "sample-api-rollout-demo"' \
+     | kubectl apply -f -
+
+   helm template sample-api-rollout-demo helm-charts/charts/sample-api \
+     --namespace sample-api-rollout-demo \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
+     --set image.tag=1.0.0 \
+     --set environment=rollout-demo \
+     --set replicaCount=2 \
+     --set autoscaling.enabled=false \
+     --set secret.enabled=false \
+     > /tmp/sample-api-rollout-demo.yaml
+
+   kubectl apply -f /tmp/sample-api-rollout-demo.yaml
+   kubectl -n sample-api-rollout-demo get rollout,replicaset,pod
    ```
 
-   Enter a newer immutable release tag, such as `1.0.1`, published by the `sample-api` CI workflow from a Git tag like `v1.0.1`. If the diff is correct, commit and push the GitOps change, then watch the rollout:
+   The demo uses the same chart and Argo Rollouts controller as the GitOps-managed workload, but it is not managed by Argo CD. This keeps the reference repositories unchanged while still giving you a real rollout object to test.
+
+5. Patch the temporary demo Rollout from `1.0.0` to `1.0.1` and watch the canary:
 
    ```bash
-   git add clusters/dev/sample-api-dev.yaml
-   git commit -m "chore: update sample api image"
-   git push
+   kubectl -n sample-api-rollout-demo patch rollout sample-api-rollout-demo \
+     --type='json' \
+     -p='[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"ghcr.io/steoli-platform-labs/sample-api:1.0.1"}]'
 
-   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application sample-api-dev -o wide
-   kubectl -n sample-api-dev get rollout sample-api -w
+   kubectl -n sample-api-rollout-demo get rollout sample-api-rollout-demo -w
    ```
 
    The Rollout should create a new ReplicaSet and progress through the canary steps. Press `Ctrl-C` after you have observed the status change. If the image tag does not change, no meaningful progressive delivery event occurs.
 
-5. Inspect the rollout result:
+6. Inspect the rollout result:
 
    ```bash
-   kubectl -n sample-api-dev get rollout,replicaset,pod -o wide
-   kubectl -n sample-api-dev describe rollout sample-api
+   kubectl -n sample-api-rollout-demo get rollout,replicaset,pod -o wide
+   kubectl -n sample-api-rollout-demo describe rollout sample-api-rollout-demo
    ```
 
-   The current Rollout status should show the new image tag and a healthy ReplicaSet. Rollback in this GitOps model is another reviewed Git change that restores the previous known-good image tag, followed by an Argo CD refresh.
+   The current Rollout status should show the new image tag and a healthy ReplicaSet. In a production GitOps flow, the same version change would be a reviewed Git change in `platform-config`; this lab uses a temporary resource so multiple learners can run the demo without pushing to shared reference repositories.
 
 ## Expected Results
 Argo Rollouts is installed and the sample API is managed as a Rollout when progressive delivery is enabled.
 
 ## Validation
-- Argo CD detects and syncs the Git change.
+- The temporary demo Rollout starts on `1.0.0`.
 - Argo Rollouts creates a new ReplicaSet.
 - Canary traffic/replica weight progresses through the documented steps.
 - Pause durations are observed.
 - Readiness failures stop progression.
-- Rollback is described as a Git revert or image-tag change back to the previous known-good version.
+- Rollback is described as a Git revert or image-tag change back to the previous known-good version in a production GitOps flow.
 - The stable service remains available during progression.
 - Metrics-based analysis is present if the lab claims automated health-based promotion.
-- The CI-to-GitOps handoff is explicit: publishing a GHCR image must result in a reviewable Git update. An unchanged image tag does not provide traceable progressive delivery.
+- The demo uses `1.0.0` and `1.0.1` release tags. An unchanged image tag does not provide traceable progressive delivery.
 
 ## Troubleshooting
 Start with the Rollout object and controller status:
@@ -145,14 +155,14 @@ Start with the Rollout object and controller status:
 kubectl -n argocd describe application argo-rollouts
 kubectl -n argocd describe application sample-api-dev
 kubectl -n sample-api-dev describe rollout sample-api
+kubectl -n sample-api-rollout-demo describe rollout sample-api-rollout-demo
 kubectl -n argo-rollouts get pods -o wide
 ```
 
 If no canary happens:
 
 - Confirm the rendered chart creates a `Rollout`, not a `Deployment`.
-- Confirm the image tag changed in Git.
-- Confirm Argo CD synced the changed values.
+- Confirm the temporary demo Rollout image changed from `1.0.0` to `1.0.1`.
 - Confirm the Rollout controller is healthy.
 
 If rollout pauses unexpectedly:
@@ -165,7 +175,12 @@ If rollout pauses unexpectedly:
 The implementation remains GitOps-driven and mergeable to `main`.
 
 ## Cleanup
-Complete or roll back any test image change through Git before moving on. Keep Argo Rollouts installed for later resilience validation.
+Delete the temporary demo namespace before moving on. Keep Argo Rollouts installed for later resilience validation.
+
+```bash
+kubectl delete namespace sample-api-rollout-demo --ignore-not-found
+rm -f /tmp/sample-api-rollout-demo.yaml
+```
 
 ## Next Steps
 Continue with [Lab 17 - High Availability and Resilience](./lab17-high-availability-and-resilience.md).

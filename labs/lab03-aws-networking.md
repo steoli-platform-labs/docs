@@ -314,16 +314,14 @@ Follow the steps below to configure the remote backend, review the network desig
 
     The tag commands use `jq`. You may also inspect the subnet tags in the AWS Console.
 
-11. Commit and push the repository changes. Do not commit `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
+11. Confirm the reference repositories contain only source files. Do not track `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
 
    In `platform-modules`:
 
    ```bash
    git status
    git diff --check
-   git add README.md Makefile .terraform-version scripts/ modules/core/
-   git commit -m "add reusable vpc module"
-   git push
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
 
    In `platform-live`:
@@ -331,10 +329,10 @@ Follow the steps below to configure the remote backend, review the network desig
    ```bash
    git status
    git diff --check
-   git add README.md Makefile .terraform-version scripts/ environments/dev/
-   git commit -m "provision development network"
-   git push
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
+
+   The `git ls-files` commands should print no local backend, variable, state or plan files.
 
 ## Expected Results
 

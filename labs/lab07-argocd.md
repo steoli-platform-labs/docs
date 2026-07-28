@@ -136,7 +136,7 @@ Key files:
    sed -n '1,120p' platform-config/bootstrap/root-application-dev.yaml
    ```
 
-   If your GitHub organization or branch differs from the committed example, update `repoURL` or `targetRevision`, then commit and push that specific `platform-config` change before applying the root Application. If the checked fields already match your repositories, no repo change is needed.
+   In reference/demo mode, use the committed repository URL and branch as-is. If you maintain your own copy of the platform outside this lab flow, adjust those values in your own repository before running the lab.
 2. Review the child Applications in `platform-config/clusters/dev` so you understand what Argo CD will reconcile after the root Application is created.
 
    Each YAML file in this directory is intended to become an Argo CD child Application for one platform component or workload. The root Application does not install those components directly; it points Argo CD at this directory, and Argo CD then reconciles each child Application it finds there.

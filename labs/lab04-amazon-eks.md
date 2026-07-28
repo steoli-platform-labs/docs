@@ -111,7 +111,7 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    kubectl get --raw='/readyz?verbose'
    ```
 
-7. Commit only Terraform source changes and documentation. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
+7. Confirm only Terraform source and documentation files are tracked. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
 
    In `platform-modules`:
 
@@ -119,9 +119,7 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    cd "$WORKSPACE/platform-modules"
    git status
    git diff --check
-   git add modules/eks/
-   git commit -m "add reusable eks module"
-   git push
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
 
    In `platform-live`:
@@ -130,10 +128,10 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    cd "$WORKSPACE/platform-live"
    git status
    git diff --check
-   git add environments/dev/
-   git commit -m "enable development eks cluster"
-   git push
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
+
+   The `git ls-files` commands should print no local backend, variable, state or plan files.
 
 ## Expected Results
 
