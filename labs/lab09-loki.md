@@ -9,9 +9,7 @@
 | **Difficulty** | Advanced |
 | **Estimated Time** | 30–60 minutes |
 | **Estimated Cost** | Low |
-| **Terraform** | No |
-| **Kubernetes** | Yes |
-| **GitOps** | Yes |
+| **Primary Tools** | Helm, kubectl, Argo CD, Loki, Grafana |
 
 ## Introduction
 

@@ -9,9 +9,7 @@
 | **Difficulty** | Beginner |
 | **Estimated Time** | 20-30 minutes |
 | **Estimated Cost** | Low |
-| **Terraform** | Yes |
-| **Kubernetes** | No |
-| **GitOps** | No |
+| **Primary Tools** | Terraform, AWS CLI |
 
 ## Introduction
 

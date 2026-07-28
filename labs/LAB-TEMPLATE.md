@@ -9,9 +9,7 @@
 | **Difficulty** | Beginner/Intermediate/Advanced |
 | **Estimated Time** | |
 | **Estimated Cost** | Free/Low/Medium |
-| **Terraform** | Yes/No |
-| **Kubernetes** | Yes/No |
-| **GitOps** | Yes/No |
+| **Primary Tools** | |
 
 ## Introduction
 

@@ -9,9 +9,7 @@
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45-75 minutes |
 | **Estimated Cost** | Medium |
-| **Terraform** | Read-only validation |
-| **Kubernetes** | Yes |
-| **GitOps** | Yes |
+| **Primary Tools** | Terraform, Helm, kubectl, Argo CD, Karpenter |
 
 ## Introduction
 

@@ -9,9 +9,7 @@
 | **Difficulty** | Beginner |
 | **Estimated Time** | 15-25 minutes |
 | **Estimated Cost** | Free |
-| **Terraform** | No |
-| **Kubernetes** | Yes |
-| **GitOps** | No |
+| **Primary Tools** | Helm, kubectl |
 
 ## Introduction
 

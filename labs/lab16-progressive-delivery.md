@@ -9,9 +9,7 @@
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45-75 minutes |
 | **Estimated Cost** | Free |
-| **Terraform** | No |
-| **Kubernetes** | Yes |
-| **GitOps** | Yes |
+| **Primary Tools** | Git, Helm, kubectl, Argo CD, Argo Rollouts |
 
 ## Introduction
 

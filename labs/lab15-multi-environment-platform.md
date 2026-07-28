@@ -9,9 +9,7 @@
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-45 minutes |
 | **Estimated Cost** | Low |
-| **Terraform** | No |
-| **Kubernetes** | Yes |
-| **GitOps** | Yes |
+| **Primary Tools** | Helm, kubectl, Argo CD |
 
 ## Introduction
 

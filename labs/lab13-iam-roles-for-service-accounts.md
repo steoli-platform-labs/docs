@@ -9,9 +9,7 @@
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-45 minutes |
 | **Estimated Cost** | Low |
-| **Terraform** | Read-only validation |
-| **Kubernetes** | Yes |
-| **GitOps** | Yes |
+| **Primary Tools** | AWS CLI, Terraform, kubectl |
 
 ## Introduction
 

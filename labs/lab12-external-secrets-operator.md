@@ -9,9 +9,7 @@
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-60 minutes |
 | **Estimated Cost** | Low |
-| **Terraform** | Read-only validation |
-| **Kubernetes** | Yes |
-| **GitOps** | Yes |
+| **Primary Tools** | AWS CLI, Terraform, Helm, kubectl, Argo CD, External Secrets Operator |
 
 ## Introduction
 
