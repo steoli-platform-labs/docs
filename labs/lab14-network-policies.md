@@ -124,8 +124,10 @@ Review these files before validation:
 
    ```bash
    SAMPLE_API_POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
-   kubectl -n sample-api-dev exec "$SAMPLE_API_POD" -- nslookup kubernetes.default.svc.cluster.local
+   kubectl -n sample-api-dev exec "$SAMPLE_API_POD" -- python -c 'import socket; print(socket.gethostbyname("kubernetes.default.svc.cluster.local"))'
    ```
+
+   Expected result: the command prints a cluster IP address, such as `172.20.0.1`. The sample API image does not include debugging tools such as `nslookup`, so this uses Python from the application runtime to perform the same DNS lookup.
 
    DNS must keep working after egress policy is applied. If the application needs outbound HTTPS, validate that path with a non-sensitive endpoint used by the lab.
 
