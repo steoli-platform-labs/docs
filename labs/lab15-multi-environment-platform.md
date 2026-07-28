@@ -56,8 +56,13 @@ Review these files before activation:
    ```bash
    cd "$WORKSPACE/platform-config"
 
+   printf '\n===== Dev root =====\n'
    yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-dev.yaml
+
+   printf '\n===== Staging root =====\n'
    yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-staging.yaml
+
+   printf '\n===== Production root =====\n'
    yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-production.yaml
    ```
 
@@ -74,7 +79,10 @@ Review these files before activation:
 2. Review the namespace desired state and the child Application that applies it:
 
    ```bash
+   printf '\n===== Namespace manifests =====\n'
    yq '.' environments/namespaces.yaml
+
+   printf '\n===== Namespace Application source path =====\n'
    yq '.spec.source.path' clusters/dev/platform-namespaces.yaml
    ```
 
@@ -83,14 +91,17 @@ Review these files before activation:
 3. Review the sample API Applications for each environment:
 
    ```bash
+   printf '\n===== Application destinations =====\n'
    yq '.metadata.name + " -> " + .spec.destination.namespace' clusters/dev/sample-api-dev.yaml
    yq '.metadata.name + " -> " + .spec.destination.namespace' clusters/staging/sample-api-staging.yaml
    yq '.metadata.name + " -> " + .spec.destination.namespace' clusters/production/sample-api-production.yaml
 
+   printf '\n===== Helm release names =====\n'
    yq '.spec.source.helm.releaseName' clusters/dev/sample-api-dev.yaml
    yq '.spec.source.helm.releaseName' clusters/staging/sample-api-staging.yaml
    yq '.spec.source.helm.releaseName' clusters/production/sample-api-production.yaml
 
+   printf '\n===== Environment Helm values =====\n'
    yq '.spec.source.helm.values | from_yaml | {"environment": .environment, "replicaCount": .replicaCount, "autoscaling": .autoscaling, "secret": .secret}' clusters/dev/sample-api-dev.yaml
    yq '.spec.source.helm.values | from_yaml | {"environment": .environment, "replicaCount": .replicaCount, "autoscaling": .autoscaling, "secret": .secret}' clusters/staging/sample-api-staging.yaml
    yq '.spec.source.helm.values | from_yaml | {"environment": .environment, "replicaCount": .replicaCount, "autoscaling": .autoscaling, "secret": .secret}' clusters/production/sample-api-production.yaml
@@ -104,6 +115,7 @@ Review these files before activation:
    export AWS_PAGER=""
    export AWS_REGION="eu-north-1"
 
+   printf '\n===== Staging sample-api secret =====\n'
    aws secretsmanager create-secret \
      --name platform-labs/sample-api-staging \
      --secret-string '{"EXAMPLE_CONFIG":"staging"}' \
@@ -113,6 +125,7 @@ Review these files before activation:
      --secret-string '{"EXAMPLE_CONFIG":"staging"}' \
      --region "$AWS_REGION"
 
+   printf '\n===== Production sample-api secret =====\n'
    aws secretsmanager create-secret \
      --name platform-labs/sample-api-production \
      --secret-string '{"EXAMPLE_CONFIG":"production"}' \
@@ -130,18 +143,28 @@ Review these files before activation:
    ```bash
    cd "$WORKSPACE"
 
+   printf '\n===== Root Application dry-runs =====\n'
    kubectl apply --dry-run=client -f platform-config/bootstrap/root-application-dev.yaml
    kubectl apply --dry-run=client -f platform-config/bootstrap/root-application-staging.yaml
    kubectl apply --dry-run=client -f platform-config/bootstrap/root-application-production.yaml
+
+   printf '\n===== Namespace dry-run =====\n'
    kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
 
+   printf '\n===== Helm chart lint =====\n'
    helm lint helm-charts/charts/sample-api
+
+   printf '\n===== Dev Helm render =====\n'
    helm template sample-api helm-charts/charts/sample-api \
      --namespace sample-api-dev \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) >/dev/null
+
+   printf '\n===== Staging Helm render =====\n'
    helm template sample-api helm-charts/charts/sample-api \
      --namespace sample-api-staging \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/staging/sample-api-staging.yaml) >/dev/null
+
+   printf '\n===== Production Helm render =====\n'
    helm template sample-api helm-charts/charts/sample-api \
      --namespace sample-api-production \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/production/sample-api-production.yaml) >/dev/null
@@ -154,8 +177,11 @@ Review these files before activation:
    ```bash
    cd "$WORKSPACE"
 
+   printf '\n===== Apply dev root Application =====\n'
    kubectl apply -f platform-config/bootstrap/root-application-dev.yaml
+   printf '\n===== Apply staging root Application =====\n'
    kubectl apply -f platform-config/bootstrap/root-application-staging.yaml
+   printf '\n===== Apply production root Application =====\n'
    kubectl apply -f platform-config/bootstrap/root-application-production.yaml
    ```
 
@@ -163,13 +189,15 @@ Review these files before activation:
 
 7. Refresh and inspect all environment roots and sample API Applications:
 
-    ```bash
-    for app in platform-root-dev platform-root-staging platform-root-production; do
-      kubectl -n argocd annotate application "$app" argocd.argoproj.io/refresh=hard --overwrite
-    done
+     ```bash
+     printf '\n===== Refresh environment roots =====\n'
+     for app in platform-root-dev platform-root-staging platform-root-production; do
+       kubectl -n argocd annotate application "$app" argocd.argoproj.io/refresh=hard --overwrite
+     done
 
-    kubectl -n argocd get application \
-      platform-root-dev \
+     printf '\n===== Environment root and sample API Applications =====\n'
+     kubectl -n argocd get application \
+       platform-root-dev \
       platform-root-staging \
       platform-root-production \
       platform-namespaces \
@@ -184,10 +212,11 @@ Review these files before activation:
 8. Validate namespace separation and workload state:
 
     ```bash
+    printf '\n===== Namespace labels =====\n'
     kubectl get namespaces -L environment
 
     for ns in sample-api-dev sample-api-staging sample-api-production; do
-      echo "===== $ns ====="
+      printf '\n===== %s resources =====\n' "$ns"
       kubectl -n "$ns" get rollout,svc,pod,externalsecret,networkpolicy,pdb
     done
     ```
@@ -196,11 +225,11 @@ Review these files before activation:
 
 9. Query each environment's API:
 
-    ```bash
-    for ns in sample-api-dev sample-api-staging sample-api-production; do
-      echo "===== $ns ====="
-      kubectl -n "$ns" port-forward svc/sample-api 8080:80 >/tmp/$ns-port-forward.log 2>&1 &
-      PF_PID=$!
+     ```bash
+     for ns in sample-api-dev sample-api-staging sample-api-production; do
+       printf '\n===== %s health =====\n' "$ns"
+       kubectl -n "$ns" port-forward svc/sample-api 8080:80 >/tmp/$ns-port-forward.log 2>&1 &
+       PF_PID=$!
       sleep 2
       curl -fsS http://localhost:8080/health || true
       kill "$PF_PID"
@@ -229,10 +258,15 @@ Start by confirming what Argo CD is configured to read:
 
 ```bash
 cd "$WORKSPACE/platform-config"
+printf '\n===== Dev root path =====\n'
 yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-dev.yaml
+printf '\n===== Staging root path =====\n'
 yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-staging.yaml
+printf '\n===== Production root path =====\n'
 yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-production.yaml
+printf '\n===== Environment namespaces =====\n'
 kubectl get namespaces -L environment
+printf '\n===== Argo CD Applications =====\n'
 kubectl -n argocd get applications.argoproj.io -o wide
 ```
 

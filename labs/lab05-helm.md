@@ -55,7 +55,9 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 2. Lint and render the chart:
 
    ```bash
+   printf '\n===== Helm lint =====\n'
    helm lint charts/sample-api
+   printf '\n===== Helm template =====\n'
    helm template sample-api charts/sample-api \
      --namespace sample-api-dev \
      --set image.repository=example.invalid/sample-api \
@@ -77,7 +79,9 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 4. Inspect the rendered resources:
 
    ```bash
+   printf '\n===== Rendered resource kinds =====\n'
    grep '^kind:' /tmp/sample-api-rendered.yaml
+   printf '\n===== Rendered platform features =====\n'
    grep -nE 'readinessProbe|livenessProbe|startupProbe|resources:|NetworkPolicy|PodDisruptionBudget' /tmp/sample-api-rendered.yaml
    ```
 
@@ -87,8 +91,11 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 
    ```bash
    cd "$WORKSPACE/helm-charts"
+   printf '\n===== helm-charts git status =====\n'
    git status
+   printf '\n===== helm-charts whitespace check =====\n'
    git diff --check
+   printf '\n===== Temporary rendered manifest tracking check =====\n'
    git ls-files /tmp/sample-api-rendered.yaml
    ```
 

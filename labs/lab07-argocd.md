@@ -152,7 +152,7 @@ Key files:
    ```bash
    for file in platform-config/clusters/dev/*.yaml
    do
-     echo "===== $file ====="
+     printf '\n===== %s =====\n' "$file"
      grep -E 'name:|repoURL:|targetRevision:|path:|namespace:' "$file"
    done
    ```
@@ -174,12 +174,19 @@ Key files:
    ```bash
    cd "$WORKSPACE"
 
+   printf '\n===== Current kubectl context =====\n'
    kubectl config current-context
+
+   printf '\n===== Cluster nodes =====\n'
    kubectl get nodes
 
-   echo "Configured Argo CD chart: $(yq -r '.spec.source.targetRevision' platform-config/clusters/dev/argocd.yaml)"
+   printf '\n===== Configured Argo CD chart version =====\n'
+   yq -r '.spec.source.targetRevision' platform-config/clusters/dev/argocd.yaml
+
+   printf '\n===== Latest available Argo CD chart version =====\n'
    helm show chart argo-cd --repo https://argoproj.github.io/argo-helm | yq '.version'
 
+   printf '\n===== Install or upgrade Argo CD =====\n'
    helm repo add argo https://argoproj.github.io/argo-helm
    helm repo update
    helm upgrade --install argocd argo/argo-cd \
@@ -194,19 +201,32 @@ Key files:
 4. Bootstrap the dev root Application from `platform-config/bootstrap/root-application-dev.yaml`:
 
    ```bash
+   printf '\n===== Wait for Argo CD server =====\n'
    kubectl -n argocd wait --for=condition=available deployment/argocd-server --timeout=300s
+   printf '\n===== Apply dev root Application =====\n'
    kubectl apply -f platform-config/bootstrap/root-application-dev.yaml
    ```
 
 5. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
 
    ```bash
+   printf '\n===== Argo CD pods =====\n'
    kubectl -n argocd get pods
+
+   printf '\n===== Argo CD Applications =====\n'
    kubectl -n argocd get applications.argoproj.io
+
+   printf '\n===== platform-root-dev details =====\n'
    kubectl -n argocd describe application platform-root-dev
+
+   printf '\n===== platform-root-dev status =====\n'
    kubectl -n argocd get application platform-root-dev \
      -o jsonpath='{.status.sync.status}{" / "}{.status.health.status}{"\n"}'
+
+   printf '\n===== Argo CD application controller logs =====\n'
    kubectl -n argocd logs statefulset/argocd-application-controller --since=10m
+
+   printf '\n===== Recent cluster events =====\n'
    kubectl get events -A --sort-by=.lastTimestamp | tail -50
    ```
 
@@ -262,16 +282,22 @@ Argo CD is installed in the `argocd` namespace, the `platform-root-dev` Applicat
 Start with Argo CD status:
 
 ```bash
+printf '\n===== Argo CD pods =====\n'
 kubectl -n argocd get pods
+printf '\n===== Argo CD Applications =====\n'
 kubectl -n argocd get applications.argoproj.io -o wide
+printf '\n===== platform-root-dev details =====\n'
 kubectl -n argocd describe application platform-root-dev
+printf '\n===== Argo CD application controller logs =====\n'
 kubectl -n argocd logs statefulset/argocd-application-controller --since=10m
 ```
 
 If `sample-api-dev` is not healthy, inspect the pod image-pull events directly:
 
 ```bash
+printf '\n===== sample-api-dev pods =====\n'
 kubectl -n sample-api-dev get pods
+printf '\n===== sample-api-dev pod details =====\n'
 kubectl -n sample-api-dev describe pod -l app.kubernetes.io/name=sample-api
 ```
 

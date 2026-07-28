@@ -450,14 +450,23 @@ Complete the setup steps below in order. This is the only lab that requires manu
    set -e
    export AWS_PAGER=""
 
+   printf '\n===== Git version =====\n'
    git --version
+   printf '\n===== AWS CLI version =====\n'
    aws --version
+   printf '\n===== Terraform version =====\n'
    terraform version
+   printf '\n===== Docker version =====\n'
    docker version
+   printf '\n===== kubectl client version =====\n'
    kubectl version --client
+   printf '\n===== Helm version =====\n'
    helm version
+   printf '\n===== GitHub CLI auth status =====\n'
    gh auth status
+   printf '\n===== AWS caller identity =====\n'
    aws sts get-caller-identity --profile "$AWS_PROFILE"
+   printf '\n===== GitHub repositories =====\n'
    gh repo list "$GITHUB_ORG" --limit 20
    ```
 
@@ -466,7 +475,7 @@ Complete the setup steps below in order. This is the only lab that requires manu
    ```bash
    for repo in docs platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
    do
-     echo "--- $repo ---"
+     printf '\n===== %s git status =====\n' "$repo"
      git -C "$WORKSPACE/$repo" status --short
    done
    ```

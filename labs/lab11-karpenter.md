@@ -45,7 +45,9 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE/platform-config"
+   printf '\n===== Karpenter Application source =====\n'
    yq '.spec.source' clusters/dev/karpenter.yaml
+   printf '\n===== Karpenter Application destination =====\n'
    yq '.spec.destination' clusters/dev/karpenter.yaml
    ```
 
@@ -72,8 +74,11 @@ Review these files before validation:
      SUBNET_FILTER_VALUES=$(terraform output -json platform_private_subnet_ids | yq -r 'join(",")')
    fi
 
+   printf '\n===== AWS caller identity =====\n'
    aws sts get-caller-identity
+   printf '\n===== EKS cluster name =====\n'
    aws eks describe-cluster --name "$CLUSTER_NAME" --query 'cluster.name' --output text
+   printf '\n===== Karpenter subnet candidates =====\n'
    aws ec2 describe-subnets --filters "Name=subnet-id,Values=$SUBNET_FILTER_VALUES" \
      --query 'Subnets[*].[SubnetId,AvailabilityZone,CidrBlock,Tags[?Key==`Name`].Value|[0]]' \
      --output table
@@ -87,7 +92,9 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
+   printf '\n===== Karpenter controller role ARN =====\n'
    terraform output -raw karpenter_controller_role_arn
+   printf '\n===== Karpenter node role name =====\n'
    terraform output -raw karpenter_node_role_name
    ```
 
@@ -108,17 +115,23 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE/platform-config"
 
+   printf '\n===== Karpenter chart version =====\n'
    yq -r '.spec.source.targetRevision' clusters/dev/karpenter.yaml
 
+   printf '\n===== Render Karpenter chart =====\n'
    helm template karpenter oci://public.ecr.aws/karpenter/karpenter \
      --version "$(yq -r '.spec.source.targetRevision' clusters/dev/karpenter.yaml)" \
      --namespace karpenter \
      --values <(yq -r '.spec.source.helm.values' clusters/dev/karpenter.yaml) \
      >/dev/null
 
+   printf '\n===== Karpenter Application dry-run =====\n'
    kubectl apply --dry-run=client -f clusters/dev/karpenter.yaml
+   printf '\n===== Karpenter provisioning Application dry-run =====\n'
    kubectl apply --dry-run=client -f clusters/dev/karpenter-provisioning.yaml
+   printf '\n===== NodePool dry-run =====\n'
    kubectl apply --dry-run=client -f addons/karpenter/nodepool.yaml
+   printf '\n===== EC2NodeClass dry-run =====\n'
    kubectl apply --dry-run=client -f addons/karpenter/ec2nodeclass.yaml
    ```
 
@@ -135,13 +148,21 @@ Review these files before validation:
 7. Refresh the root Argo CD Application, then reconcile `karpenter`:
 
    ```bash
+   printf '\n===== Refresh dev root =====\n'
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Karpenter Application before refresh =====\n'
    kubectl -n argocd get application karpenter -o wide
+   printf '\n===== Refresh Karpenter Applications =====\n'
    kubectl -n argocd annotate application karpenter argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Karpenter Application after refresh =====\n'
    kubectl -n argocd get application karpenter -o wide
+   printf '\n===== Karpenter provisioning Application =====\n'
    kubectl -n argocd get application karpenter-provisioning -o wide
+   printf '\n===== Karpenter Application details =====\n'
    kubectl -n argocd describe application karpenter
+   printf '\n===== Karpenter workloads =====\n'
    kubectl -n karpenter get deployment,pod -o wide
+   printf '\n===== Karpenter events =====\n'
    kubectl -n karpenter get events --sort-by=.lastTimestamp
    ```
 
@@ -156,12 +177,19 @@ Review these files before validation:
 8. Validate Karpenter readiness and configuration:
 
    ```bash
+   printf '\n===== Karpenter Application =====\n'
    kubectl -n argocd get application karpenter -o wide
+   printf '\n===== Karpenter provisioning Application =====\n'
    kubectl -n argocd get application karpenter-provisioning -o wide
+   printf '\n===== Karpenter pods =====\n'
    kubectl -n karpenter get pods
+   printf '\n===== Karpenter custom resources =====\n'
    kubectl get nodepool,ec2nodeclass
+   printf '\n===== NodePool details =====\n'
    kubectl describe nodepool karpenter
+   printf '\n===== EC2NodeClass details =====\n'
    kubectl describe ec2nodeclass default
+   printf '\n===== Karpenter logs =====\n'
    kubectl -n karpenter logs deployment/karpenter --since=15m --tail=300
    ```
 
@@ -172,8 +200,11 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE/platform-config"
 
+   printf '\n===== NodePool requirements =====\n'
    yq '.spec.template.spec.requirements' addons/karpenter/nodepool.yaml
+   printf '\n===== Allowed instance type assertion =====\n'
    yq -e '.spec.template.spec.requirements[] | select(.key == "node.kubernetes.io/instance-type" and .operator == "In" and (.values | contains(["t3.small", "t3.medium", "c7a.medium"])))' addons/karpenter/nodepool.yaml
+   printf '\n===== NodePool dry-run =====\n'
    kubectl apply --dry-run=client -f addons/karpenter/nodepool.yaml
    ```
 
@@ -182,17 +213,24 @@ Review these files before validation:
    Refresh `karpenter-provisioning` before creating the test workload:
 
    ```bash
+   printf '\n===== Refresh dev root =====\n'
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Refresh Karpenter provisioning =====\n'
    kubectl -n argocd annotate application karpenter-provisioning argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== NodePool details =====\n'
    kubectl describe nodepool karpenter
    ```
 
 10. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
 
    ```bash
+   printf '\n===== Create Karpenter test namespace =====\n'
    kubectl create namespace karpenter-test
+   printf '\n===== Create inflate deployment =====\n'
    kubectl -n karpenter-test create deployment inflate --image=public.ecr.aws/eks-distro/kubernetes/pause:3.10
+   printf '\n===== Scale inflate deployment =====\n'
    kubectl -n karpenter-test scale deployment inflate --replicas=20
+   printf '\n===== Watch test pods =====\n'
    kubectl -n karpenter-test get pods -w
    ```
 
@@ -219,14 +257,18 @@ Review these files before validation:
    The `kubectl get node -w` command is a watch stream. It can print the same node multiple times as status changes from `NotReady` to `Ready`, so repeated lines do not mean Kubernetes created duplicate nodes with the same name. To see the current unique nodes, run a normal non-watch query in another terminal:
 
    ```bash
+   printf '\n===== Current nodes =====\n'
    kubectl get nodes -o wide
+   printf '\n===== Current node claims =====\n'
    kubectl get nodeclaim -o wide
    ```
 
 11. Clean up the temporary namespace after validation:
 
    ```bash
+   printf '\n===== Delete Karpenter test namespace =====\n'
    kubectl delete namespace karpenter-test
+   printf '\n===== Remaining node claims and nodes =====\n'
    kubectl get nodeclaim,node
    ```
 
@@ -247,12 +289,19 @@ The `karpenter` Argo CD Application reconciles successfully and Karpenter can pr
 Start with the Argo CD Application, Karpenter controller and provisioning resources:
 
 ```bash
+printf '\n===== Karpenter Application details =====\n'
 kubectl -n argocd describe application karpenter
+printf '\n===== Karpenter pods =====\n'
 kubectl -n karpenter get pods -o wide
+printf '\n===== Karpenter deployment details =====\n'
 kubectl -n karpenter describe deployment karpenter
+printf '\n===== Karpenter events =====\n'
 kubectl -n karpenter get events --sort-by=.lastTimestamp
+printf '\n===== Karpenter provisioning resources =====\n'
 kubectl get nodepool,ec2nodeclass,nodeclaim
+printf '\n===== Karpenter recent logs =====\n'
 kubectl -n karpenter logs deployment/karpenter --since=15m --tail=300
+printf '\n===== Karpenter previous logs =====\n'
 kubectl -n karpenter logs deployment/karpenter --previous --tail=200
 ```
 

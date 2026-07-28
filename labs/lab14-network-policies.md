@@ -51,9 +51,12 @@ Review these files before validation:
 2. Confirm whether the cluster CNI enforces Kubernetes NetworkPolicy:
 
    ```bash
+   printf '\n===== AWS VPC CNI pods =====\n'
    kubectl -n kube-system get pods -l k8s-app=aws-node
+   printf '\n===== AWS VPC CNI containers =====\n'
    kubectl -n kube-system get daemonset aws-node \
      -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{"\n"}{end}'
+   printf '\n===== NetworkPolicy enforcement flag =====\n'
    kubectl -n kube-system describe daemonset aws-node | grep -- '--enable-network-policy=true' || true
    ```
 
@@ -64,10 +67,13 @@ Review these files before validation:
 3. Run `helm lint` and render the chart:
 
    ```bash
+   printf '\n===== sample-api Helm lint =====\n'
    helm lint helm-charts/charts/sample-api
+   printf '\n===== Render sample-api chart =====\n'
    helm template sample-api helm-charts/charts/sample-api \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      > /tmp/sample-api-networkpolicy.yaml
+   printf '\n===== Rendered NetworkPolicy =====\n'
    yq 'select(.kind == "NetworkPolicy")' /tmp/sample-api-networkpolicy.yaml
    ```
 
@@ -78,14 +84,18 @@ Review these files before validation:
 4. Refresh Argo CD and verify `sample-api-dev` is synced:
 
    ```bash
+   printf '\n===== Refresh dev root =====\n'
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== sample-api-dev Application =====\n'
    kubectl -n argocd get application sample-api-dev -o wide
    ```
 
 5. Confirm that the deployed NetworkPolicy and pods match the rendered intent:
 
    ```bash
+   printf '\n===== Deployed NetworkPolicy =====\n'
    kubectl -n sample-api-dev get networkpolicy -o yaml
+   printf '\n===== sample-api pods =====\n'
    kubectl -n sample-api-dev get pods -l app.kubernetes.io/name=sample-api -o wide
    ```
 
@@ -151,8 +161,11 @@ The `sample-api` chart renders a NetworkPolicy and the deployed application stil
 Start with the rendered policy and namespace events:
 
 ```bash
+printf '\n===== sample-api NetworkPolicy details =====\n'
 kubectl -n sample-api-dev describe networkpolicy sample-api
+printf '\n===== sample-api pods, services and endpoints =====\n'
 kubectl -n sample-api-dev get pods,svc,endpoints -o wide
+printf '\n===== sample-api events =====\n'
 kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
 ```
 

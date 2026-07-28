@@ -51,7 +51,9 @@ Review these files before validation:
 2. Review the chaos manifest target and RBAC:
 
    ```bash
+   printf '\n===== Chaos manifest identity =====\n'
    yq '.kind, .metadata.name' platform-config/chaos/delete-pod.yaml
+   printf '\n===== Chaos manifest RBAC and target references =====\n'
    grep -nE 'kind: (ServiceAccount|Role|RoleBinding|Job)|name: chaos-runner|delete|pods|sample-api' platform-config/chaos/delete-pod.yaml
    ```
 
@@ -60,8 +62,11 @@ Review these files before validation:
 3. Validate the chaos manifest and establish the steady state before injecting failure:
 
    ```bash
+   printf '\n===== Chaos manifest dry-run =====\n'
    kubectl apply --dry-run=client -f platform-config/chaos/delete-pod.yaml
+   printf '\n===== sample-api steady state =====\n'
    kubectl -n sample-api-dev get rollout,pod,pdb
+   printf '\n===== Argo CD Applications =====\n'
    kubectl -n argocd get applications.argoproj.io -o wide
    ```
 
@@ -70,9 +75,12 @@ Review these files before validation:
 4. Verify the chaos identity before execution:
 
    ```bash
+   printf '\n===== Chaos service account =====\n'
    kubectl -n sample-api-dev get serviceaccount chaos-runner
+   printf '\n===== Can chaos-runner delete pods? =====\n'
    kubectl -n sample-api-dev auth can-i delete pods \
      --as=system:serviceaccount:sample-api-dev:chaos-runner
+   printf '\n===== Can chaos-runner delete deployments? =====\n'
    kubectl -n sample-api-dev auth can-i delete deployments \
      --as=system:serviceaccount:sample-api-dev:chaos-runner
    ```
@@ -96,9 +104,13 @@ Review these files before validation:
 6. Run the one-off chaos Job and watch Kubernetes replace the deleted pod:
 
    ```bash
+   printf '\n===== Create chaos Job =====\n'
    kubectl create -f platform-config/chaos/delete-pod.yaml
+   printf '\n===== Chaos Job logs =====\n'
    kubectl -n sample-api-dev logs -f job/delete-sample-api-pod
+   printf '\n===== Watch sample-api pods =====\n'
    kubectl -n sample-api-dev get pods -w
+   printf '\n===== Recent sample-api events =====\n'
    kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
    ```
 
@@ -107,8 +119,11 @@ Review these files before validation:
 7. Validate recovery through platform signals:
 
    ```bash
+   printf '\n===== sample-api recovery state =====\n'
    kubectl -n sample-api-dev get rollout,pod,pdb -o wide
+   printf '\n===== Recent sample-api events =====\n'
    kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
+   printf '\n===== sample-api-dev Application =====\n'
    kubectl -n argocd get application sample-api-dev -o wide
    ```
 
@@ -117,7 +132,9 @@ Review these files before validation:
 8. Remove the one-off chaos Job after validation:
 
    ```bash
+   printf '\n===== Delete chaos Job =====\n'
    kubectl -n sample-api-dev delete job delete-sample-api-pod
+   printf '\n===== Remaining jobs and pods =====\n'
    kubectl -n sample-api-dev get job,pod
    ```
 
@@ -142,9 +159,13 @@ The chaos manifest is valid, the sample API starts from a healthy steady state, 
 Start with the chaos Job, RBAC and workload events:
 
 ```bash
+printf '\n===== Chaos Job details =====\n'
 kubectl -n sample-api-dev describe job delete-sample-api-pod
+printf '\n===== Chaos RBAC resources =====\n'
 kubectl -n sample-api-dev get serviceaccount,role,rolebinding | grep chaos
+printf '\n===== sample-api events =====\n'
 kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
+printf '\n===== sample-api pods =====\n'
 kubectl -n sample-api-dev get pods -o wide
 ```
 

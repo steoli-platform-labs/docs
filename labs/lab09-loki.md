@@ -138,20 +138,25 @@ Review these files before validation:
 3. Compare the pinned chart versions with the latest available chart versions:
 
    ```bash
-   echo "Pinned Loki chart:  $(yq -r '.spec.source.targetRevision' clusters/dev/loki.yaml)"
+   printf '\n===== Configured Loki chart =====\n'
+   yq -r '.spec.source.targetRevision' clusters/dev/loki.yaml
+   printf '\n===== Latest available Loki chart =====\n'
    helm show chart loki --repo https://grafana.github.io/helm-charts | yq '.version'
 
-   echo "Pinned Alloy chart: $(yq -r '.spec.source.targetRevision' clusters/dev/alloy.yaml)"
+   printf '\n===== Configured Alloy chart =====\n'
+   yq -r '.spec.source.targetRevision' clusters/dev/alloy.yaml
+   printf '\n===== Latest available Alloy chart =====\n'
    helm show chart alloy --repo https://grafana.github.io/helm-charts | yq '.version'
    ```
 
    The pinned versions in `clusters/dev/loki.yaml` and `clusters/dev/alloy.yaml` are the versions tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned versions just because newer versions are available; Helm charts can change required values between releases.
 
-   If you intentionally update a chart version, update the YAML, render the chart locally, review the rendered manifests and commit the tested change. Treat chart upgrades as deliberate maintenance, not as an automatic part of the lab.
+   If you intentionally update a chart version in your own platform fork, update the YAML, render the chart locally and review the rendered manifests. Treat chart upgrades as deliberate maintenance, not as an automatic part of the lab.
 
 4. Render both Helm charts locally before relying on Argo CD:
 
    ```bash
+   printf '\n===== Render Loki chart =====\n'
    yq -r '.spec.source.helm.values' clusters/dev/loki.yaml \
      | helm template loki loki \
        --repo https://grafana.github.io/helm-charts \
@@ -160,6 +165,7 @@ Review these files before validation:
        --values - \
        >/dev/null
 
+   printf '\n===== Render Alloy chart =====\n'
    yq -r '.spec.source.helm.values' clusters/dev/alloy.yaml \
      | helm template alloy alloy \
        --repo https://grafana.github.io/helm-charts \
@@ -190,9 +196,12 @@ Review these files before validation:
 5. Let Argo CD reconcile Loki and Alloy from Git:
 
    ```bash
+   printf '\n===== Loki and Alloy Applications before refresh =====\n'
    kubectl -n argocd get application loki alloy -o wide
+   printf '\n===== Refresh Loki and Alloy Applications =====\n'
    kubectl -n argocd annotate application loki argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application alloy argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Loki and Alloy Applications after refresh =====\n'
    kubectl -n argocd get application loki alloy -o wide
    ```
 
@@ -201,18 +210,24 @@ Review these files before validation:
 6. If either Application is not `Synced`, inspect the Argo CD condition before checking pods:
 
    ```bash
+   printf '\n===== Loki Application details =====\n'
    kubectl -n argocd describe application loki
+   printf '\n===== Alloy Application details =====\n'
    kubectl -n argocd describe application alloy
    ```
 
-   Look for `Status.Conditions`. A message such as `Failed to load target state` or `failed to generate manifest` means the Helm chart did not render. Fix the values in Git, push the change, then refresh the Application again.
+   Look for `Status.Conditions`. A message such as `Failed to load target state` or `failed to generate manifest` means the Helm chart did not render. Pull the current reference desired state, then refresh the Application again.
 
 7. Validate that the workloads exist and are ready:
 
    ```bash
+   printf '\n===== Loki and Alloy Applications =====\n'
    kubectl -n argocd get application loki alloy -o wide
+   printf '\n===== Loki pods =====\n'
    kubectl -n monitoring get pods -l app.kubernetes.io/name=loki
+   printf '\n===== Alloy pods =====\n'
    kubectl -n monitoring get pods -l app.kubernetes.io/name=alloy
+   printf '\n===== Loki service =====\n'
    kubectl -n monitoring get svc loki
    ```
 
@@ -251,9 +266,11 @@ Review these files before validation:
      -l app.kubernetes.io/name=sample-api \
      -o jsonpath='{.items[0].metadata.name}')
 
+   printf '\n===== Write Loki smoke-test log line =====\n'
    kubectl -n sample-api-dev exec "$SAMPLE_API_POD" -- sh -c \
      'echo "loki smoke test from sample-api-dev $(date -u +%Y-%m-%dT%H:%M:%SZ)" > /proc/1/fd/1'
 
+   printf '\n===== Recent sample-api logs =====\n'
    kubectl -n sample-api-dev logs "$SAMPLE_API_POD" --tail=5
    ```
 
@@ -329,9 +346,13 @@ The `loki` and `alloy` Argo CD Applications reconcile successfully and log data 
 Start with the Argo CD Applications and monitoring namespace:
 
 ```bash
+printf '\n===== Loki Application details =====\n'
 kubectl -n argocd describe application loki
+printf '\n===== Alloy Application details =====\n'
 kubectl -n argocd describe application alloy
+printf '\n===== Monitoring pods =====\n'
 kubectl -n monitoring get pods -o wide
+printf '\n===== Monitoring events =====\n'
 kubectl -n monitoring get events --sort-by=.lastTimestamp
 ```
 

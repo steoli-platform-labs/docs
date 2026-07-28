@@ -53,9 +53,16 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    ```bash
    cd "$WORKSPACE"
+   printf '\n===== platform-modules Terraform format =====\n'
    terraform -chdir=platform-modules fmt -recursive
+
+   printf '\n===== platform-live Terraform format =====\n'
    terraform -chdir=platform-live fmt -recursive
+
+   printf '\n===== Helm chart lint =====\n'
    helm lint helm-charts/charts/sample-api
+
+   printf '\n===== Namespace manifest dry-run =====\n'
    kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
    ```
 
@@ -68,8 +75,13 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    ```bash
    cd "$WORKSPACE/sample-api"
+   printf '\n===== sample-api git status =====\n'
    git status
+
+   printf '\n===== sample-api whitespace check =====\n'
    git diff --check
+
+   printf '\n===== sample-api workflow file =====\n'
    test -f .github/workflows/ci.yaml
    ```
 
@@ -77,8 +89,13 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    ```bash
    cd "$WORKSPACE/helm-charts"
+   printf '\n===== helm-charts git status =====\n'
    git status
+
+   printf '\n===== helm-charts whitespace check =====\n'
    git diff --check
+
+   printf '\n===== Helm workflow file =====\n'
    test -f .github/workflows/helm.yaml
    ```
 
@@ -86,8 +103,13 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    ```bash
    cd "$WORKSPACE/platform-modules"
+   printf '\n===== platform-modules git status =====\n'
    git status
+
+   printf '\n===== platform-modules whitespace check =====\n'
    git diff --check
+
+   printf '\n===== Terraform workflow file =====\n'
    test -f .github/workflows/terraform.yaml
    ```
 
@@ -95,8 +117,13 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    ```bash
    cd "$WORKSPACE/platform-live"
+   printf '\n===== platform-live git status =====\n'
    git status
+
+   printf '\n===== platform-live whitespace check =====\n'
    git diff --check
+
+   printf '\n===== Terraform workflow file =====\n'
    test -f .github/workflows/terraform.yaml
    ```
 
@@ -123,15 +150,28 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
    ```bash
    cd "$WORKSPACE/sample-api"
+   printf '\n===== Create Python virtual environment =====\n'
    python3 -m venv .venv
    source .venv/bin/activate
+
+   printf '\n===== Install Python dependencies =====\n'
    pip install -r requirements.txt
+
+   printf '\n===== Python tests =====\n'
    pytest -q
+
+   printf '\n===== Docker build =====\n'
    docker build -t sample-api:lab06 .
 
    deactivate
+
+   printf '\n===== Helm chart lint =====\n'
    cd ../helm-charts && helm lint charts/sample-api
+
+   printf '\n===== platform-modules Terraform format =====\n'
    cd ../platform-modules && terraform fmt -check -recursive
+
+   printf '\n===== platform-live Terraform format =====\n'
    cd ../platform-live && terraform fmt -check -recursive
    ```
 
@@ -142,7 +182,10 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    Verify the image tag:
 
    ```bash
+   printf '\n===== Pull release image =====\n'
    docker pull ghcr.io/${GITHUB_ORG}/sample-api:1.0.0
+
+   printf '\n===== Inspect release image digest =====\n'
    docker inspect ghcr.io/${GITHUB_ORG}/sample-api:1.0.0 --format '{{.RepoDigests}}'
    ```
 

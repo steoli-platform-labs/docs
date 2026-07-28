@@ -108,7 +108,9 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 
    ```bash
    cd "$WORKSPACE/platform-config"
-   echo "Configured Prometheus chart: $(yq -r '.spec.source.targetRevision' clusters/dev/prometheus.yaml)"
+   printf '\n===== Configured Prometheus chart =====\n'
+   yq -r '.spec.source.targetRevision' clusters/dev/prometheus.yaml
+   printf '\n===== Latest available Prometheus chart =====\n'
    helm show chart kube-prometheus-stack --repo https://prometheus-community.github.io/helm-charts | yq '.version'
    ```
 
@@ -129,18 +131,26 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 
    ```bash
    cd "$WORKSPACE"
+   printf '\n===== Prometheus Application before refresh =====\n'
    kubectl -n argocd get application prometheus -o wide
+   printf '\n===== Refresh Prometheus Application =====\n'
    kubectl -n argocd annotate application prometheus argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Prometheus Application after refresh =====\n'
    kubectl -n argocd get application prometheus -o wide
    ```
 
 5. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
 
    ```bash
+   printf '\n===== Prometheus Application =====\n'
    kubectl -n argocd get application prometheus -o wide
+   printf '\n===== Monitoring pods =====\n'
    kubectl -n monitoring get pods
+   printf '\n===== Prometheus custom resources =====\n'
    kubectl -n monitoring get servicemonitors,podmonitors,prometheusrules
+   printf '\n===== Monitoring CRDs =====\n'
    kubectl get crd | grep monitoring.coreos.com
+   printf '\n===== Prometheus and Grafana endpoints =====\n'
    kubectl -n monitoring get endpoints prometheus-kube-prometheus-prometheus prometheus-grafana
    ```
 
@@ -157,8 +167,11 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 7. Validate metrics ingestion through Prometheus from another terminal:
 
    ```bash
+   printf '\n===== Prometheus readiness =====\n'
    curl -fsS http://localhost:9090/-/ready
+   printf '\n===== Prometheus up query =====\n'
    curl -fsS 'http://localhost:9090/api/v1/query?query=up' | python3 -m json.tool
+   printf '\n===== Prometheus kube_pod_info query =====\n'
    curl -fsS 'http://localhost:9090/api/v1/query?query=kube_pod_info' | python3 -m json.tool
    ```
 
@@ -167,8 +180,10 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 8. Get the chart-generated Grafana credentials:
 
    ```bash
+   printf '\n===== Grafana admin username =====\n'
    kubectl -n monitoring get secret prometheus-grafana \
      -o jsonpath='{.data.admin-user}' | base64 --decode; printf '\n'
+   printf '\n===== Grafana admin password =====\n'
    kubectl -n monitoring get secret prometheus-grafana \
      -o jsonpath='{.data.admin-password}' | base64 --decode; printf '\n'
    ```
@@ -212,16 +227,22 @@ The `prometheus` Argo CD Application reconciles successfully and creates the mon
 Start with the Argo CD Application and monitoring pods:
 
 ```bash
+printf '\n===== Prometheus Application details =====\n'
 kubectl -n argocd describe application prometheus
+printf '\n===== Monitoring pods =====\n'
 kubectl -n monitoring get pods -o wide
+printf '\n===== Monitoring events =====\n'
 kubectl -n monitoring get events --sort-by=.lastTimestamp
+printf '\n===== Prometheus and Grafana endpoints =====\n'
 kubectl -n monitoring get endpoints prometheus-kube-prometheus-prometheus prometheus-grafana
 ```
 
 If Prometheus port-forwarding times out, the Prometheus service probably has no ready endpoints. Check whether Argo CD failed to apply the Prometheus Operator CRDs:
 
 ```bash
+printf '\n===== Prometheus Application details =====\n'
 kubectl -n argocd describe application prometheus
+printf '\n===== Monitoring CRDs =====\n'
 kubectl get crd | grep monitoring.coreos.com
 ```
 

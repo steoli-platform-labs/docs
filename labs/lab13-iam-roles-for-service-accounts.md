@@ -110,7 +110,9 @@ Review these files before validation:
 2. Inspect the existing AWS-integrated controller service accounts:
 
    ```bash
+   printf '\n===== External Secrets service account =====\n'
    kubectl -n external-secrets get serviceaccount external-secrets -o yaml
+   printf '\n===== Karpenter service account =====\n'
    kubectl -n karpenter get serviceaccount karpenter -o yaml
    ```
 
@@ -132,9 +134,12 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE"
 
+   printf '\n===== Karpenter controller role ARN =====\n'
    terraform -chdir=platform-live/environments/dev output karpenter_controller_role_arn
+   printf '\n===== External Secrets role ARN =====\n'
    terraform -chdir=platform-live/environments/dev output external_secrets_role_arn
 
+   printf '\n===== Terraform workload identity resources =====\n'
    grep -R "aws_eks_pod_identity_association\|secretsmanager:GetSecretValue\|ec2:RunInstances" -n \
      platform-modules/modules/eks
    ```
@@ -164,12 +169,16 @@ Review these files before validation:
 6. Validate that controller pods use the expected service accounts and AWS access works:
 
    ```bash
+   printf '\n===== External Secrets pod service accounts =====\n'
    kubectl -n external-secrets get pod -l app.kubernetes.io/name=external-secrets \
      -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
+   printf '\n===== Karpenter pod service accounts =====\n'
    kubectl -n karpenter get pod -l app.kubernetes.io/name=karpenter \
      -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.serviceAccountName}{"\n"}{end}'
 
+   printf '\n===== External Secrets logs =====\n'
    kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
+   printf '\n===== Karpenter logs =====\n'
    kubectl -n karpenter logs deployment/karpenter --since=10m --tail=200
    ```
 
@@ -194,9 +203,13 @@ The EKS OIDC issuer exists, AWS-integrated controllers use dedicated workload id
 Start with the service account, pod identity and controller logs:
 
 ```bash
+printf '\n===== External Secrets service account =====\n'
 kubectl -n external-secrets describe serviceaccount external-secrets
+printf '\n===== Karpenter service account =====\n'
 kubectl -n karpenter describe serviceaccount karpenter
+printf '\n===== External Secrets logs =====\n'
 kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
+printf '\n===== Karpenter logs =====\n'
 kubectl -n karpenter logs deployment/karpenter --since=10m --tail=200
 ```
 

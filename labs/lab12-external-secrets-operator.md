@@ -47,7 +47,9 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE/platform-config"
+   printf '\n===== External Secrets Application source =====\n'
    yq '.spec.source' clusters/dev/external-secrets.yaml
+   printf '\n===== External Secrets Application destination =====\n'
    yq '.spec.destination' clusters/dev/external-secrets.yaml
    ```
 
@@ -56,7 +58,9 @@ Review these files before validation:
    Compare the configured chart version with the latest available chart version:
 
    ```bash
-   echo "Configured External Secrets chart: $(yq -r '.spec.source.targetRevision' clusters/dev/external-secrets.yaml)"
+   printf '\n===== Configured External Secrets chart =====\n'
+   yq -r '.spec.source.targetRevision' clusters/dev/external-secrets.yaml
+   printf '\n===== Latest available External Secrets chart =====\n'
    helm show chart external-secrets --repo https://charts.external-secrets.io | yq '.version'
    ```
 
@@ -65,7 +69,9 @@ Review these files before validation:
 2. Check whether the SecretStore desired state and GitOps wiring exist:
 
    ```bash
+   printf '\n===== External Secrets config Application source =====\n'
    yq '.spec.source' clusters/dev/external-secrets-config.yaml
+   printf '\n===== SecretStore manifests =====\n'
    grep -R "kind: ClusterSecretStore\|kind: SecretStore" -n . || true
    ```
 
@@ -75,7 +81,9 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE"
+   printf '\n===== sample-api chart secret values =====\n'
    yq '.secret' helm-charts/charts/sample-api/values.yaml
+   printf '\n===== sample-api-dev Helm values =====\n'
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
@@ -115,8 +123,10 @@ Review these files before validation:
    cd "$WORKSPACE"
    CLUSTER_NAME="$(terraform -chdir=platform-live/environments/dev output -raw cluster_name)"
 
+   printf '\n===== External Secrets role ARN =====\n'
    terraform -chdir=platform-live/environments/dev output external_secrets_role_arn
 
+   printf '\n===== External Secrets Pod Identity association =====\n'
    aws eks list-pod-identity-associations \
      --cluster-name "$CLUSTER_NAME" \
      --namespace external-secrets \
@@ -128,13 +138,16 @@ Review these files before validation:
 6. Render the relevant charts before relying on Argo CD:
 
    ```bash
+   printf '\n===== Render External Secrets chart =====\n'
    helm template external-secrets external-secrets \
      --repo https://charts.external-secrets.io \
      --version "$(yq -r '.spec.source.targetRevision' platform-config/clusters/dev/external-secrets.yaml)" \
      --namespace external-secrets \
      >/dev/null
 
+   printf '\n===== sample-api Helm lint =====\n'
    helm lint helm-charts/charts/sample-api
+   printf '\n===== Render sample-api chart =====\n'
    helm template sample-api helm-charts/charts/sample-api \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      >/dev/null
@@ -154,26 +167,38 @@ Review these files before validation:
 8. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api-dev`:
 
    ```bash
+   printf '\n===== Refresh dev root =====\n'
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Applications before child refresh =====\n'
    kubectl -n argocd get application external-secrets external-secrets-config sample-api-dev -o wide
+   printf '\n===== Refresh child Applications =====\n'
    kubectl -n argocd annotate application external-secrets argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application external-secrets-config argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application sample-api-dev argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Applications after child refresh =====\n'
    kubectl -n argocd get application external-secrets external-secrets-config sample-api-dev -o wide
    ```
 
-   Expected behavior: after the latest `platform-config` commit is reconciled, `external-secrets`, `external-secrets-config` and `sample-api-dev` should move toward `Synced / Healthy`. If any Application shows `OutOfSync / Degraded`, describe that Application and check for sync errors before continuing.
+   Expected behavior: after the current `platform-config` revision is reconciled, `external-secrets`, `external-secrets-config` and `sample-api-dev` should move toward `Synced / Healthy`. If any Application shows `OutOfSync / Degraded`, describe that Application and check for sync errors before continuing.
 
 9. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
 
    ```bash
+   printf '\n===== external-secrets Application =====\n'
    kubectl -n argocd get application external-secrets -o wide
+   printf '\n===== External Secrets config and sample API Applications =====\n'
    kubectl -n argocd get application external-secrets-config sample-api-dev -o wide
+   printf '\n===== External Secrets workloads =====\n'
    kubectl -n external-secrets get pods,serviceaccounts
+   printf '\n===== ClusterSecretStore manifest =====\n'
    kubectl get clustersecretstore aws-secrets-manager -o yaml
+   printf '\n===== ClusterSecretStore details =====\n'
    kubectl describe clustersecretstore aws-secrets-manager
+   printf '\n===== sample-api secrets =====\n'
    kubectl -n sample-api-dev get externalsecret,secret
+   printf '\n===== sample-api ExternalSecret details =====\n'
    kubectl -n sample-api-dev describe externalsecret sample-api
+   printf '\n===== External Secrets logs =====\n'
    kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
    ```
 
@@ -182,7 +207,9 @@ Review these files before validation:
    Create or identify a non-sensitive test secret in AWS Secrets Manager, enable the chart's ExternalSecret configuration, sync Argo CD and verify the Kubernetes Secret metadata and key names without printing values:
 
    ```bash
+   printf '\n===== sample-api secret name =====\n'
    kubectl -n sample-api-dev get secret sample-api -o jsonpath='{.metadata.name}{"\n"}'
+   printf '\n===== sample-api secret keys =====\n'
    kubectl -n sample-api-dev get secret sample-api -o go-template='{{range $key, $_ := .data}}{{printf "%s\n" $key}}{{end}}'
    ```
 
@@ -214,9 +241,13 @@ The `external-secrets` and `external-secrets-config` Argo CD Applications reconc
 Start with the Argo CD Application, operator pods and store status:
 
 ```bash
+printf '\n===== External Secrets Application details =====\n'
 kubectl -n argocd describe application external-secrets
+printf '\n===== External Secrets pods =====\n'
 kubectl -n external-secrets get pods -o wide
+printf '\n===== ClusterSecretStore details =====\n'
 kubectl describe clustersecretstore aws-secrets-manager
+printf '\n===== External Secrets logs =====\n'
 kubectl -n external-secrets logs deployment/external-secrets --since=10m --tail=200
 ```
 
@@ -233,9 +264,13 @@ If the Application is `OutOfSync / Degraded` and the sync error mentions `metada
 If the Application becomes `Synced` but the main `external-secrets` pod remains in `CrashLoopBackOff` with log messages such as `no matches for kind "ClusterSecretStore"`, the controller may have started before the CRDs were fully available. After confirming the CRDs exist, restart the controller deployment:
 
 ```bash
+printf '\n===== External Secrets CRDs =====\n'
 kubectl get crd clustersecretstores.external-secrets.io secretstores.external-secrets.io externalsecrets.external-secrets.io
+printf '\n===== Restart External Secrets deployment =====\n'
 kubectl -n external-secrets rollout restart deployment/external-secrets
+printf '\n===== External Secrets rollout status =====\n'
 kubectl -n external-secrets rollout status deployment/external-secrets --timeout=180s
+printf '\n===== External Secrets Application =====\n'
 kubectl -n argocd get application external-secrets -o wide
 ```
 

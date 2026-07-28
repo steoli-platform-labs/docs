@@ -104,10 +104,15 @@ later labs
 5. Create the backend bucket using local state:
 
    ```bash
+   printf '\n===== Terraform init =====\n'
    terraform init
+   printf '\n===== Terraform format =====\n'
    terraform fmt -recursive
+   printf '\n===== Terraform validate =====\n'
    terraform validate
+   printf '\n===== Terraform plan =====\n'
    terraform plan -out=tfplan
+   printf '\n===== Terraform apply =====\n'
    terraform apply tfplan
    ```
 
@@ -120,7 +125,9 @@ later labs
 7. Validate the backend:
 
    ```bash
+   printf '\n===== Backend validation script =====\n'
    ./scripts/validate.sh
+   printf '\n===== Terraform drift check =====\n'
    terraform plan -detailed-exitcode
    ```
 
@@ -136,8 +143,11 @@ later labs
 8. Confirm only source files and scripts are tracked. Local backend, state, variable and plan files must remain ignored:
 
    ```bash
+   printf '\n===== Git status =====\n'
    git status
+   printf '\n===== Whitespace check =====\n'
    git diff --check
+   printf '\n===== Ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
 
@@ -177,7 +187,9 @@ The backend bucket exists with versioning, encryption and Block Public Access en
    Then rerun:
 
    ```bash
+   printf '\n===== Terraform plan =====\n'
    terraform plan -out=tfplan
+   printf '\n===== Terraform apply =====\n'
    terraform apply tfplan
    ```
 

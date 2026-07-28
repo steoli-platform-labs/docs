@@ -96,6 +96,7 @@ Lab writing rules:
 - Put commands, validation commands and negative tests inside the relevant implementation step.
 - Each implementation step should explain what the user is doing, why it matters and what output or state to expect.
 - Prefer concrete commands over broad instructions such as "configure", "validate" or "review" without examples.
+- When one copy/paste command block contains multiple commands that produce output, print clear section headers with `printf '\n===== Description =====\n'` before each distinct check so readers can map output back to the command.
 - When a step depends on GitOps, explain whether the desired state is already committed in the reference repositories, whether the root Argo CD Application must be refreshed and how to recognize stale desired state.
 - When a chart, Terraform module or Kubernetes manifest can drift over time, explain pinned versions, local rendering or validation and expected success or failure output.
 - Keep `Validation` as concise pass/fail bullet criteria.

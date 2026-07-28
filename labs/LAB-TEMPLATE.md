@@ -34,9 +34,13 @@ List the important files and explain why each one matters. Include repository ow
 Use a top-level numbered list for lab-specific steps. Each step should include the relevant context and commands needed to complete that step.
 Do not add a separate top-level `Commands` section; commands belong inside the step they support.
 Include verification actions as explicit steps instead of hiding the procedure in `Validation`.
+When one command block runs multiple output-producing checks, print section headers before each distinct check so pasted terminal output is easy to read.
 
 ```bash
 cd "$WORKSPACE"
+
+printf '\n===== Example check =====\n'
+tool command --example
 ```
 
 ## Expected Results

@@ -148,10 +148,14 @@ Review these files before validation:
 3. Compare the configured chart versions with the latest available chart versions:
 
    ```bash
-   echo "Configured Tempo chart: $(yq -r '.spec.source.targetRevision' clusters/dev/tempo.yaml)"
+   printf '\n===== Configured Tempo chart =====\n'
+   yq -r '.spec.source.targetRevision' clusters/dev/tempo.yaml
+   printf '\n===== Latest available Tempo chart =====\n'
    helm show chart tempo --repo https://grafana-community.github.io/helm-charts | yq '.version'
 
-   echo "Configured OpenTelemetry chart: $(yq -r '.spec.source.targetRevision' clusters/dev/opentelemetry.yaml)"
+   printf '\n===== Configured OpenTelemetry chart =====\n'
+   yq -r '.spec.source.targetRevision' clusters/dev/opentelemetry.yaml
+   printf '\n===== Latest available OpenTelemetry chart =====\n'
    helm show chart opentelemetry-collector \
      --repo https://open-telemetry.github.io/opentelemetry-helm-charts \
      | yq '.version'
@@ -162,12 +166,14 @@ Review these files before validation:
 4. Render both Helm charts locally before relying on Argo CD:
 
    ```bash
+   printf '\n===== Render Tempo chart =====\n'
    helm template tempo tempo \
      --repo https://grafana-community.github.io/helm-charts \
      --version "$(yq -r '.spec.source.targetRevision' clusters/dev/tempo.yaml)" \
      --namespace monitoring \
      >/dev/null
 
+   printf '\n===== Render OpenTelemetry Collector chart =====\n'
    helm template opentelemetry opentelemetry-collector \
      --repo https://open-telemetry.github.io/opentelemetry-helm-charts \
      --version "$(yq -r '.spec.source.targetRevision' clusters/dev/opentelemetry.yaml)" \
@@ -180,10 +186,12 @@ Review these files before validation:
 
    If the OpenTelemetry render fails with a message such as `image.repository must be set`, the chart version requires explicit values. Stop and reconcile the desired state in `clusters/dev/opentelemetry.yaml` before continuing.
 
-5. Refresh the root Argo CD Application so child Applications pick up the latest `platform-config` commit:
+5. Refresh the root Argo CD Application so child Applications pick up the current `platform-config` revision:
 
    ```bash
+   printf '\n===== Refresh dev root =====\n'
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Dev root Application =====\n'
    kubectl -n argocd get application platform-root-dev -o wide
    ```
 
@@ -192,9 +200,12 @@ Review these files before validation:
 6. Let Argo CD reconcile Tempo and OpenTelemetry from Git:
 
    ```bash
+   printf '\n===== Tempo and OpenTelemetry Applications before refresh =====\n'
    kubectl -n argocd get application tempo opentelemetry -o wide
+   printf '\n===== Refresh Tempo and OpenTelemetry Applications =====\n'
    kubectl -n argocd annotate application tempo argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application opentelemetry argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Tempo and OpenTelemetry Applications after refresh =====\n'
    kubectl -n argocd get application tempo opentelemetry -o wide
    ```
 
@@ -203,18 +214,24 @@ Review these files before validation:
 7. If either Application is not `Synced`, inspect the Argo CD condition:
 
    ```bash
+   printf '\n===== Tempo Application details =====\n'
    kubectl -n argocd describe application tempo
+   printf '\n===== OpenTelemetry Application details =====\n'
    kubectl -n argocd describe application opentelemetry
    ```
 
-   Look for `Status.Conditions`. A message such as `failed to generate manifest` means the chart did not render. Fix the Helm values in Git, push the change and refresh `platform-root-dev` again.
+   Look for `Status.Conditions`. A message such as `failed to generate manifest` means the chart did not render. Pull the current reference desired state and refresh `platform-root-dev` again.
 
 8. Validate that the tracing workloads exist and are ready:
 
    ```bash
+   printf '\n===== Tempo and OpenTelemetry Applications =====\n'
    kubectl -n argocd get application tempo opentelemetry -o wide
+   printf '\n===== Tempo pods =====\n'
    kubectl -n monitoring get pods -l app.kubernetes.io/name=tempo
+   printf '\n===== OpenTelemetry Collector pods =====\n'
    kubectl -n monitoring get pods -l app.kubernetes.io/name=opentelemetry-collector
+   printf '\n===== Tempo and OpenTelemetry services =====\n'
    kubectl -n monitoring get svc tempo opentelemetry-opentelemetry-collector
    ```
 
@@ -308,9 +325,11 @@ Review these files before validation:
    Check the generator result:
 
    ```bash
+   printf '\n===== telemetrygen status =====\n'
    kubectl -n monitoring get pod "$COLLECTOR_POD" \
      -o jsonpath='{range .status.ephemeralContainerStatuses[*]}{.name}{" terminated="}{.state.terminated.reason}{" exit="}{.state.terminated.exitCode}{"\n"}{end}'
 
+   printf '\n===== telemetrygen logs =====\n'
    kubectl -n monitoring logs "$COLLECTOR_POD" -c telemetrygen
    ```
 
@@ -319,7 +338,9 @@ Review these files before validation:
    Ephemeral containers cannot be removed from a running pod after they complete. This is harmless for the lab. If you want to remove the completed debug container from the pod status, restart the collector pod and wait for Kubernetes to recreate it:
 
    ```bash
+   printf '\n===== Delete collector pod =====\n'
    kubectl -n monitoring delete pod "$COLLECTOR_POD"
+   printf '\n===== Wait for collector readiness =====\n'
    kubectl -n monitoring wait --for=condition=Ready pod \
      -l app.kubernetes.io/name=opentelemetry-collector \
      --timeout=180s
@@ -402,9 +423,13 @@ The `tempo` and `opentelemetry` Argo CD Applications reconcile successfully and 
 Start with the Argo CD Applications and collector logs:
 
 ```bash
+printf '\n===== Tempo Application details =====\n'
 kubectl -n argocd describe application tempo
+printf '\n===== OpenTelemetry Application details =====\n'
 kubectl -n argocd describe application opentelemetry
+printf '\n===== Monitoring pods =====\n'
 kubectl -n monitoring get pods -o wide
+printf '\n===== OpenTelemetry Collector logs =====\n'
 kubectl -n monitoring logs -l app.kubernetes.io/name=opentelemetry-collector --since=10m --tail=200
 ```
 

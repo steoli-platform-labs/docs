@@ -79,9 +79,13 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 4. Plan and apply:
 
    ```bash
+   printf '\n===== Terraform format =====\n'
    terraform fmt
+   printf '\n===== Terraform validate =====\n'
    terraform validate
+   printf '\n===== Terraform plan =====\n'
    terraform plan -out=tfplan
+   printf '\n===== Terraform apply =====\n'
    terraform apply tfplan
    ```
 
@@ -100,14 +104,24 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    ```bash
    export AWS_PAGER=""
 
+   printf '\n===== EKS cluster details =====\n'
    aws eks describe-cluster \
      --name "$CLUSTER" \
      --query 'cluster.{status:status,version:version,endpoint:endpoint,subnets:resourcesVpcConfig.subnetIds}'
 
+   printf '\n===== EKS managed node groups =====\n'
    aws eks list-nodegroups --cluster-name "$CLUSTER"
+
+   printf '\n===== Kubernetes cluster info =====\n'
    kubectl cluster-info
+
+   printf '\n===== Kubernetes nodes =====\n'
    kubectl get nodes -o wide
+
+   printf '\n===== Kubernetes pods =====\n'
    kubectl get pods -A
+
+   printf '\n===== Kubernetes readyz =====\n'
    kubectl get --raw='/readyz?verbose'
    ```
 
@@ -117,8 +131,11 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 
    ```bash
    cd "$WORKSPACE/platform-modules"
+   printf '\n===== platform-modules git status =====\n'
    git status
+   printf '\n===== platform-modules whitespace check =====\n'
    git diff --check
+   printf '\n===== platform-modules ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
 
@@ -126,8 +143,11 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 
    ```bash
    cd "$WORKSPACE/platform-live"
+   printf '\n===== platform-live git status =====\n'
    git status
+   printf '\n===== platform-live whitespace check =====\n'
    git diff --check
+   printf '\n===== platform-live ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
 
@@ -153,7 +173,9 @@ Terraform creates an active EKS control plane, a managed node group and access e
 Start with:
 
 ```bash
+printf '\n===== Cluster events =====\n'
 kubectl get events -A --sort-by=.lastTimestamp
+printf '\n===== Cluster pods =====\n'
 kubectl get pods -A
 ```
 

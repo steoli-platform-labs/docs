@@ -225,12 +225,14 @@ Follow the steps below to configure the remote backend, review the network desig
 
    Terraform should initialize the S3 backend and download the AWS provider and the pinned VPC module dependency.
 
-   Commit `.terraform.lock.hcl` after successful initialization. It records the selected provider versions and checksums.
+   The checked-in `.terraform.lock.hcl` records the selected provider versions and checksums after successful initialization.
 
 4. Format and validate Terraform:
 
    ```bash
+   printf '\n===== Terraform format =====\n'
    terraform fmt
+   printf '\n===== Terraform validate =====\n'
    terraform validate
    ```
 
@@ -275,11 +277,17 @@ Follow the steps below to configure the remote backend, review the network desig
 7. Validate Terraform state and outputs:
 
    ```bash
+   printf '\n===== Terraform state resources =====\n'
    terraform state list
+   printf '\n===== VPC ID =====\n'
    terraform output -raw vpc_id
+   printf '\n===== Public subnet IDs =====\n'
    terraform output -json public_subnet_ids
+   printf '\n===== Private subnet IDs =====\n'
    terraform output -json private_subnet_ids
+   printf '\n===== Platform private subnet IDs =====\n'
    terraform output -json platform_private_subnet_ids
+   printf '\n===== EKS private subnet IDs =====\n'
    terraform output -json eks_private_subnet_ids
    ```
 
@@ -296,9 +304,13 @@ Follow the steps below to configure the remote backend, review the network desig
    ```bash
    export AWS_PAGER=""
    VPC_ID="$(terraform output -raw vpc_id)"
+   printf '\n===== VPC configuration =====\n'
    aws ec2 describe-vpcs   --vpc-ids "${VPC_ID}"   --query 'Vpcs[0].{VpcId:VpcId,Cidr:CidrBlock,DnsSupport:EnableDnsSupport,DnsHostnames:EnableDnsHostnames}'
+   printf '\n===== Subnet configuration =====\n'
    aws ec2 describe-subnets   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'Subnets[].{SubnetId:SubnetId,AZ:AvailabilityZone,Cidr:CidrBlock,PublicIpOnLaunch:MapPublicIpOnLaunch}'   --output table
+   printf '\n===== NAT gateways =====\n'
    aws ec2 describe-nat-gateways   --filter "Name=vpc-id,Values=${VPC_ID}"   --query 'NatGateways[].{Id:NatGatewayId,State:State,Subnet:SubnetId}'   --output table
+   printf '\n===== Route tables =====\n'
    aws ec2 describe-route-tables   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'RouteTables[].{RouteTableId:RouteTableId,Routes:Routes[].{Destination:DestinationCidrBlock,Gateway:GatewayId,NatGateway:NatGatewayId}}'
    ```
 
@@ -307,8 +319,10 @@ Follow the steps below to configure the remote backend, review the network desig
    ```bash
    export AWS_PAGER=""
 
+   printf '\n===== Public subnet load-balancer tags =====\n'
    aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json public_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/elb"
 
+   printf '\n===== Private subnet load-balancer tags =====\n'
    aws ec2 describe-tags   --filters     "Name=resource-id,Values=$(terraform output -json private_subnet_ids | jq -r 'join(",")')"     "Name=key,Values=kubernetes.io/role/internal-elb"
    ```
 
@@ -319,16 +333,22 @@ Follow the steps below to configure the remote backend, review the network desig
    In `platform-modules`:
 
    ```bash
+   printf '\n===== platform-modules git status =====\n'
    git status
+   printf '\n===== platform-modules whitespace check =====\n'
    git diff --check
+   printf '\n===== platform-modules ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
 
    In `platform-live`:
 
    ```bash
+   printf '\n===== platform-live git status =====\n'
    git status
+   printf '\n===== platform-live whitespace check =====\n'
    git diff --check
+   printf '\n===== platform-live ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
    ```
 

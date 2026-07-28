@@ -63,11 +63,14 @@ Review these files before validation:
 3. Render the chart locally and confirm the HA settings are present:
 
    ```bash
+   printf '\n===== sample-api Helm lint =====\n'
    helm lint helm-charts/charts/sample-api
+   printf '\n===== Render sample-api chart =====\n'
    helm template sample-api helm-charts/charts/sample-api \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      --set rollout.enabled=false \
      > /tmp/sample-api-ha.yaml
+   printf '\n===== Rendered HA settings =====\n'
    grep -nE 'readinessProbe|livenessProbe|startupProbe|PodDisruptionBudget|topologySpreadConstraints|podAntiAffinity' /tmp/sample-api-ha.yaml
    ```
 
@@ -76,17 +79,23 @@ Review these files before validation:
 4. Refresh Argo CD and confirm `sample-api` is healthy:
 
    ```bash
+   printf '\n===== Refresh dev root =====\n'
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== sample-api-dev Application =====\n'
    kubectl -n argocd get application sample-api-dev -o wide
    ```
 
 5. Inspect the deployed workload before testing recovery:
 
    ```bash
+   printf '\n===== sample-api workload resources =====\n'
    kubectl -n sample-api-dev get rollout,pod,pdb -o wide
+   printf '\n===== sample-api PDB details =====\n'
    kubectl -n sample-api-dev describe pdb sample-api
+   printf '\n===== sample-api pod placement =====\n'
    kubectl -n sample-api-dev get pods \
      -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,READY:.status.containerStatuses[0].ready
+   printf '\n===== Node zones =====\n'
    kubectl get nodes -L topology.kubernetes.io/zone
    ```
 
@@ -110,7 +119,9 @@ Review these files before validation:
 
    ```bash
    POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
+   printf '\n===== Delete pod %s =====\n' "$POD"
    kubectl -n sample-api-dev delete pod "$POD"
+   printf '\n===== Watch replacement pods =====\n'
    kubectl -n sample-api-dev get pods -w
    ```
 
@@ -122,12 +133,15 @@ Review these files before validation:
    SAMPLE_POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
    TEST_NODE=$(kubectl -n sample-api-dev get pod "$SAMPLE_POD" -o jsonpath='{.spec.nodeName}')
 
-   printf 'Draining node: %s\n' "$TEST_NODE"
+   printf '\n===== Drain node %s =====\n' "$TEST_NODE"
    kubectl drain "$TEST_NODE" --ignore-daemonsets --delete-emptydir-data
+   printf '\n===== Wait for sample-api readiness =====\n'
    kubectl -n sample-api-dev wait --for=condition=Ready pod \
      -l app.kubernetes.io/name=sample-api \
      --timeout=5m
+   printf '\n===== sample-api pods after drain =====\n'
    kubectl -n sample-api-dev get pods -o wide
+   printf '\n===== Uncordon node %s =====\n' "$TEST_NODE"
    kubectl uncordon "$TEST_NODE"
    ```
 
@@ -149,9 +163,13 @@ The sample API has health probes, disruption protection and scheduling rules tha
 Start with workload status, events and scheduling placement:
 
 ```bash
+printf '\n===== sample-api PDB details =====\n'
 kubectl -n sample-api-dev describe pdb sample-api
+printf '\n===== sample-api pods =====\n'
 kubectl -n sample-api-dev get pods -o wide
+printf '\n===== sample-api events =====\n'
 kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
+printf '\n===== Node zones =====\n'
 kubectl get nodes -L topology.kubernetes.io/zone
 ```
 

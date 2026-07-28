@@ -62,7 +62,9 @@ Review these files before validation:
    Compare the configured chart version with the latest available chart version:
 
    ```bash
-   echo "Configured Argo Rollouts chart: $(yq -r '.spec.source.targetRevision' platform-config/clusters/dev/argo-rollouts.yaml)"
+   printf '\n===== Configured Argo Rollouts chart =====\n'
+   yq -r '.spec.source.targetRevision' platform-config/clusters/dev/argo-rollouts.yaml
+   printf '\n===== Latest available Argo Rollouts chart =====\n'
    helm show chart argo-rollouts --repo https://argoproj.github.io/argo-helm | yq '.version'
    ```
 
@@ -71,11 +73,16 @@ Review these files before validation:
 2. Render the chart locally with Rollout enabled:
 
    ```bash
+   printf '\n===== Helm chart lint =====\n'
    helm lint helm-charts/charts/sample-api
+
+   printf '\n===== Render sample-api Rollout =====\n'
    helm template sample-api helm-charts/charts/sample-api \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      --set rollout.enabled=true \
      > /tmp/sample-api-rollout.yaml
+
+   printf '\n===== Rendered Rollout manifest =====\n'
    grep -A60 '^kind: Rollout' /tmp/sample-api-rollout.yaml
    ```
 
@@ -84,11 +91,22 @@ Review these files before validation:
 3. Confirm the current deployed rollout state:
 
    ```bash
+   printf '\n===== Refresh dev root =====\n'
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+
+   printf '\n===== Argo CD Applications =====\n'
    kubectl -n argocd get application argo-rollouts sample-api-dev -o wide
+
+   printf '\n===== Argo Rollouts controller pods =====\n'
    kubectl -n argo-rollouts get pods
+
+   printf '\n===== sample-api Rollout summary =====\n'
    kubectl -n sample-api-dev get rollout sample-api
+
+   printf '\n===== sample-api workload resources =====\n'
    kubectl -n sample-api-dev get rollout,replicaset,pod
+
+   printf '\n===== sample-api Rollout details =====\n'
    kubectl -n sample-api-dev describe rollout sample-api
    ```
 
@@ -99,8 +117,10 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE"
 
+   printf '\n===== Create demo namespace =====\n'
    kubectl create namespace sample-api-rollout-demo --dry-run=client -o yaml | kubectl apply -f -
 
+   printf '\n===== Render demo Rollout =====\n'
    helm template sample-api-rollout-demo helm-charts/charts/sample-api \
      --namespace sample-api-rollout-demo \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
@@ -111,7 +131,10 @@ Review these files before validation:
      --set secret.enabled=false \
      > /tmp/sample-api-rollout-demo.yaml
 
+   printf '\n===== Apply demo Rollout =====\n'
    kubectl apply -f /tmp/sample-api-rollout-demo.yaml
+
+   printf '\n===== Demo rollout resources =====\n'
    kubectl -n sample-api-rollout-demo get rollout,replicaset,pod
    ```
 
@@ -120,10 +143,12 @@ Review these files before validation:
 5. Patch the temporary demo Rollout from `1.0.0` to `1.0.1` and watch the canary:
 
    ```bash
+   printf '\n===== Patch demo Rollout to 1.0.1 =====\n'
    kubectl -n sample-api-rollout-demo patch rollout sample-api-rollout-demo \
      --type='json' \
      -p='[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"ghcr.io/steoli-platform-labs/sample-api:1.0.1"}]'
 
+   printf '\n===== Watch demo Rollout =====\n'
    kubectl -n sample-api-rollout-demo get rollout sample-api-rollout-demo -w
    ```
 
@@ -132,7 +157,10 @@ Review these files before validation:
 6. Inspect the rollout result:
 
    ```bash
+   printf '\n===== Demo workload resources =====\n'
    kubectl -n sample-api-rollout-demo get rollout,replicaset,pod -o wide
+
+   printf '\n===== Demo Rollout details =====\n'
    kubectl -n sample-api-rollout-demo describe rollout sample-api-rollout-demo
    ```
 
@@ -156,10 +184,15 @@ Argo Rollouts is installed and the sample API is managed as a Rollout when progr
 Start with the Rollout object and controller status:
 
 ```bash
+printf '\n===== Argo Rollouts Application details =====\n'
 kubectl -n argocd describe application argo-rollouts
+printf '\n===== sample-api-dev Application details =====\n'
 kubectl -n argocd describe application sample-api-dev
+printf '\n===== GitOps sample-api Rollout details =====\n'
 kubectl -n sample-api-dev describe rollout sample-api
+printf '\n===== Demo Rollout details =====\n'
 kubectl -n sample-api-rollout-demo describe rollout sample-api-rollout-demo
+printf '\n===== Argo Rollouts controller pods =====\n'
 kubectl -n argo-rollouts get pods -o wide
 ```
 
