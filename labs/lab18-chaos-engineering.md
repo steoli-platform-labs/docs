@@ -34,7 +34,7 @@ Before starting this lab:
 Review these files before validation:
 
 - `platform-config/chaos/delete-pod.yaml`: one-off chaos Job, ServiceAccount, Role and RoleBinding.
-- `platform-config/clusters/dev/sample-api.yaml`: workload under test.
+- `platform-config/clusters/dev/sample-api-dev.yaml`: dev workload under test.
 - `helm-charts/charts/sample-api/templates/pdb.yaml`: availability expectation during disruption.
 
 ## Step-by-Step Implementation
@@ -109,7 +109,7 @@ Review these files before validation:
    ```bash
    kubectl -n sample-api-dev get rollout,pod,pdb -o wide
    kubectl -n sample-api-dev get events --sort-by=.lastTimestamp
-   kubectl -n argocd get application sample-api -o wide
+   kubectl -n argocd get application sample-api-dev -o wide
    ```
 
    In Grafana, check Prometheus metrics, Loki logs and Tempo traces for the test window if those signals are available. The key question is whether the platform recovered within the expected time and whether the observability stack made the disruption visible.

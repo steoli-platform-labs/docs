@@ -36,7 +36,7 @@ Review these files before validation:
 - `helm-charts/charts/sample-api/templates/rollout.yaml` and `deployment.yaml`: probes, resources and pod template settings.
 - `helm-charts/charts/sample-api/templates/pdb.yaml`: disruption protection.
 - `helm-charts/charts/sample-api/values.yaml`: replica count, autoscaling and resource defaults.
-- `platform-config/clusters/dev/sample-api.yaml`: dev-specific replica and autoscaling values.
+- `platform-config/clusters/dev/sample-api-dev.yaml`: dev-specific replica and autoscaling values.
 
 ## Step-by-Step Implementation
 
@@ -45,7 +45,7 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE"
    yq '.replicaCount, .autoscaling' helm-charts/charts/sample-api/values.yaml
-   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
    Confirm the dev environment keeps a small steady-state replica count while still allowing controlled maintenance. The chart uses a `PodDisruptionBudget` with `maxUnavailable: 1`, which protects the service from losing both replicas during voluntary disruption without requiring an extra baseline pod.
@@ -65,7 +65,7 @@ Review these files before validation:
    ```bash
    helm lint helm-charts/charts/sample-api
    helm template sample-api helm-charts/charts/sample-api \
-     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      --set rollout.enabled=false \
      > /tmp/sample-api-ha.yaml
    grep -nE 'readinessProbe|livenessProbe|startupProbe|PodDisruptionBudget|topologySpreadConstraints|podAntiAffinity' /tmp/sample-api-ha.yaml
@@ -76,8 +76,8 @@ Review these files before validation:
 4. Refresh Argo CD and confirm `sample-api` is healthy:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application sample-api -o wide
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application sample-api-dev -o wide
    ```
 
 5. Inspect the deployed workload before testing recovery:

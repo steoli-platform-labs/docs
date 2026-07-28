@@ -17,7 +17,7 @@ This lab introduces ArgoCD as the GitOps deployment platform for Kubernetes.
 
 ArgoCD continuously monitors Git repositories and automatically synchronizes the desired platform state with the Amazon EKS cluster. From this point onward, Git becomes the single source of truth for Kubernetes deployments.
 
-Concepts introduced in this lab include GitOps, Argo CD Applications, app-of-apps, desired state, actual state, reconciliation, sync status, health status, drift, self-heal and pruning. See the [Concepts Reference](../concepts/README.md) for the meaning of each term, including when to refresh `platform-root` versus a child Application.
+Concepts introduced in this lab include GitOps, Argo CD Applications, app-of-apps, desired state, actual state, reconciliation, sync status, health status, drift, self-heal and pruning. See the [Concepts Reference](../concepts/README.md) for the meaning of each term, including when to refresh `platform-root-dev` versus a child Application.
 
 ## Outcome
 
@@ -107,20 +107,20 @@ Key files:
 
 | File | Purpose |
 |------|---------|
-| `platform-config/bootstrap/root-application.yaml` | Root Argo CD Application that points at `platform-config/clusters/dev` |
+| `platform-config/bootstrap/root-application-dev.yaml` | Dev root Argo CD Application that points at `platform-config/clusters/dev` |
 | `platform-config/clusters/dev/argocd.yaml` | Child Application that lets Argo CD manage itself after bootstrap |
-| `platform-config/clusters/dev/sample-api.yaml` | Child Application that deploys the sample API from `helm-charts` |
+| `platform-config/clusters/dev/sample-api-dev.yaml` | Child Application that deploys the dev sample API from `helm-charts` |
 | `platform-config/clusters/dev/*.yaml` | Desired state for platform services introduced across later labs |
 
 ## Step-by-Step Implementation
 
-1. Review `platform-config/bootstrap/root-application.yaml` and confirm that it points Argo CD at the correct Git source.
+1. Review `platform-config/bootstrap/root-application-dev.yaml` and confirm that it points Argo CD at the correct Git source.
 
    This file is the first Argo CD `Application` you apply manually. It is called the root Application because it tells Argo CD where to find the rest of the platform desired state. After it is applied, Argo CD reads the Git repository and creates the child Applications from the configured path.
 
    Check these fields before continuing:
 
-   - `metadata.name`: should be `platform-root`, which is the Application you will inspect later.
+   - `metadata.name`: should be `platform-root-dev`, which is the Application you will inspect later.
    - `metadata.namespace`: should be `argocd`, because the Argo CD controller watches Applications in that namespace.
    - `spec.source.repoURL`: must point to your `platform-config` repository.
    - `spec.source.targetRevision`: must point to the branch or tag Argo CD should read, usually `main` for these labs.
@@ -133,7 +133,7 @@ Key files:
 
    ```bash
    cd "$WORKSPACE"
-   sed -n '1,120p' platform-config/bootstrap/root-application.yaml
+   sed -n '1,120p' platform-config/bootstrap/root-application-dev.yaml
    ```
 
    If your GitHub organization or branch differs from the committed example, update `repoURL` or `targetRevision`, then commit and push that specific `platform-config` change before applying the root Application. If the checked fields already match your repositories, no repo change is needed.
@@ -159,10 +159,10 @@ Key files:
 
    At this point, it is acceptable if some child Applications point to components introduced in later labs. The goal in this step is to verify that Argo CD will read the expected repository, branch and path, and that you understand which Applications may initially be `Progressing`, `OutOfSync` or `Unknown` until their lab-specific configuration is completed.
 
-   Confirm the `sample-api` Application uses the image published in Lab 06:
+   Confirm the `sample-api-dev` Application uses the image published in Lab 06:
 
    ```bash
-   grep -A4 'image:' platform-config/clusters/dev/sample-api.yaml
+   grep -A4 'image:' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
    The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:latest` so the first GitOps deployment can follow the newest successful `main` build without editing the image tag manually. The package should remain private by default, so the Application also references an `imagePullSecrets` entry named `ghcr-pull`.
@@ -170,7 +170,7 @@ Key files:
    Confirm the Application values include the pull secret reference:
 
    ```bash
-   grep -A8 'image:' platform-config/clusters/dev/sample-api.yaml
+   grep -A8 'image:' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
 3. Create the image pull secret that allows Kubernetes nodes to pull the private GHCR image.
@@ -227,11 +227,11 @@ Key files:
 
    The pinned version in `platform-config/clusters/dev/argocd.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
-5. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`:
+5. Bootstrap the dev root Application from `platform-config/bootstrap/root-application-dev.yaml`:
 
    ```bash
    kubectl -n argocd wait --for=condition=available deployment/argocd-server --timeout=300s
-   kubectl apply -f platform-config/bootstrap/root-application.yaml
+   kubectl apply -f platform-config/bootstrap/root-application-dev.yaml
    ```
 
 6. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
@@ -239,8 +239,8 @@ Key files:
    ```bash
    kubectl -n argocd get pods
    kubectl -n argocd get applications.argoproj.io
-   kubectl -n argocd describe application platform-root
-   kubectl -n argocd get application platform-root \
+   kubectl -n argocd describe application platform-root-dev
+   kubectl -n argocd get application platform-root-dev \
      -o jsonpath='{.status.sync.status}{" / "}{.status.health.status}{"\n"}'
    kubectl -n argocd logs statefulset/argocd-application-controller --since=10m
    kubectl get events -A --sort-by=.lastTimestamp | tail -50
@@ -248,7 +248,7 @@ Key files:
 
    The Argo CD application controller runs as a StatefulSet in the Helm chart used by this lab, so the log command targets `statefulset/argocd-application-controller`.
 
-   For this lab, `platform-root` and `argocd` should be `Synced / Healthy`. Later-lab Applications may appear as `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs provide the required values, CRDs, IAM roles, secrets or chart versions.
+   For this lab, `platform-root-dev` and `argocd` should be `Synced / Healthy`. Later-lab Applications may appear as `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs provide the required values, CRDs, IAM roles, secrets or chart versions.
 
 7. Access the Argo CD UI and inspect the same Applications visually.
 
@@ -265,7 +265,7 @@ Key files:
    kubectl -n argocd port-forward svc/argocd-server 8080:80
    ```
 
-   Open `http://localhost:8080`, log in with username `admin` and the password from the secret, then inspect `platform-root`, `argocd` and `sample-api`.
+   Open `http://localhost:8080`, log in with username `admin` and the password from the secret, then inspect `platform-root-dev`, `argocd` and `sample-api-dev`.
 
    Use the UI to confirm the application tree, sync status, health status, rendered resources and any diffs. This lab uses local port-forwarding only; do not expose the Argo CD server publicly without an approved access pattern such as SSO, VPN or an internal ingress.
 
@@ -275,16 +275,16 @@ Key files:
 
 ## Expected Results
 
-Argo CD is installed in the `argocd` namespace, the `platform-root` Application exists, Argo CD begins reconciling the child Applications from `platform-config/clusters/dev`, the Lab 07 bootstrap resources are healthy and the UI is reachable through local port-forwarding.
+Argo CD is installed in the `argocd` namespace, the `platform-root-dev` Application exists, Argo CD begins reconciling the child Applications from `platform-config/clusters/dev`, the Lab 07 bootstrap resources are healthy and the UI is reachable through local port-forwarding.
 
 ## Validation
 
 - Argo CD controller, repo-server and API server pods are ready.
-- `platform-root` exists and can read the `platform-config` repository.
+- `platform-root-dev` exists and can read the `platform-config` repository.
 - Child Applications are created from `platform-config/clusters/dev`.
-- `platform-root` and `argocd` are `Synced / Healthy`.
-- `sample-api` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and the `ghcr-pull` image pull secret exists in `sample-api-dev`.
-- If `sample-api` shows `ImagePullBackOff`, the image tag is missing, the `ghcr-pull` secret is missing, or the token cannot read the package.
+- `platform-root-dev` and `argocd` are `Synced / Healthy`.
+- `sample-api-dev` is `Synced` and becomes healthy when `ghcr.io/<github-organization>/sample-api:latest` is published and the `ghcr-pull` image pull secret exists in `sample-api-dev`.
+- If `sample-api-dev` shows `ImagePullBackOff`, the image tag is missing, the `ghcr-pull` secret is missing, or the token cannot read the package.
 - Later-lab Applications may be `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs complete the required configuration.
 - The Argo CD UI is reachable through local port-forwarding and shows the same Application statuses as `kubectl`.
 - Changing a harmless Git-managed annotation is reconciled into the cluster.
@@ -300,11 +300,11 @@ Start with Argo CD status:
 ```bash
 kubectl -n argocd get pods
 kubectl -n argocd get applications.argoproj.io -o wide
-kubectl -n argocd describe application platform-root
+kubectl -n argocd describe application platform-root-dev
 kubectl -n argocd logs statefulset/argocd-application-controller --since=10m
 ```
 
-If `sample-api` is not healthy, inspect the pod image-pull events directly:
+If `sample-api-dev` is not healthy, inspect the pod image-pull events directly:
 
 ```bash
 kubectl -n sample-api-dev get pods
@@ -325,8 +325,8 @@ Common issues:
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `applications.argoproj.io` is unknown | Argo CD CRDs are not installed yet | Recheck the Helm install step and wait for Argo CD pods |
-| `platform-root` cannot fetch manifests | Wrong `repoURL`, branch or repository visibility | Correct `platform-config/bootstrap/root-application.yaml`, commit and reapply the root Application |
-| Child Applications are missing | Root Application did not sync or points at the wrong path | Confirm `path: clusters/dev` and inspect `platform-root` events |
+| `platform-root-dev` cannot fetch manifests | Wrong `repoURL`, branch or repository visibility | Correct `platform-config/bootstrap/root-application-dev.yaml`, commit and reapply the root Application |
+| Child Applications are missing | Root Application did not sync or points at the wrong path | Confirm `path: clusters/dev` and inspect `platform-root-dev` events |
 | Application is `OutOfSync` | Desired state differs from cluster state | Review the diff in Argo CD or describe the Application |
 | Application is `Degraded` | Rendered manifests failed or workloads are unhealthy | Inspect the Application events and affected Kubernetes resources |
 | `sample-api` pods show `ImagePullBackOff` | `latest` was not published, `ghcr-pull` is missing, or the token cannot read the package | Confirm Lab 06 CI published `latest`, recreate `ghcr-pull` with `read:packages`, then delete the stuck pods |

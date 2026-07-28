@@ -7,212 +7,307 @@
 | **Phase** | Platform Operations |
 | **Lab** | 15 |
 | **Difficulty** | Intermediate |
-| **Estimated Time** | 30-45 minutes |
+| **Estimated Time** | 45-60 minutes |
 | **Estimated Cost** | Low |
-| **Primary Tools** | Helm, kubectl, Argo CD |
+| **Primary Tools** | AWS CLI, Helm, kubectl, Argo CD |
 
 ## Introduction
 
-This lab introduces the checks used to evaluate a multi-environment GitOps layout for the platform.
+This lab activates the platform's multi-environment GitOps layout.
 
-The current platform has only the development workload reconciled. This lab treats that as a gap assessment: you are checking whether staging and production are represented in GitOps desired state, not manually creating them during validation.
+Labs 01-14 build and validate the dev platform. Lab 15 adds staging and production desired state by using Pattern A: one root Argo CD Application per environment path. The roots are `platform-root-dev`, `platform-root-staging` and `platform-root-production`, and each root reconciles one `platform-config/clusters/<environment>` directory.
 
-Concepts introduced in this lab include environment separation, namespace boundaries, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
+Concepts introduced in this lab include environment separation, namespace boundaries, environment root Applications, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
 
 ## Outcome
-Validate the current multi-environment GitOps readiness and identify whether staging and production desired state are actually reconciled.
+
+Activate staging and production as GitOps-managed environments in the same EKS cluster, while keeping dev resources managed by the dev root Application.
 
 ## Prerequisites
 
 Before starting this lab:
 
 - Lab 01 - Lab 14 completed
-- AWS CLI, Terraform, kubectl and Helm installed
-- Repository URLs configured
+- AWS CLI, kubectl, Helm and yq installed
+- Argo CD running in the dev cluster
+- `sample-api:latest` published to GHCR by Lab 06
+- A GitHub token with `read:packages` for the private GHCR image pull secret
+- AWS credentials that can read and write the lab Secrets Manager secret values
 
 ## Files to Review
-Review these files before validation:
 
+Review these files before activation:
+
+- `platform-config/bootstrap/root-application-dev.yaml`: dev root Application for `clusters/dev`.
+- `platform-config/bootstrap/root-application-staging.yaml`: staging root Application for `clusters/staging`.
+- `platform-config/bootstrap/root-application-production.yaml`: production root Application for `clusters/production`.
+- `platform-config/clusters/dev/platform-namespaces.yaml`: child Application that reconciles namespace desired state.
+- `platform-config/clusters/dev/sample-api-dev.yaml`: dev sample API Application and values.
+- `platform-config/clusters/staging/sample-api-staging.yaml`: staging sample API Application and values.
+- `platform-config/clusters/production/sample-api-production.yaml`: production sample API Application and values.
 - `platform-config/environments/namespaces.yaml`: namespace boundaries and environment labels.
-- `platform-config/clusters/dev/*.yaml`: current single-cluster GitOps Applications that may need environment-specific variants.
-- `platform-config/bootstrap/root-application.yaml`: root Application path, which determines whether environment manifests are reconciled.
-- `helm-charts/charts/sample-api/values.yaml`: default chart values that environment-specific overrides build on.
+- `helm-charts/charts/sample-api/values.yaml`: reusable chart defaults that environment-specific overrides build on.
 
 ## Step-by-Step Implementation
 
-1. Review the namespace desired state:
+1. Review the environment roots and confirm each root points at one environment path:
 
    ```bash
    cd "$WORKSPACE/platform-config"
+
+   yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-dev.yaml
+   yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-staging.yaml
+   yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-production.yaml
+   ```
+
+   Expected output:
+
+   ```text
+   platform-root-dev -> clusters/dev
+   platform-root-staging -> clusters/staging
+   platform-root-production -> clusters/production
+   ```
+
+   This separation makes Argo CD ownership explicit. A staging change is discovered by `platform-root-staging`, a production change is discovered by `platform-root-production`, and dev remains owned by `platform-root-dev`.
+
+2. Review the namespace desired state and the child Application that applies it:
+
+   ```bash
    yq '.' environments/namespaces.yaml
+   yq '.spec.source.path' clusters/dev/platform-namespaces.yaml
    ```
 
-   Confirm each namespace has a clear `environment` label such as `dev`, `staging` or `production`. The label is used by humans, policies and validation commands to distinguish environments.
+   The namespace file defines `sample-api-dev`, `sample-api-staging` and `sample-api-production` with environment labels. The `platform-namespaces` child Application points Argo CD at the `environments` directory so the namespace layer is GitOps-managed instead of manually applied.
 
-2. Confirm whether the environment namespace file is reconciled by Argo CD:
+3. Review the sample API Applications for each environment:
 
    ```bash
-   yq '.spec.source.path' bootstrap/root-application.yaml
-   grep -R "environments/namespaces.yaml\|path: environments" -n . || true
+   yq '.metadata.name + " -> " + .spec.destination.namespace' clusters/dev/sample-api-dev.yaml
+   yq '.metadata.name + " -> " + .spec.destination.namespace' clusters/staging/sample-api-staging.yaml
+   yq '.metadata.name + " -> " + .spec.destination.namespace' clusters/production/sample-api-production.yaml
+
+   yq '.spec.source.helm.releaseName' clusters/dev/sample-api-dev.yaml
+   yq '.spec.source.helm.releaseName' clusters/staging/sample-api-staging.yaml
+   yq '.spec.source.helm.releaseName' clusters/production/sample-api-production.yaml
+
+   yq '.spec.source.helm.values | from_yaml | {environment, replicaCount, autoscaling, secret}' clusters/dev/sample-api-dev.yaml
+   yq '.spec.source.helm.values | from_yaml | {environment, replicaCount, autoscaling, secret}' clusters/staging/sample-api-staging.yaml
+   yq '.spec.source.helm.values | from_yaml | {environment, replicaCount, autoscaling, secret}' clusters/production/sample-api-production.yaml
    ```
 
-   The first command prints the directory watched by the root Argo CD Application. In this lab series it is usually `clusters/dev`, which means Argo CD automatically reads child Applications from `platform-config/clusters/dev`.
+   Each Application points at the same reusable Helm chart but targets a different namespace and values block. The Applications keep `releaseName: sample-api` so the Kubernetes resource names stay stable in each namespace even though the Argo CD Application names are environment-scoped.
 
-   The second command checks whether anything under the current GitOps tree references `environments/namespaces.yaml` directly, or points an Argo CD Application at the `environments` directory. No output means the namespace file exists in Git, but Argo CD is not currently told to apply it.
-
-   A file sitting outside the root Application path is not applied automatically. For this lab, treat missing wiring as an important finding: namespaces alone are not a multi-environment platform until they are connected to GitOps desired state. Do not manually apply the file to make the check pass; either the GitOps wiring must exist already, or adding that wiring becomes follow-up implementation work.
-
-3. Review current environment-specific application state:
+4. Create or update the external secret values required by staging and production:
 
    ```bash
-   kubectl -n argocd get applications.argoproj.io -o wide
-   grep -R "sample-api-staging\|sample-api-production\|environment:" -n clusters environments || true
+   export AWS_PAGER=""
+   export AWS_REGION="eu-north-1"
+
+   aws secretsmanager create-secret \
+     --name platform-labs/sample-api-staging \
+     --secret-string '{"EXAMPLE_CONFIG":"staging"}' \
+     --region "$AWS_REGION" || \
+   aws secretsmanager put-secret-value \
+     --secret-id platform-labs/sample-api-staging \
+     --secret-string '{"EXAMPLE_CONFIG":"staging"}' \
+     --region "$AWS_REGION"
+
+   aws secretsmanager create-secret \
+     --name platform-labs/sample-api-production \
+     --secret-string '{"EXAMPLE_CONFIG":"production"}' \
+     --region "$AWS_REGION" || \
+   aws secretsmanager put-secret-value \
+     --secret-id platform-labs/sample-api-production \
+     --secret-string '{"EXAMPLE_CONFIG":"production"}' \
+     --region "$AWS_REGION"
    ```
 
-   A multi-environment platform needs more than namespaces. It should have clear desired state for each environment or a documented promotion path from dev to staging to production.
+   The chart creates an `ExternalSecret` per environment. External Secrets Operator reads these paths from AWS Secrets Manager and writes Kubernetes Secrets into the target namespace.
 
-4. Run local checks before refreshing Argo CD:
+5. Create the private GHCR image pull secret in staging and production:
+
+   ```bash
+   export GITHUB_USER="<your-github-username>"
+   read -r -s GHCR_READ_TOKEN
+
+   for ns in sample-api-staging sample-api-production; do
+     kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
+     kubectl -n "$ns" create secret docker-registry ghcr-pull \
+       --docker-server=ghcr.io \
+       --docker-username="$GITHUB_USER" \
+       --docker-password="$GHCR_READ_TOKEN" \
+       --dry-run=client -o yaml | kubectl apply -f -
+   done
+
+   unset GHCR_READ_TOKEN
+   ```
+
+   This is the same private image-pull bootstrap pattern used in Lab 07. Do not commit the token value to Git.
+
+6. Run local validation before Argo CD applies the new desired state:
 
    ```bash
    cd "$WORKSPACE"
+
+   kubectl apply --dry-run=client -f platform-config/bootstrap/root-application-dev.yaml
+   kubectl apply --dry-run=client -f platform-config/bootstrap/root-application-staging.yaml
+   kubectl apply --dry-run=client -f platform-config/bootstrap/root-application-production.yaml
    kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
+
    helm lint helm-charts/charts/sample-api
-   helm template sample-api helm-charts/charts/sample-api >/dev/null
+   helm template sample-api helm-charts/charts/sample-api \
+     --namespace sample-api-dev \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) >/dev/null
+   helm template sample-api helm-charts/charts/sample-api \
+     --namespace sample-api-staging \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/staging/sample-api-staging.yaml) >/dev/null
+   helm template sample-api helm-charts/charts/sample-api \
+     --namespace sample-api-production \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/production/sample-api-production.yaml) >/dev/null
    ```
 
-   The namespace dry-run confirms Kubernetes can parse the manifests. Helm lint and render confirm the reusable chart still works before multiple environments consume it.
+   These checks confirm Kubernetes can parse the bootstrap manifests and the chart can render all three environment values blocks.
 
-5. Refresh Argo CD and inspect the environment Applications:
+7. Commit and push the `platform-config` changes before refreshing Argo CD:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get applications.argoproj.io -o wide
+   cd "$WORKSPACE/platform-config"
+   git status --short
+   git add bootstrap clusters
+   git commit -m "feat: add multi environment gitops roots"
+   git push
    ```
 
-   This refresh does not create new environments by itself. It only asks Argo CD to re-read the Git paths it already knows about. If `platform-root` still points at `clusters/dev` and no child Application points at `environments`, Argo CD will continue reconciling the existing dev Applications only.
+   Argo CD reads Git, not your local working tree. If the changes are not pushed to the branch referenced by the root Applications, Argo CD cannot see them.
 
-   Expected result in the current slim platform: the existing Applications remain `Synced / Healthy`, and you may still see only the dev workload Application. That means the platform is healthy, but staging and production have not yet been wired into GitOps.
-
-6. Validate that each namespace has isolated workloads, policies and configuration:
+8. Apply the environment root Applications:
 
    ```bash
-   kubectl get namespaces -L environment
-   kubectl get applications.argoproj.io -n argocd
-   for ns in sample-api-dev sample-api-staging sample-api-production; do
-     echo "===== $ns ====="
-     if ! kubectl get namespace "$ns" >/dev/null 2>&1; then
-       echo "namespace missing"
-       continue
-     fi
-     kubectl -n "$ns" get deploy,rollout,svc,pod,externalsecret,networkpolicy,pdb
-     kubectl -n "$ns" get resourcequota,limitrange
-   done
+   cd "$WORKSPACE"
+
+   kubectl apply -f platform-config/bootstrap/root-application-dev.yaml
+   kubectl apply -f platform-config/bootstrap/root-application-staging.yaml
+   kubectl apply -f platform-config/bootstrap/root-application-production.yaml
    ```
 
-   If `sample-api-dev` contains resources and `sample-api-staging` or `sample-api-production` contain no resources, your cluster is still dev-only from an application perspective. That is the key finding for this lab. It means the namespace file or future environment layout may exist in Git, but staging and production workload Applications are not currently reconciled by Argo CD.
+   Applying root Applications is a bootstrap exception to the GitOps rule. After these roots exist, Argo CD owns the child Applications and workloads.
 
-   Also compare this output with `kubectl get namespaces -L environment`. If staging and production namespaces do not appear there, even the namespace desired state is not currently applied. If they appear but contain no workload resources, only the namespace layer exists.
-
-7. Query each environment's API if workloads exist:
+9. If your cluster still has the old `platform-root` or `sample-api` Applications from earlier labs, remove only those replaced Argo CD Application objects:
 
    ```bash
-   for ns in sample-api-dev sample-api-staging sample-api-production; do
-     if ! kubectl get namespace "$ns" >/dev/null 2>&1; then
-       echo "===== $ns ====="
-       echo "namespace missing; skipping API check"
-       continue
-     fi
-     if kubectl -n "$ns" get svc sample-api >/dev/null 2>&1; then
-       echo "===== $ns ====="
-       kubectl -n "$ns" port-forward svc/sample-api 8080:80 >/tmp/$ns-port-forward.log 2>&1 &
-       PF_PID=$!
-       sleep 2
-       curl -fsS http://localhost:8080/health || true
-       kill "$PF_PID"
-     else
-       echo "===== $ns ====="
-       echo "sample-api service missing; skipping API check"
-     fi
-   done
+   kubectl -n argocd delete application platform-root --ignore-not-found
+   kubectl -n argocd delete application sample-api --cascade=orphan --ignore-not-found
    ```
 
-   In a dev-only cluster, this loop will query only `sample-api-dev` and skip staging and production because their `sample-api` Services do not exist. That is expected when those environments are not wired yet. In a completed multi-environment setup, each environment should return its own response, image tag and environment-specific values.
+   `platform-root-dev` replaces `platform-root`, and `sample-api-dev` replaces the old dev child Application name. The orphan cascade keeps already-created workload resources in place so `sample-api-dev` can adopt and reconcile them instead of causing an unnecessary outage.
 
-8. Understand what is required to activate multiple environments:
+10. Refresh and inspect all environment roots and sample API Applications:
 
-   This lab does not create staging or production. To turn the current dev-only platform into an active multi-environment setup, the platform needs additional GitOps desired state.
+    ```bash
+    for app in platform-root-dev platform-root-staging platform-root-production; do
+      kubectl -n argocd annotate application "$app" argocd.argoproj.io/refresh=hard --overwrite
+    done
 
-   At minimum, a complete multi-environment setup needs:
+    kubectl -n argocd get application \
+      platform-root-dev \
+      platform-root-staging \
+      platform-root-production \
+      platform-namespaces \
+      sample-api-dev \
+      sample-api-staging \
+      sample-api-production \
+      -o wide
+    ```
 
-   - A reconciled namespace source.
+    Expected result: each root is `Synced / Healthy`, `platform-namespaces` is `Synced / Healthy`, and the three sample API Applications are created. Workload health depends on the GHCR pull secrets, AWS secret values and cluster capacity being ready.
 
-     For example, add a child Argo CD Application under `platform-config/clusters/dev` that points at `platform-config/environments`, or move the namespace manifests under an already reconciled path. The Application should create `sample-api-dev`, `sample-api-staging` and `sample-api-production` from Git, include clear `environment` labels and avoid one-off `kubectl apply` namespace creation.
+11. Validate namespace separation and workload state:
 
-     Concretely, this means the namespace YAML must be reachable from an Argo CD Application path, the root Application must discover that child Application, and `kubectl get namespaces -L environment` should show the expected labels after sync. If the file exists in Git but no Argo CD Application points at it, it is only a prepared manifest, not active platform desired state.
-   - One workload Application per environment.
+    ```bash
+    kubectl get namespaces -L environment
 
-     For example, keep separate Argo CD Applications named `sample-api-dev`, `sample-api-staging` and `sample-api-production`, each pointing at the same Helm chart but targeting a different namespace and values block. Each Application should have an explicit destination namespace, sync status and Git revision so you can tell which environment is running which desired state.
+    for ns in sample-api-dev sample-api-staging sample-api-production; do
+      echo "===== $ns ====="
+      kubectl -n "$ns" get rollout,svc,pod,externalsecret,networkpolicy,pdb
+    done
+    ```
 
-     Concretely, each Application should set `spec.destination.namespace` to its own namespace and should not share one live Kubernetes namespace with another environment. The Applications can reuse the same chart source, but their Helm values must differ where environment behavior differs. A useful validation is that `kubectl -n argocd get applications.argoproj.io -o wide` shows a distinct Application for each active environment.
-   - Environment-specific Helm values.
+    Each namespace should show its own sample API resources. If staging or production pods are pending, inspect the pod events before changing GitOps desired state.
 
-     For example, each environment needs its own namespace, image tag policy, replica/autoscaling settings, secret remote key, rollout behavior and resource settings. Staging and production should not silently inherit every dev value unchanged; production might use stricter resources, more replicas, different secret paths and immutable image tags only.
+12. Query each environment's API:
 
-     Concretely, dev can keep fast feedback settings, while staging should resemble production closely enough for release validation and production should use stable, reviewed settings. Values that commonly differ include `environment`, `replicaCount`, HPA min/max replicas, image tag, `secret.remoteKey`, resource requests/limits and rollout strategy. Shared defaults belong in the Helm chart; environment decisions belong in `platform-config`.
-   - A promotion process.
+    ```bash
+    for ns in sample-api-dev sample-api-staging sample-api-production; do
+      echo "===== $ns ====="
+      kubectl -n "$ns" port-forward svc/sample-api 8080:80 >/tmp/$ns-port-forward.log 2>&1 &
+      PF_PID=$!
+      sleep 2
+      curl -fsS http://localhost:8080/health || true
+      kill "$PF_PID"
+    done
+    ```
 
-     For example, CI publishes an immutable image tag, dev uses it first, a pull request promotes the same tag to staging after validation, and a later reviewed pull request promotes that exact tag to production. Avoid relying on `latest` for staging or production because it hides what was promoted and makes rollback harder to reason about.
-
-     Concretely, promotion should be a Git change to the target environment values, not a manual `kubectl set image` or direct Helm upgrade. The pull request should show exactly which image tag moved, which environment is affected and whether any config changed with it. Rollback should be another Git change that restores the previous known-good tag for that environment.
-   - Environment-scoped security and operations settings.
-
-     For example, NetworkPolicies, ExternalSecrets, service accounts, resource quotas, limit ranges and disruption budgets should be scoped per namespace. Each environment should be able to change access, secrets, quotas or disruption settings without accidentally changing another environment's behavior.
-
-     Concretely, staging and production should not consume the same secret path as dev unless that is intentional and reviewed. NetworkPolicies should allow only the traffic each namespace needs. Quotas and limits should prevent one environment from consuming all shared cluster capacity. PDBs and rollout settings should match each environment's availability expectations.
-
-   A common layout is to keep shared chart logic in `helm-charts`, environment-specific desired state in `platform-config`, and promotion history in Git commits or pull requests. The important rule is that Argo CD must be told about every environment path that should be reconciled; files that exist in Git but are not under an Argo CD Application path are only documentation until they are wired into GitOps.
+    In a completed multi-environment setup, each environment returns a healthy response from its own namespace.
 
 ## Expected Results
-The lab identifies whether the platform is still dev-only or whether each environment is represented by explicit GitOps desired state rather than ad hoc manual deployment.
+
+The cluster has GitOps-managed dev, staging and production sample API environments. Each environment has a root Application, a child workload Application, a namespace boundary and environment-specific Helm values.
 
 ## Validation
-- Current dev resources remain `Synced / Healthy` after the Argo CD refresh.
-- The lab output clearly shows whether staging and production namespaces exist.
-- The lab output clearly shows whether staging and production workload Applications exist.
-- If only dev resources exist, that is recorded as a multi-environment gap rather than treated as a successful deployment.
-- Namespaces alone do not constitute a multi-environment platform; workloads and environment-specific desired state must also be present.
-- In a completed multi-environment setup, dev, staging and production each have namespace labels, GitOps Applications, environment-specific values and traceable promotion history.
+
+- `platform-root-dev`, `platform-root-staging` and `platform-root-production` exist in Argo CD.
+- The root Applications point to `clusters/dev`, `clusters/staging` and `clusters/production` respectively.
+- `platform-namespaces` applies the namespaces from `platform-config/environments`.
+- `sample-api-dev`, `sample-api-staging` and `sample-api-production` exist and target separate namespaces.
+- `kubectl get namespaces -L environment` shows `dev`, `staging` and `production` labels.
+- Each sample API namespace contains its own rollout, Service, ExternalSecret, NetworkPolicy and PDB.
+- Argo CD reports no repository authentication, manifest-generation or comparison errors.
 
 ## Troubleshooting
-Start by confirming what Argo CD is actually configured to read:
+
+Start by confirming what Argo CD is configured to read:
 
 ```bash
 cd "$WORKSPACE/platform-config"
-yq '.spec.source.path' bootstrap/root-application.yaml
-grep -R "environments/namespaces.yaml\|path: environments\|sample-api-staging\|sample-api-production" -n . || true
+yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-dev.yaml
+yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-staging.yaml
+yq '.metadata.name + " -> " + .spec.source.path' bootstrap/root-application-production.yaml
 kubectl get namespaces -L environment
 kubectl -n argocd get applications.argoproj.io -o wide
 ```
 
-If staging or production namespaces are missing:
+If staging or production Applications are missing:
 
-- Confirm `environments/namespaces.yaml` defines those namespaces.
-- Confirm an Argo CD Application references that file or its parent directory.
-- Do not manually apply the namespace file as a workaround; that bypasses the GitOps check this lab is validating.
+- Confirm the corresponding root Application exists in `argocd`.
+- Confirm the root points at the expected `clusters/<environment>` path.
+- Confirm the `platform-config` changes were committed and pushed to the branch referenced by the root Application.
 
-If staging or production namespaces exist but have no workloads:
+If pods show `ImagePullBackOff`:
 
-- Confirm Argo CD has workload Applications for those environments.
-- Confirm each Application points at the intended chart and target namespace.
-- Confirm each environment has its own Helm values instead of accidentally reusing the dev values unchanged.
+- Confirm the `ghcr-pull` secret exists in the affected namespace.
+- Confirm the GitHub token used to create it has `read:packages` permission.
+- Delete the stuck pod after fixing the secret so Kubernetes retries the image pull.
 
-If only dev exists, the lab has still produced a useful result: the current platform is healthy but not yet an active multi-environment deployment.
+If an `ExternalSecret` is not ready:
+
+- Confirm `ClusterSecretStore/aws-secrets-manager` is `Ready=True`.
+- Confirm the environment-specific AWS Secrets Manager path exists.
+- Confirm External Secrets Operator has AWS access through the workload identity configured in Lab 13.
+
+If the old `platform-root` or `sample-api` Application still appears:
+
+- Confirm `platform-root-dev` and `sample-api-dev` are healthy first.
+- Delete only the old replaced Application object, using orphan cascade for `sample-api` if it still owns live workload resources.
+- Do not delete namespaces or workloads directly unless you intentionally want Argo CD to recreate them.
 
 ## Final Repository State
-The implementation remains GitOps-driven and mergeable to `main`.
+
+The implementation remains GitOps-driven and mergeable to `main`. `platform-config` contains one root Application per environment and one sample API Application per environment.
 
 ## Cleanup
-No cleanup is required. Do not delete existing dev resources. If staging or production namespaces exist, keep them only if they are part of the GitOps-managed desired state.
+
+No cleanup is required. Keep staging and production only if you want the shared dev cluster to continue running all three lab environments.
 
 ## Next Steps
+
 Continue with [Lab 16 - Progressive Delivery](./lab16-progressive-delivery.md).

@@ -39,7 +39,7 @@ Review these files before validation:
 - `platform-modules/modules/eks/external-secrets.tf`: IAM role, policy and EKS Pod Identity association for External Secrets Operator.
 - `platform-live/environments/dev/outputs.tf`: exposes the External Secrets IAM role ARN for validation.
 - `helm-charts/charts/sample-api/templates/externalsecret.yaml`: optional workload-level ExternalSecret template.
-- `platform-config/clusters/dev/sample-api.yaml`: values that enable or disable the sample API ExternalSecret.
+- `platform-config/clusters/dev/sample-api-dev.yaml`: values that enable or disable the dev sample API ExternalSecret.
 
 ## Step-by-Step Implementation
 
@@ -76,7 +76,7 @@ Review these files before validation:
    ```bash
    cd "$WORKSPACE"
    yq '.secret' helm-charts/charts/sample-api/values.yaml
-   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
    Confirm the sample API chart creates an `ExternalSecret` and references the same remote key used in the AWS test secret step. Do not commit real secret values. Only commit references such as secret names, remote keys and property names.
@@ -88,7 +88,7 @@ Review these files before validation:
    export AWS_REGION="$(yq -r '.spec.provider.aws.region' "$WORKSPACE/platform-config/addons/external-secrets/cluster-secret-store.yaml")"
 
    CHART_SECRET_ID="$(yq -r '.secret.remoteKey // ""' "$WORKSPACE/helm-charts/charts/sample-api/values.yaml")"
-   APP_SECRET_ID="$(yq -r '.spec.source.helm.values | from_yaml | .secret.remoteKey // ""' "$WORKSPACE/platform-config/clusters/dev/sample-api.yaml")"
+   APP_SECRET_ID="$(yq -r '.spec.source.helm.values | from_yaml | .secret.remoteKey // ""' "$WORKSPACE/platform-config/clusters/dev/sample-api-dev.yaml")"
    SECRET_ID="${APP_SECRET_ID:-$CHART_SECRET_ID}"
 
    printf 'Using AWS Secrets Manager secret id: %s\n' "$SECRET_ID"
@@ -136,7 +136,7 @@ Review these files before validation:
 
    helm lint helm-charts/charts/sample-api
    helm template sample-api helm-charts/charts/sample-api \
-     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      >/dev/null
    ```
 
@@ -151,24 +151,24 @@ Review these files before validation:
 
    A fresh lab run should not require edits here. If `git status --short` shows changes, review whether they are intentional before continuing.
 
-8. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api`:
+8. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api-dev`:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application external-secrets external-secrets-config sample-api -o wide
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application external-secrets external-secrets-config sample-api-dev -o wide
    kubectl -n argocd annotate application external-secrets argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application external-secrets-config argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd annotate application sample-api argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application external-secrets external-secrets-config sample-api -o wide
+   kubectl -n argocd annotate application sample-api-dev argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application external-secrets external-secrets-config sample-api-dev -o wide
    ```
 
-   Expected behavior: after the latest `platform-config` commit is reconciled, `external-secrets`, `external-secrets-config` and `sample-api` should move toward `Synced / Healthy`. If any Application shows `OutOfSync / Degraded`, describe that Application and check for sync errors before continuing.
+   Expected behavior: after the latest `platform-config` commit is reconciled, `external-secrets`, `external-secrets-config` and `sample-api-dev` should move toward `Synced / Healthy`. If any Application shows `OutOfSync / Degraded`, describe that Application and check for sync errors before continuing.
 
 9. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
 
    ```bash
    kubectl -n argocd get application external-secrets -o wide
-   kubectl -n argocd get application external-secrets-config sample-api -o wide
+   kubectl -n argocd get application external-secrets-config sample-api-dev -o wide
    kubectl -n external-secrets get pods,serviceaccounts
    kubectl get clustersecretstore aws-secrets-manager -o yaml
    kubectl describe clustersecretstore aws-secrets-manager
@@ -228,7 +228,7 @@ If the operator is healthy but no Kubernetes Secret appears:
 - Check operator logs for authentication or `AccessDenied` errors.
 - Do not troubleshoot by printing decoded secret values.
 
-If the Application is `OutOfSync / Degraded` and the sync error mentions `metadata.annotations: Too long`, Argo CD tried to apply large CRDs using client-side apply. Confirm `platform-config/clusters/dev/external-secrets.yaml` includes `ServerSideApply=true`. If it does not, stop and reconcile the desired state before refreshing `platform-root` and `external-secrets` again.
+If the Application is `OutOfSync / Degraded` and the sync error mentions `metadata.annotations: Too long`, Argo CD tried to apply large CRDs using client-side apply. Confirm `platform-config/clusters/dev/external-secrets.yaml` includes `ServerSideApply=true`. If it does not, stop and reconcile the desired state before refreshing `platform-root-dev` and `external-secrets` again.
 
 If the Application becomes `Synced` but the main `external-secrets` pod remains in `CrashLoopBackOff` with log messages such as `no matches for kind "ClusterSecretStore"`, the controller may have started before the CRDs were fully available. After confirming the CRDs exist, restart the controller deployment:
 

@@ -103,7 +103,7 @@ Review these files before validation:
 
 - `platform-config/clusters/dev/tempo.yaml`: Tempo chart repository, chart version, release name and monitoring namespace target.
 - `platform-config/clusters/dev/opentelemetry.yaml`: OpenTelemetry Collector chart repository, chart version, collector mode, image and trace pipeline configuration.
-- `platform-config/bootstrap/root-application.yaml`: root Argo CD Application that discovers `clusters/dev/*.yaml`.
+- `platform-config/bootstrap/root-application-dev.yaml`: dev root Argo CD Application that discovers `clusters/dev/*.yaml`.
 
 `tempo.yaml` deploys Grafana Tempo, the trace storage and query backend. `opentelemetry.yaml` deploys the OpenTelemetry Collector, the component that receives traces from instrumented workloads and exports them to Tempo.
 
@@ -183,8 +183,8 @@ Review these files before validation:
 5. Refresh the root Argo CD Application so child Applications pick up the latest `platform-config` commit:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application platform-root -o wide
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application platform-root-dev -o wide
    ```
 
    The root Application should show the latest Git revision from `platform-config/main`. If the root app is still on an old revision, child app refreshes may continue using old desired state.
@@ -207,7 +207,7 @@ Review these files before validation:
    kubectl -n argocd describe application opentelemetry
    ```
 
-   Look for `Status.Conditions`. A message such as `failed to generate manifest` means the chart did not render. Fix the Helm values in Git, push the change and refresh `platform-root` again.
+   Look for `Status.Conditions`. A message such as `failed to generate manifest` means the chart did not render. Fix the Helm values in Git, push the change and refresh `platform-root-dev` again.
 
 8. Validate that the tracing workloads exist and are ready:
 

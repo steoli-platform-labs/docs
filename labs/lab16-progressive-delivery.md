@@ -36,7 +36,7 @@ Review these files before validation:
 - `helm-charts/charts/sample-api/templates/rollout.yaml`: Argo Rollouts `Rollout` resource.
 - `helm-charts/charts/sample-api/values.yaml`: rollout and image defaults.
 - `platform-config/clusters/dev/argo-rollouts.yaml`: Argo Rollouts controller Application.
-- `platform-config/clusters/dev/sample-api.yaml`: deployed sample API image values.
+- `platform-config/clusters/dev/sample-api-dev.yaml`: deployed dev sample API image values.
 
 ## Step-by-Step Implementation
 
@@ -54,7 +54,7 @@ Review these files before validation:
 
    ```bash
    yq '.spec.source' platform-config/clusters/dev/argo-rollouts.yaml
-   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml
+   yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
    Confirm Argo Rollouts is installed before relying on `Rollout` resources, confirm `targetRevision` is pinned to the tested chart version and confirm `sample-api` uses an image tag that can be changed through Git.
@@ -73,7 +73,7 @@ Review these files before validation:
    ```bash
    helm lint helm-charts/charts/sample-api
    helm template sample-api helm-charts/charts/sample-api \
-     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      --set rollout.enabled=true \
      > /tmp/sample-api-rollout.yaml
    grep -A60 '^kind: Rollout' /tmp/sample-api-rollout.yaml
@@ -84,8 +84,8 @@ Review these files before validation:
 4. Refresh Argo CD and confirm Argo Rollouts and sample API are healthy:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application argo-rollouts sample-api -o wide
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application argo-rollouts sample-api-dev -o wide
    kubectl -n argo-rollouts get pods
    kubectl -n sample-api-dev get rollout sample-api
    ```
@@ -104,26 +104,26 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE/platform-config"
-   yq '.spec.source.helm.values' clusters/dev/sample-api.yaml
+   yq '.spec.source.helm.values' clusters/dev/sample-api-dev.yaml
 
    printf 'New image tag: '
    read -r NEW_IMAGE_TAG
    export NEW_IMAGE_TAG
-   yq -i '.spec.source.helm.values = ((.spec.source.helm.values | from_yaml | .image.tag = strenv(NEW_IMAGE_TAG)) | to_yaml)' clusters/dev/sample-api.yaml
+   yq -i '.spec.source.helm.values = ((.spec.source.helm.values | from_yaml | .image.tag = strenv(NEW_IMAGE_TAG)) | to_yaml)' clusters/dev/sample-api-dev.yaml
 
    git status --short
-   git diff -- clusters/dev/sample-api.yaml
+   git diff -- clusters/dev/sample-api-dev.yaml
    ```
 
    Enter a known new immutable tag, such as a commit-SHA image tag published by the `sample-api` CI workflow. If the diff is correct, commit and push the GitOps change, then watch the rollout:
 
    ```bash
-   git add clusters/dev/sample-api.yaml
+   git add clusters/dev/sample-api-dev.yaml
    git commit -m "chore: update sample api image"
    git push
 
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application sample-api -o wide
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application sample-api-dev -o wide
    kubectl argo rollouts get rollout sample-api -n sample-api-dev --watch
    ```
 
@@ -158,7 +158,7 @@ Start with the Rollout object and controller status:
 
 ```bash
 kubectl -n argocd describe application argo-rollouts
-kubectl -n argocd describe application sample-api
+kubectl -n argocd describe application sample-api-dev
 kubectl -n sample-api-dev describe rollout sample-api
 kubectl -n argo-rollouts get pods -o wide
 ```

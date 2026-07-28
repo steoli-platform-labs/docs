@@ -35,7 +35,7 @@ Review these files before validation:
 
 - `helm-charts/charts/sample-api/templates/networkpolicy.yaml`: rendered Kubernetes NetworkPolicy.
 - `helm-charts/charts/sample-api/values.yaml`: chart values that control service ports, rollout mode and policy-related behavior.
-- `platform-config/clusters/dev/sample-api.yaml`: environment-specific values deployed by Argo CD.
+- `platform-config/clusters/dev/sample-api-dev.yaml`: dev-specific values deployed by Argo CD.
 
 ## Step-by-Step Implementation
 
@@ -66,7 +66,7 @@ Review these files before validation:
    ```bash
    helm lint helm-charts/charts/sample-api
    helm template sample-api helm-charts/charts/sample-api \
-     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api.yaml) \
+     --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
      > /tmp/sample-api-networkpolicy.yaml
    yq 'select(.kind == "NetworkPolicy")' /tmp/sample-api-networkpolicy.yaml
    ```
@@ -75,11 +75,11 @@ Review these files before validation:
 
    Rendering locally catches template mistakes before Argo CD deploys them. The rendered file contains every manifest from the chart, so use `yq` to extract only the `NetworkPolicy` document instead of showing a fixed number of lines after the match.
 
-4. Refresh Argo CD and verify `sample-api` is synced:
+4. Refresh Argo CD and verify `sample-api-dev` is synced:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
-   kubectl -n argocd get application sample-api -o wide
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd get application sample-api-dev -o wide
    ```
 
 5. Confirm that the deployed NetworkPolicy and pods match the rendered intent:

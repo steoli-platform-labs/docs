@@ -135,7 +135,7 @@ Review these files before validation:
 7. Refresh the root Argo CD Application, then reconcile `karpenter`:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application karpenter -o wide
    kubectl -n argocd annotate application karpenter argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application karpenter -o wide
@@ -151,7 +151,7 @@ Review these files before validation:
    kubectl -n karpenter logs deployment/karpenter --previous --tail=200
    ```
 
-   If the child Application stays on an old revision, inspect `platform-root` before troubleshooting the child Application.
+   If the child Application stays on an old revision, inspect `platform-root-dev` before troubleshooting the child Application.
 
 8. Validate Karpenter readiness and configuration:
 
@@ -182,7 +182,7 @@ Review these files before validation:
    Refresh `karpenter-provisioning` before creating the test workload:
 
    ```bash
-   kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
+   kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd annotate application karpenter-provisioning argocd.argoproj.io/refresh=hard --overwrite
    kubectl describe nodepool karpenter
    ```
