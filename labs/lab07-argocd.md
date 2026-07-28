@@ -138,7 +138,7 @@ Key files:
    sed -n '1,120p' platform-config/bootstrap/root-application.yaml
    ```
 
-   If your GitHub organization or branch differs from the committed example, update `repoURL` or `targetRevision`, then commit and push that `platform-config` change before applying the root Application.
+   If your GitHub organization or branch differs from the committed example, update `repoURL` or `targetRevision`, then commit and push that specific `platform-config` change before applying the root Application. If the checked fields already match your repositories, no repo change is needed.
 2. Review the child Applications in `platform-config/clusters/dev` so you understand what Argo CD will reconcile after the root Application is created.
 
    Each YAML file in this directory is intended to become an Argo CD child Application for one platform component or workload. The root Application does not install those components directly; it points Argo CD at this directory, and Argo CD then reconciles each child Application it finds there.
@@ -207,8 +207,7 @@ Key files:
    ```bash
    kubectl -n sample-api-dev delete pod -l app.kubernetes.io/name=sample-api
    ```
-4. Commit and push any required `platform-config` changes before bootstrapping Argo CD.
-5. Confirm kubectl points at the intended EKS cluster, compare the Argo CD chart version and install Argo CD:
+4. Confirm kubectl points at the intended EKS cluster, compare the Argo CD chart version and install Argo CD:
 
    ```bash
    cd "$WORKSPACE"
@@ -230,14 +229,14 @@ Key files:
 
    The pinned version in `platform-config/clusters/dev/argocd.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
-6. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`:
+5. Bootstrap the root Application from `platform-config/bootstrap/root-application.yaml`:
 
    ```bash
    kubectl -n argocd wait --for=condition=available deployment/argocd-server --timeout=300s
    kubectl apply -f platform-config/bootstrap/root-application.yaml
    ```
 
-7. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
+6. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
 
    ```bash
    kubectl -n argocd get pods
@@ -253,7 +252,7 @@ Key files:
 
    For this lab, `platform-root` and `argocd` should be `Synced / Healthy`. Later-lab Applications may appear as `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs provide the required values, CRDs, IAM roles, secrets or chart versions.
 
-8. Access the Argo CD UI and inspect the same Applications visually.
+7. Access the Argo CD UI and inspect the same Applications visually.
 
    Get the initial admin password:
 
@@ -272,7 +271,7 @@ Key files:
 
    Use the UI to confirm the application tree, sync status, health status, rendered resources and any diffs. This lab uses local port-forwarding only; do not expose the Argo CD server publicly without an approved access pattern such as SSO, VPN or an internal ingress.
 
-9. Use Argo CD status, the UI and controller logs to troubleshoot any repository or manifest errors.
+8. Use Argo CD status, the UI and controller logs to troubleshoot any repository or manifest errors.
 
    The direct install/bootstrap commands in this section are only for bringing up Argo CD itself. After Argo CD is running, application and platform changes should flow through GitOps rather than manual `kubectl apply`, `helm install` or `helm upgrade` commands.
 

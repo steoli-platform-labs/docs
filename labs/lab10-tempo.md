@@ -180,27 +180,9 @@ Review these files before validation:
 
    No output is expected when rendering succeeds because the rendered manifests are redirected to `/dev/null`. A Helm error here means Argo CD will also fail to generate manifests. A deprecation warning means the lab is pointing at an old chart repository or chart version; use the pinned Grafana Community chart in `clusters/dev/tempo.yaml`.
 
-   If the OpenTelemetry render fails with a message such as `image.repository must be set`, the chart version requires explicit values. Fix the desired state in `clusters/dev/opentelemetry.yaml`, render again, then commit and push the tested configuration.
+   If the OpenTelemetry render fails with a message such as `image.repository must be set`, the chart version requires explicit values. Stop and reconcile the desired state in `clusters/dev/opentelemetry.yaml` before continuing.
 
-5. Commit and push the desired state if you changed it:
-
-   ```bash
-   git status --short
-   ```
-
-   If this command prints no files, your local repository already matches Git and there is nothing to commit for this step.
-
-   If you edited `tempo.yaml`, `opentelemetry.yaml` or chart versions during this lab, commit and push those changes:
-
-   ```bash
-   git add clusters/dev/tempo.yaml clusters/dev/opentelemetry.yaml
-   git commit -m "feat: configure tempo and opentelemetry"
-   git push
-   ```
-
-   Argo CD reconciles from Git. Local uncommitted changes are not deployed by Argo CD.
-
-6. Refresh the root Argo CD Application so child Applications pick up the latest `platform-config` commit:
+5. Refresh the root Argo CD Application so child Applications pick up the latest `platform-config` commit:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
@@ -209,7 +191,7 @@ Review these files before validation:
 
    The root Application should show the latest Git revision from `platform-config/main`. If the root app is still on an old revision, child app refreshes may continue using old desired state.
 
-7. Let Argo CD reconcile Tempo and OpenTelemetry from Git:
+6. Let Argo CD reconcile Tempo and OpenTelemetry from Git:
 
    ```bash
    kubectl -n argocd get application tempo opentelemetry -o wide
@@ -220,7 +202,7 @@ Review these files before validation:
 
    `SYNC STATUS` should move to `Synced`. If an Application shows `Unknown`, inspect the Application before checking pods because Argo CD may have failed during Helm rendering.
 
-8. If either Application is not `Synced`, inspect the Argo CD condition:
+7. If either Application is not `Synced`, inspect the Argo CD condition:
 
    ```bash
    kubectl -n argocd describe application tempo
@@ -229,7 +211,7 @@ Review these files before validation:
 
    Look for `Status.Conditions`. A message such as `failed to generate manifest` means the chart did not render. Fix the Helm values in Git, push the change and refresh `platform-root` again.
 
-9. Validate that the tracing workloads exist and are ready:
+8. Validate that the tracing workloads exist and are ready:
 
    ```bash
    kubectl -n argocd get application tempo opentelemetry -o wide
@@ -244,7 +226,7 @@ Review these files before validation:
    - OpenTelemetry Collector has a running pod or DaemonSet/Deployment, depending on chart configuration.
    - Services expose the ports used by applications or collectors to send traces.
 
-10. Check collector logs for receiver and exporter startup:
+9. Check collector logs for receiver and exporter startup:
 
    ```bash
    kubectl -n monitoring logs -l app.kubernetes.io/name=opentelemetry-collector --since=10m --tail=200
@@ -252,7 +234,7 @@ Review these files before validation:
 
    The logs should show the collector starting receivers and exporters. Repeated errors connecting to Tempo mean the collector pipeline or Tempo service address is wrong.
 
-11. Port-forward Tempo and check readiness:
+10. Port-forward Tempo and check readiness:
 
    ```bash
    kubectl -n monitoring port-forward svc/tempo 3200:3200
@@ -266,7 +248,7 @@ Review these files before validation:
 
    A successful response confirms that the Tempo HTTP API is reachable through the local port-forward.
 
-12. Add Tempo as a Grafana data source:
+11. Add Tempo as a Grafana data source:
 
    ```bash
    kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
@@ -294,7 +276,7 @@ Review these files before validation:
 
    This manual data source is enough for the lab, but it is not durable platform configuration. If the Grafana pod is recreated and Grafana persistence is not enabled, manually added data sources can disappear. For a production-ready platform, provision Loki and Tempo data sources through the `kube-prometheus-stack` Helm values in GitOps and enable persistent Grafana storage for dashboards and UI-created settings.
 
-13. Generate test traces without creating another pod:
+12. Generate test traces without creating another pod:
 
    Deployment health only proves that Tempo and the collector are running. End-to-end tracing also requires an instrumented application or a trace generator that sends spans to the collector. At this point in the lab series, the sample API may not emit OpenTelemetry traces yet, so use `telemetrygen` to prove the collector-to-Tempo pipeline works.
 
@@ -353,11 +335,11 @@ Review these files before validation:
    - The collector has an exporter that sends traces to Tempo.
    - Grafana can query Tempo and display the trace.
 
-14. Inspect traces in Grafana and understand what you are seeing:
+13. Inspect traces in Grafana and understand what you are seeing:
 
    Open Grafana Explore and search for the generated traces:
 
-   - Open `http://localhost:3000` while the Grafana port-forward from step 12 is running.
+   - Open `http://localhost:3000` while the Grafana port-forward from step 11 is running.
    - Go to `Explore`.
    - Select the Tempo data source.
    - Choose `Search` or `TraceQL`, depending on the Grafana UI version.
@@ -368,7 +350,7 @@ Review these files before validation:
    { resource.service.name = "telemetrygen" }
    ```
 
-   Open one returned trace. If the query returns no traces, widen the time range and check the OpenTelemetry Collector logs from step 10.
+   Open one returned trace. If the query returns no traces, widen the time range and check the OpenTelemetry Collector logs from step 9.
 
    In the trace view, look for these fields:
 

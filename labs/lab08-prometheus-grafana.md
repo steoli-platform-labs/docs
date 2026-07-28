@@ -127,8 +127,7 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
    ```
 
    No output means the chart rendered successfully. Any Helm error here will also fail in Argo CD.
-4. Commit and push any required `platform-config` changes.
-5. Let Argo CD reconcile the `prometheus` Application from Git:
+4. Let Argo CD reconcile the `prometheus` Application from Git:
 
    ```bash
    cd "$WORKSPACE"
@@ -137,7 +136,7 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
    kubectl -n argocd get application prometheus -o wide
    ```
 
-6. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
+5. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
 
    ```bash
    kubectl -n argocd get application prometheus -o wide
@@ -151,13 +150,13 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 
    A missing Prometheus endpoint usually means one of two things: the Prometheus CRD is missing, so Kubernetes rejected the `Prometheus` resource, or the Prometheus Operator has not reconciled that resource into a running StatefulSet yet.
 
-7. Start a local Prometheus port-forward in a separate terminal:
+6. Start a local Prometheus port-forward in a separate terminal:
 
    ```bash
    kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
    ```
 
-8. Validate metrics ingestion through Prometheus from another terminal:
+7. Validate metrics ingestion through Prometheus from another terminal:
 
    ```bash
    curl -fsS http://localhost:9090/-/ready
@@ -167,7 +166,7 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 
    Open `http://localhost:9090/targets` and confirm that Kubernetes, kube-state-metrics and node-exporter targets are present. Some managed-control-plane targets may be unavailable on EKS depending on endpoint access, but the node, kubelet and kube-state-metrics targets should be active.
 
-9. Get the chart-generated Grafana credentials:
+8. Get the chart-generated Grafana credentials:
 
    ```bash
    kubectl -n monitoring get secret prometheus-grafana \
@@ -176,17 +175,17 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
      -o jsonpath='{.data.admin-password}' | base64 --decode; printf '\n'
    ```
 
-10. Start a local Grafana port-forward in a separate terminal:
+9. Start a local Grafana port-forward in a separate terminal:
 
    ```bash
    kubectl -n monitoring port-forward svc/prometheus-grafana 3000:80
    ```
 
-11. Open `http://localhost:3000` and log in with the username and password from the secret.
+10. Open `http://localhost:3000` and log in with the username and password from the secret.
 
    Confirm the Prometheus data source is healthy from **Connections** -> **Data sources** -> **Prometheus** -> **Save & test**.
 
-12. Review the preloaded Kubernetes dashboards in Grafana.
+11. Review the preloaded Kubernetes dashboards in Grafana.
 
     Open **Dashboards** and inspect dashboards such as:
 

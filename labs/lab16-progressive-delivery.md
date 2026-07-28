@@ -70,7 +70,7 @@ Review these files before validation:
 
    The pinned version in `platform-config/clusters/dev/argo-rollouts.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
-3. Render the chart locally with Rollout enabled before committing changes:
+3. Render the chart locally with Rollout enabled before refreshing Argo CD:
 
    ```bash
    helm lint helm-charts/charts/sample-api
@@ -83,16 +83,7 @@ Review these files before validation:
 
    Confirm the rendered output contains a `Rollout` and not only a `Deployment`.
 
-4. Commit and push any chart or GitOps value changes if you made any:
-
-   ```bash
-   git -C helm-charts status --short
-   git -C platform-config status --short
-   ```
-
-   Chart template changes belong in `helm-charts`. Image tag or environment-specific values belong in `platform-config`.
-
-5. Refresh Argo CD and confirm Argo Rollouts and sample API are healthy:
+4. Refresh Argo CD and confirm Argo Rollouts and sample API are healthy:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
@@ -101,7 +92,7 @@ Review these files before validation:
    kubectl -n sample-api-dev get rollout sample-api
    ```
 
-6. Observe the current stable state before changing the image:
+5. Observe the current stable state before changing the image:
 
    ```bash
    kubectl -n sample-api-dev get rollout,replicaset,pod
@@ -111,7 +102,7 @@ Review these files before validation:
 
    Record the stable ReplicaSet and current image tag. You need a baseline before validating canary behavior.
 
-7. Change the sample API image tag through Git and observe the canary rollout:
+6. Change the sample API image tag through Git and observe the canary rollout:
 
    ```bash
    cd "$WORKSPACE/platform-config"
@@ -140,7 +131,7 @@ Review these files before validation:
 
    The Rollout should create a new ReplicaSet and progress through the canary steps. If the image tag does not change, no meaningful progressive delivery event occurs.
 
-8. Test abort and rollback with a deliberately bad image only in the dev environment:
+7. Test abort and rollback with a deliberately bad image only in the dev environment:
 
    ```bash
    kubectl argo rollouts abort sample-api -n sample-api-dev

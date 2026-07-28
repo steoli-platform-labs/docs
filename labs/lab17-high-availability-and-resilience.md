@@ -75,23 +75,14 @@ Review these files before validation:
 
    If `topologySpreadConstraints` or `podAntiAffinity` are not present, either the chart does not implement them yet or the values do not enable them. Do not claim that the lab validates a setting that is not rendered.
 
-4. Commit and push any chart or value changes if you changed them:
-
-   ```bash
-   git -C helm-charts status --short
-   git -C platform-config status --short
-   ```
-
-   Commit chart changes in `helm-charts` and environment value changes in `platform-config`.
-
-5. Refresh Argo CD and confirm `sample-api` is healthy:
+4. Refresh Argo CD and confirm `sample-api` is healthy:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application sample-api -o wide
    ```
 
-6. Inspect the deployed workload before testing recovery:
+5. Inspect the deployed workload before testing recovery:
 
    ```bash
    kubectl -n sample-api-dev get rollout,pod,pdb -o wide
@@ -103,7 +94,7 @@ Review these files before validation:
 
    Confirm pods are ready and note which nodes they run on. If all replicas are on one node, pod deletion can still be tested, but node failure and zone-spread claims cannot be fully validated.
 
-7. Run continuous traffic while testing recovery:
+6. Run continuous traffic while testing recovery:
 
    ```bash
    kubectl -n sample-api-dev port-forward svc/sample-api 8080:80
@@ -117,7 +108,7 @@ Review these files before validation:
 
    This gives you a simple signal for whether the service remains available during disruption.
 
-8. Run controlled pod deletion and measure recovery:
+7. Run controlled pod deletion and measure recovery:
 
    ```bash
    POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
@@ -127,7 +118,7 @@ Review these files before validation:
 
    Expected behavior: Kubernetes creates a replacement pod, the Service keeps at least one ready endpoint and the repeated health requests do not fail for a sustained period.
 
-9. Drain one worker only when the lab environment has enough spare capacity:
+8. Drain one worker only when the lab environment has enough spare capacity:
 
    ```bash
    SAMPLE_POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')

@@ -69,7 +69,7 @@ Review these files before validation:
 
    A multi-environment platform needs more than namespaces. It should have clear desired state for each environment or a documented promotion path from dev to staging to production.
 
-4. Run local checks before committing changes:
+4. Run local checks before refreshing Argo CD:
 
    ```bash
    cd "$WORKSPACE"
@@ -80,25 +80,16 @@ Review these files before validation:
 
    The namespace dry-run confirms Kubernetes can parse the manifests. Helm lint and render confirm the reusable chart still works before multiple environments consume it.
 
-5. Commit and push environment configuration changes if you made any:
-
-   ```bash
-   git -C platform-config status --short
-   git -C helm-charts status --short
-   ```
-
-   Commit changed files in the repository that owns them. Namespace and Argo CD Application changes belong in `platform-config`; chart changes belong in `helm-charts`.
-
-6. Refresh Argo CD after the relevant changes are pushed:
+5. Refresh Argo CD and inspect the environment Applications:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get applications.argoproj.io -o wide
    ```
 
-   Confirm the root Application revision matches the pushed `platform-config` commit before validating child resources.
+   Confirm the root Application revision matches the expected `platform-config` commit before validating child resources.
 
-7. Validate that each namespace has isolated workloads, policies and configuration:
+6. Validate that each namespace has isolated workloads, policies and configuration:
 
    ```bash
    kubectl get namespaces -L environment
@@ -112,7 +103,7 @@ Review these files before validation:
 
    Some environments may initially contain only namespaces until their workload Applications are added. Treat missing staging or production workload desired state as implementation work, not as a successful multi-environment deployment.
 
-8. Query each environment's API if workloads exist:
+7. Query each environment's API if workloads exist:
 
    ```bash
    for ns in sample-api-dev sample-api-staging sample-api-production; do
