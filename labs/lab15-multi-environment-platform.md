@@ -56,7 +56,11 @@ Review these files before validation:
    grep -R "environments/namespaces.yaml\|path: environments" -n . || true
    ```
 
-   A file sitting outside the root Application path is not applied automatically. If `environments/namespaces.yaml` is not referenced by a root or child Application, add the GitOps wiring before expecting Argo CD to create namespaces.
+   The first command prints the directory watched by the root Argo CD Application. In this lab series it is usually `clusters/dev`, which means Argo CD automatically reads child Applications from `platform-config/clusters/dev`.
+
+   The second command checks whether anything under the current GitOps tree references `environments/namespaces.yaml` directly, or points an Argo CD Application at the `environments` directory. No output means the namespace file exists in Git, but Argo CD is not currently told to apply it.
+
+   A file sitting outside the root Application path is not applied automatically. For this lab, treat missing wiring as an important finding: namespaces alone are not a multi-environment platform until they are connected to GitOps desired state. Do not manually apply the file to make the check pass; either the GitOps wiring must exist already, or adding that wiring becomes follow-up implementation work.
 
 3. Review current environment-specific application state:
 
