@@ -78,30 +78,21 @@ Review these files before validation:
 
    Rendering locally catches template mistakes before Argo CD deploys them. The rendered file contains every manifest from the chart, so use `yq` to extract only the `NetworkPolicy` document instead of showing a fixed number of lines after the match.
 
-4. Commit and push any chart or value changes if you changed them:
-
-   ```bash
-   git -C helm-charts status --short
-   git -C platform-config status --short
-   ```
-
-   Commit in the repository that owns the changed file. Chart template changes belong in `helm-charts`; environment values belong in `platform-config`.
-
-5. Refresh Argo CD and verify `sample-api` is synced:
+4. Refresh Argo CD and verify `sample-api` is synced:
 
    ```bash
    kubectl -n argocd annotate application platform-root argocd.argoproj.io/refresh=hard --overwrite
    kubectl -n argocd get application sample-api -o wide
    ```
 
-6. Confirm that the deployed NetworkPolicy and pods match the rendered intent:
+5. Confirm that the deployed NetworkPolicy and pods match the rendered intent:
 
    ```bash
    kubectl -n sample-api-dev get networkpolicy -o yaml
    kubectl -n sample-api-dev get pods -l app.kubernetes.io/name=sample-api -o wide
    ```
 
-7. Run a positive connectivity test from the allowed namespace or expected source:
+6. Run a positive connectivity test from the allowed namespace or expected source:
 
    ```bash
    kubectl -n sample-api-dev run allowed-client --rm -it --restart=Never \
@@ -110,7 +101,7 @@ Review these files before validation:
 
    This should succeed. If it fails, inspect the Service, endpoints and NetworkPolicy before running deny tests.
 
-8. Run a negative test from an unintended namespace:
+7. Run a negative test from an unintended namespace:
 
    ```bash
    kubectl create namespace network-denied-test
@@ -120,7 +111,7 @@ Review these files before validation:
 
    This should fail or time out only if NetworkPolicy enforcement is enabled. If it succeeds, either the policy is too permissive or the CNI is not enforcing NetworkPolicy.
 
-9. Validate DNS and required HTTPS egress from an application pod:
+8. Validate DNS and required HTTPS egress from an application pod:
 
    ```bash
    SAMPLE_API_POD=$(kubectl -n sample-api-dev get pod -l app.kubernetes.io/name=sample-api -o jsonpath='{.items[0].metadata.name}')
@@ -129,7 +120,7 @@ Review these files before validation:
 
    DNS must keep working after egress policy is applied. If the application needs outbound HTTPS, validate that path with a non-sensitive endpoint used by the lab.
 
-10. Delete the temporary namespace after validation:
+9. Delete the temporary namespace after validation:
 
    ```bash
    kubectl delete namespace network-denied-test
