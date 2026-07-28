@@ -147,18 +147,28 @@ Review these files before validation:
    - A reconciled namespace source.
 
      For example, add a child Argo CD Application under `platform-config/clusters/dev` that points at `platform-config/environments`, or move the namespace manifests under an already reconciled path. The Application should create `sample-api-dev`, `sample-api-staging` and `sample-api-production` from Git, include clear `environment` labels and avoid one-off `kubectl apply` namespace creation.
+
+     Concretely, this means the namespace YAML must be reachable from an Argo CD Application path, the root Application must discover that child Application, and `kubectl get namespaces -L environment` should show the expected labels after sync. If the file exists in Git but no Argo CD Application points at it, it is only a prepared manifest, not active platform desired state.
    - One workload Application per environment.
 
      For example, keep separate Argo CD Applications named `sample-api-dev`, `sample-api-staging` and `sample-api-production`, each pointing at the same Helm chart but targeting a different namespace and values block. Each Application should have an explicit destination namespace, sync status and Git revision so you can tell which environment is running which desired state.
+
+     Concretely, each Application should set `spec.destination.namespace` to its own namespace and should not share one live Kubernetes namespace with another environment. The Applications can reuse the same chart source, but their Helm values must differ where environment behavior differs. A useful validation is that `kubectl -n argocd get applications.argoproj.io -o wide` shows a distinct Application for each active environment.
    - Environment-specific Helm values.
 
      For example, each environment needs its own namespace, image tag policy, replica/autoscaling settings, secret remote key, rollout behavior and resource settings. Staging and production should not silently inherit every dev value unchanged; production might use stricter resources, more replicas, different secret paths and immutable image tags only.
+
+     Concretely, dev can keep fast feedback settings, while staging should resemble production closely enough for release validation and production should use stable, reviewed settings. Values that commonly differ include `environment`, `replicaCount`, HPA min/max replicas, image tag, `secret.remoteKey`, resource requests/limits and rollout strategy. Shared defaults belong in the Helm chart; environment decisions belong in `platform-config`.
    - A promotion process.
 
      For example, CI publishes an immutable image tag, dev uses it first, a pull request promotes the same tag to staging after validation, and a later reviewed pull request promotes that exact tag to production. Avoid relying on `latest` for staging or production because it hides what was promoted and makes rollback harder to reason about.
+
+     Concretely, promotion should be a Git change to the target environment values, not a manual `kubectl set image` or direct Helm upgrade. The pull request should show exactly which image tag moved, which environment is affected and whether any config changed with it. Rollback should be another Git change that restores the previous known-good tag for that environment.
    - Environment-scoped security and operations settings.
 
      For example, NetworkPolicies, ExternalSecrets, service accounts, resource quotas, limit ranges and disruption budgets should be scoped per namespace. Each environment should be able to change access, secrets, quotas or disruption settings without accidentally changing another environment's behavior.
+
+     Concretely, staging and production should not consume the same secret path as dev unless that is intentional and reviewed. NetworkPolicies should allow only the traffic each namespace needs. Quotas and limits should prevent one environment from consuming all shared cluster capacity. PDBs and rollout settings should match each environment's availability expectations.
 
    A common layout is to keep shared chart logic in `helm-charts`, environment-specific desired state in `platform-config`, and promotion history in Git commits or pull requests. The important rule is that Argo CD must be told about every environment path that should be reconciled; files that exist in Git but are not under an Argo CD Application path are only documentation until they are wired into GitOps.
 
