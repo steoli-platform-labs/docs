@@ -15,7 +15,7 @@
 
 This lab activates the platform's multi-environment GitOps layout.
 
-Labs 01-14 build and validate the dev platform. Lab 15 adds staging and production desired state by using Pattern A: one root Argo CD Application per environment path. The roots are `platform-root-dev`, `platform-root-staging` and `platform-root-production`, and each root reconciles one `platform-config/clusters/<environment>` directory.
+Labs 01-14 build and validate the dev platform. Lab 15 adds staging and production desired state by using one root Argo CD Application per environment path. The roots are `platform-root-dev`, `platform-root-staging` and `platform-root-production`, and each root reconciles one `platform-config/clusters/<environment>` directory.
 
 Concepts introduced in this lab include environment separation, namespace boundaries, environment root Applications, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
 
