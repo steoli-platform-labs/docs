@@ -30,7 +30,7 @@ Before starting this lab:
 
 - Lab 01 - Lab 15 completed
 - AWS CLI, Terraform, kubectl and Helm installed
-- `sample-api:1.0.2` and `sample-api:1.0.3` published to GHCR
+- `sample-api:1.0.0` and `sample-api:1.0.1` published to GHCR
 
 ## Files to Review
 Review these files before validation:
@@ -57,7 +57,7 @@ Review these files before validation:
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
-   Confirm the chart has rollout support, Argo Rollouts is managed by Argo CD and `sample-api-dev` uses the release tag published in Lab 06. Progressive delivery should move from one readable, immutable release tag to another, such as `1.0.2` to `1.0.3`.
+   Confirm the chart has rollout support, Argo Rollouts is managed by Argo CD and `sample-api-dev` uses the release tag published in Lab 06. Progressive delivery should move from one readable, immutable release tag to another, such as `1.0.0` to `1.0.1`.
 
    Compare the configured chart version with the latest available chart version:
 
@@ -124,7 +124,7 @@ Review these files before validation:
    helm template sample-api-rollout-demo helm-charts/charts/sample-api \
      --namespace sample-api-rollout-demo \
      --values <(yq -r '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml) \
-     --set image.tag=1.0.2 \
+     --set image.tag=1.0.0 \
      --set environment=rollout-demo \
      --set replicaCount=2 \
      --set autoscaling.enabled=false \
@@ -141,33 +141,27 @@ Review these files before validation:
    kubectl -n sample-api-rollout-demo get rollout sample-api-rollout-demo \
      -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
 
-   printf '\n===== Demo application version before rollout =====\n'
-   kubectl -n sample-api-rollout-demo port-forward svc/sample-api-rollout-demo 8080:80 >/tmp/sample-api-rollout-demo-port-forward.log 2>&1 &
-   PF_PID=$!
-   sleep 2
-   curl -fsS http://localhost:8080/version | python3 -m json.tool
-   kill "$PF_PID"
    ```
 
    The demo uses the same chart and Argo Rollouts controller as the GitOps-managed workload, but it is not managed by Argo CD. This keeps the reference repositories unchanged while still giving you a real rollout object to test.
 
    The `-n sample-api-rollout-demo` flag on `kubectl apply` is required because these chart templates do not set `metadata.namespace` in every rendered manifest. `helm template --namespace` sets the Helm release namespace, but it does not automatically add `metadata.namespace` to templates that omit it.
 
-   The image check should print `ghcr.io/steoli-platform-labs/sample-api:1.0.2`, and the `/version` endpoint should return `{"version":"1.0.2"}`. The chart passes the image tag to the application as `APP_VERSION`, so the HTTP response shows the application version that the running pod received at deploy time.
+   The image check should print `ghcr.io/steoli-platform-labs/sample-api:1.0.0`. The original `1.0.0` and `1.0.1` reference images do not expose a `/version` HTTP endpoint, so Kubernetes image metadata is the source of truth for this lab's running application version.
 
-5. Patch the temporary demo Rollout from `1.0.2` to `1.0.3` and watch the canary:
+5. Patch the temporary demo Rollout from `1.0.0` to `1.0.1` and watch the canary:
 
    ```bash
-   printf '\n===== Patch demo Rollout to 1.0.3 =====\n'
+   printf '\n===== Patch demo Rollout to 1.0.1 =====\n'
    kubectl -n sample-api-rollout-demo patch rollout sample-api-rollout-demo \
      --type='json' \
-     -p='[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"ghcr.io/steoli-platform-labs/sample-api:1.0.3"},{"op":"replace","path":"/spec/template/spec/containers/0/env/1/value","value":"1.0.3"}]'
+     -p='[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"ghcr.io/steoli-platform-labs/sample-api:1.0.1"}]'
 
    printf '\n===== Watch demo Rollout =====\n'
    kubectl -n sample-api-rollout-demo get rollout sample-api-rollout-demo -w
    ```
 
-   The Rollout should create a new ReplicaSet and progress through the canary steps. Press `Ctrl-C` after you have observed the status change. If the image tag and `APP_VERSION` value do not change together, the pod image and application-reported version can drift.
+   The Rollout should create a new ReplicaSet and progress through the canary steps. Press `Ctrl-C` after you have observed the status change. If the image tag does not change, no meaningful progressive delivery event occurs.
 
 6. Inspect the rollout result:
 
@@ -184,26 +178,19 @@ Review these files before validation:
 
    printf '\n===== Running pod images =====\n'
    kubectl -n sample-api-rollout-demo get pods \
-     -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[0].ready,IMAGE:.spec.containers[0].image
-
-   printf '\n===== Demo application version after rollout =====\n'
-   kubectl -n sample-api-rollout-demo port-forward svc/sample-api-rollout-demo 8080:80 >/tmp/sample-api-rollout-demo-port-forward.log 2>&1 &
-   PF_PID=$!
-   sleep 2
-   curl -fsS http://localhost:8080/version | python3 -m json.tool
-   kill "$PF_PID"
+     -o 'custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[0].ready,IMAGE:.spec.containers[0].image'
 
    printf '\n===== Demo Rollout details =====\n'
    kubectl -n sample-api-rollout-demo describe rollout sample-api-rollout-demo
    ```
 
-   The current Rollout status and pod image list should show `ghcr.io/steoli-platform-labs/sample-api:1.0.3`, and the `/version` endpoint should return `{"version":"1.0.3"}`. In a production GitOps flow, the same version change would be a reviewed Git change in `platform-config`; this lab uses a temporary resource so multiple learners can run the demo without pushing to shared reference repositories.
+   The current Rollout status and pod image list should show `ghcr.io/steoli-platform-labs/sample-api:1.0.1` and a healthy ReplicaSet. In a production GitOps flow, the same version change would be a reviewed Git change in `platform-config`; this lab uses a temporary resource so multiple learners can run the demo without pushing to shared reference repositories.
 
 ## Expected Results
 Argo Rollouts is installed and the sample API is managed as a Rollout when progressive delivery is enabled.
 
 ## Validation
-- The temporary demo Rollout starts on `1.0.2`.
+- The temporary demo Rollout starts on `1.0.0`.
 - Argo Rollouts creates a new ReplicaSet.
 - Canary traffic/replica weight progresses through the documented steps.
 - Pause durations are observed.
@@ -211,7 +198,7 @@ Argo Rollouts is installed and the sample API is managed as a Rollout when progr
 - Rollback is described as a Git revert or image-tag change back to the previous known-good version in a production GitOps flow.
 - The stable service remains available during progression.
 - Metrics-based analysis is present if the lab claims automated health-based promotion.
-- The demo uses `1.0.2` and `1.0.3` release tags. An unchanged image tag or application-reported version does not provide traceable progressive delivery.
+- The demo uses `1.0.0` and `1.0.1` release tags. An unchanged image tag does not provide traceable progressive delivery.
 
 ## Troubleshooting
 Start with the Rollout object and controller status:
@@ -232,7 +219,7 @@ kubectl -n argo-rollouts get pods -o wide
 If no canary happens:
 
 - Confirm the rendered chart creates a `Rollout`, not a `Deployment`.
-- Confirm the temporary demo Rollout image and `APP_VERSION` value changed from `1.0.2` to `1.0.3`.
+- Confirm the temporary demo Rollout image changed from `1.0.0` to `1.0.1`.
 - Confirm the Rollout controller is healthy.
 - If `kubectl -n sample-api-rollout-demo get rollout,replicaset,pod` prints `No resources found` after `kubectl apply` reported created resources, check the `default` namespace. Re-apply the manifest with `kubectl -n sample-api-rollout-demo apply -f /tmp/sample-api-rollout-demo.yaml` and remove any accidentally created default-namespace demo resources.
 

@@ -94,7 +94,7 @@ Review these files before validation:
    kubectl -n sample-api-dev describe pdb sample-api
    printf '\n===== sample-api pod placement =====\n'
    kubectl -n sample-api-dev get pods \
-     -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,READY:.status.containerStatuses[0].ready
+     -o 'custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,READY:.status.containerStatuses[0].ready'
    printf '\n===== Node zones =====\n'
    kubectl get nodes -L topology.kubernetes.io/zone
    ```
