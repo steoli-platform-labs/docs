@@ -17,6 +17,8 @@ This lab activates the platform's multi-environment GitOps layout.
 
 Labs 01-14 build and validate the dev platform. Lab 15 adds staging and production desired state by using one root Argo CD Application per environment path. The roots are `platform-root-dev`, `platform-root-staging` and `platform-root-production`, and each root reconciles one `platform-config/clusters/<environment>` directory.
 
+For cost and simplicity, this lab runs dev, staging and production in one shared EKS cluster using separate namespaces and Argo CD environment roots. In many production platforms, these environments would be separated further by using different EKS clusters, different AWS accounts, or both. The GitOps structure shown here still maps to that model: each environment root would point at the desired state for its own cluster instead of another namespace in the same cluster.
+
 Concepts introduced in this lab include environment separation, namespace boundaries, environment root Applications, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
 
 ## Outcome
