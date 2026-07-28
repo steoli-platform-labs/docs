@@ -15,7 +15,7 @@
 
 This lab introduces the checks used to evaluate a multi-environment GitOps layout for the platform.
 
-The current platform may still have only the development workload reconciled. That is acceptable for this lab if the result is treated as a gap assessment: you are checking whether staging and production are represented in GitOps desired state, not manually creating them during validation.
+The current platform has only the development workload reconciled. This lab treats that as a gap assessment: you are checking whether staging and production are represented in GitOps desired state, not manually creating them during validation.
 
 Concepts introduced in this lab include environment separation, namespace boundaries, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
 
