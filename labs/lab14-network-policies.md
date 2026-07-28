@@ -99,17 +99,27 @@ Review these files before validation:
       --image=curlimages/curl -- curl -fsS http://sample-api/
    ```
 
-   This should succeed. If it fails, inspect the Service, endpoints and NetworkPolicy before running deny tests.
+   Expected result: the command prints the sample API response and then deletes the temporary pod:
+
+   ```json
+   {"environment":"dev","service":"sample-api"}
+   ```
+
+   You may also see messages such as `couldn't attach to pod`, `falling back to streaming logs` or the JSON response printed twice. That is normal for short-lived `kubectl run --rm -it` pods: the curl container can finish before kubectl attaches, so kubectl falls back to reading the completed pod logs before deleting it.
+
+   Treat the test as successful when the response contains `"service":"sample-api"` and the temporary `allowed-client` pod is deleted. If the curl command exits with an HTTP error, times out or cannot resolve `sample-api`, inspect the Service, endpoints and NetworkPolicy before running deny tests.
 
 7. Run a negative test from an unintended namespace:
 
    ```bash
    kubectl create namespace network-denied-test
    kubectl -n network-denied-test run denied-client --rm -it --restart=Never \
-      --image=curlimages/curl --max-time=5 -- curl -fsS http://sample-api.sample-api-dev.svc.cluster.local/
+      --image=curlimages/curl -- curl --max-time=5 -fsS http://sample-api.sample-api-dev.svc.cluster.local/
    ```
 
-   This should fail or time out only if NetworkPolicy enforcement is enabled. If it succeeds, either the policy is too permissive or the CNI is not enforcing NetworkPolicy.
+   The `--` separator matters: everything before it is a `kubectl run` option, and everything after it is the command executed inside the temporary pod. `--max-time=5` must be after `--` so it is passed to `curl`.
+
+   Expected result: this should fail or time out only if NetworkPolicy enforcement is enabled. A timeout, non-zero curl exit or `pod "denied-client" deleted` after a failed request is the intended deny behavior. If it prints the sample API JSON response, either the policy is too permissive or the CNI is not enforcing NetworkPolicy.
 
 8. Validate DNS and required HTTPS egress from an application pod:
 
