@@ -8,7 +8,6 @@
 | **Lab** | 16 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45-75 minutes |
-| **Estimated Cost** | Free |
 | **Primary Tools** | Helm, kubectl, Argo CD, Argo Rollouts |
 
 ## Introduction

@@ -8,7 +8,6 @@
 | **Lab** | 19 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45-90 minutes |
-| **Estimated Cost** | Reduces ongoing cost |
 | **Primary Tools** | kubectl, Argo CD, AWS CLI, Terraform |
 
 ## Introduction
@@ -17,13 +16,13 @@ This lab decommissions the complete platform built in Labs 01-18.
 
 Cleanup is part of platform engineering. It proves you know what was created, which system owns each resource and how to remove it without leaving cost-generating infrastructure behind.
 
-This lab removes Kubernetes workloads, Argo CD Applications, lab secrets, the Development infrastructure and the Terraform bootstrap backend.
+This lab removes Kubernetes workloads, Argo CD Applications, lab secrets, the shared AWS infrastructure and the Terraform bootstrap backend.
 
 Concepts reinforced in this lab include ownership, GitOps shutdown order, Terraform destroy, remote state, finalizers and safe decommissioning. See the [Concepts Reference](../concepts/README.md) for the platform components you are removing.
 
 ## Outcome
 
-Remove the lab platform resources from the AWS account and verify that the Terraform-managed Development environment is gone.
+Remove the lab platform resources from the AWS account and verify that the Terraform-managed shared AWS infrastructure is gone.
 
 ## Prerequisites
 
@@ -38,7 +37,7 @@ Before starting this lab:
 
 Review these files before cleanup:
 
-- `platform-live/environments/dev`: Terraform root module for the Development VPC, EKS cluster, IAM roles and supporting resources.
+- `platform-live/environments/dev`: Terraform root module for the shared VPC, EKS cluster, IAM roles and supporting resources.
 - `platform-bootstrap`: Terraform backend bucket and bootstrap validation scripts.
 - `platform-config/bootstrap/root-application-*.yaml`: Argo CD environment root Applications.
 - `platform-config/environments/namespaces.yaml`: namespaces created for the platform environments.
@@ -190,7 +189,7 @@ Review these files before cleanup:
 
    Karpenter-created nodes may remain briefly while workloads terminate. Delete any remaining `NodeClaim` objects before deleting the `karpenter` namespace so the Karpenter controller can drain the node, terminate the EC2 instance and remove its finalizers. After this step, the node list should show only the managed node group nodes that Terraform will destroy in the next step.
 
-7. Destroy the Development Terraform environment:
+7. Destroy the shared Terraform infrastructure:
 
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
@@ -203,9 +202,9 @@ Review these files before cleanup:
    terraform apply tf-destroy-plan
    ```
 
-   Review the destroy plan carefully before applying. It should remove the Development VPC, EKS cluster, managed node group, IAM roles and related resources created by the live environment. This is intentionally destructive.
+   Review the destroy plan carefully before applying. It should remove the shared VPC, EKS cluster, managed node group, IAM roles and related resources created by the live environment. This is intentionally destructive.
 
-8. Verify the Development environment state is empty and the AWS resources are gone:
+8. Verify the shared infrastructure state is empty and the AWS resources are gone:
 
    ```bash
    printf '\n===== Terraform state after destroy =====\n'
@@ -220,7 +219,7 @@ Review these files before cleanup:
      --output table
    ```
 
-   `terraform state list` should print no managed resources after a clean destroy. A normal `terraform plan` after destroy will usually show resources to create again because the configuration still describes the desired Development environment; that does not mean destroy failed. Use AWS checks to confirm the previously managed resources are actually gone. AWS may return recently deleted NAT gateways for a short time; `State` should be `deleted` if the lab NAT gateway has already been removed.
+   `terraform state list` should print no managed resources after a clean destroy. A normal `terraform plan` after destroy will usually show resources to create again because the configuration still describes the desired shared AWS infrastructure; that does not mean destroy failed. Use AWS checks to confirm the previously managed resources are actually gone. AWS may return recently deleted NAT gateways for a short time; `State` should be `deleted` if the lab NAT gateway has already been removed.
 
 9. Remove the Terraform bootstrap backend:
 
@@ -310,7 +309,7 @@ Review these files before cleanup:
 
 ## Expected Results
 
-The Development platform is removed, GitOps is no longer reconciling lab workloads, lab-only secrets are scheduled for deletion and the Terraform bootstrap backend is removed.
+The shared AWS infrastructure is removed, GitOps is no longer reconciling lab workloads, lab-only secrets are scheduled for deletion and the Terraform bootstrap backend is removed.
 
 ## Validation
 
@@ -318,7 +317,7 @@ The Development platform is removed, GitOps is no longer reconciling lab workloa
 - Argo CD root Applications are deleted before cluster teardown.
 - Terraform destroy for `platform-live/environments/dev` completes successfully.
 - `terraform state list` prints no managed resources after destroy.
-- The Development EKS cluster and active lab NAT gateways are absent.
+- The shared EKS cluster and active lab NAT gateways are absent.
 - Lab Secrets Manager values are scheduled for deletion or already deleted.
 - Bootstrap backend cleanup removes the final Terraform state bucket.
 

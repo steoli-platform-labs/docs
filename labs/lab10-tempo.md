@@ -8,7 +8,6 @@
 | **Lab** | 10 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 30–60 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | Helm, kubectl, Argo CD, Tempo, OpenTelemetry, Grafana |
 
 ## Introduction
@@ -307,7 +306,7 @@ Review these files before validation:
 
    Later, an instrumented application follows the same path, but the service name and span names come from real code paths such as `sample-api`, `GET /health`, `GET /orders` or `database query`.
 
-   The development cluster is intentionally small before Lab 11 introduces Karpenter. Creating a separate generator Job can fail with `Too many pods`, so this lab runs `telemetrygen` as an ephemeral container inside the existing OpenTelemetry Collector pod. That reuses an already scheduled pod and avoids changing any GitOps-managed replica counts.
+   The shared lab cluster is intentionally small before Lab 11 introduces Karpenter. Creating a separate generator Job can fail with `Too many pods`, so this lab runs `telemetrygen` as an ephemeral container inside the existing OpenTelemetry Collector pod. That reuses an already scheduled pod and avoids changing any GitOps-managed replica counts.
 
    An ephemeral container is a temporary debugging container added to an existing pod. Here it runs a trace generator inside the already scheduled collector pod, which avoids needing extra cluster capacity just to create test telemetry.
 
@@ -465,7 +464,7 @@ If the Tempo or Loki data source is missing after reopening Grafana:
 
 If the OpenTelemetry Collector pod is `Pending` with `Too many pods`:
 
-- The small pre-Karpenter development cluster has reached its per-node pod capacity.
+- The small pre-Karpenter shared lab cluster has reached its per-node pod capacity.
 - Confirm the dev `sample-api` desired state uses a small replica count before Lab 11 introduces node autoscaling.
 - Reconcile `sample-api`, then refresh `opentelemetry` after capacity is available.
 

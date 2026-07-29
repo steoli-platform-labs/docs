@@ -8,12 +8,13 @@
 | **Lab** | 03 |
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 45–75 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | Terraform, AWS CLI |
 
 ## Introduction
 
 This lab provisions the foundational AWS networking layer for the platform.
+
+This lab adds AWS networking resources that can incur cost while they exist, especially the NAT Gateway and its data processing. These resources are removed in the final cleanup lab.
 
 A production-inspired Virtual Private Cloud (VPC) is created with public and private subnets distributed across multiple Availability Zones. Internet connectivity, outbound access and routing are configured to support future workloads running on Amazon EKS.
 
@@ -105,7 +106,7 @@ The networking architecture follows AWS Well-Architected design principles.
 
 - **Multi-AZ deployment:** Resources are distributed across two Availability Zones to improve availability and resilience.
 
-- **Cost-optimized NAT Gateway:** The Development environment uses one NAT Gateway by default to limit recurring lab cost. This creates an Availability Zone dependency for private-subnet outbound connectivity. The reusable module supports one NAT Gateway per Availability Zone when a higher-availability production configuration is required.
+- **Cost-optimized NAT Gateway:** The shared lab infrastructure uses one NAT Gateway by default to limit recurring lab cost. This creates an Availability Zone dependency for private-subnet outbound connectivity. The reusable module supports one NAT Gateway per Availability Zone when a higher-availability production configuration is required.
 
 - **EKS-ready subnet discovery:** Public and private subnets are tagged for future AWS Load Balancer Controller discovery. Public subnets use `kubernetes.io/role/elb = 1`, while private subnets use `kubernetes.io/role/internal-elb = 1`.
 
@@ -148,20 +149,20 @@ platform-labs/
 └── platform-modules/
 ```
 
-`platform-live` and `platform-modules` must be sibling directories because the Development stack initially consumes the module through a local relative path. A future release workflow can replace the relative path with an immutable Git tag.
+`platform-live` and `platform-modules` must be sibling directories because the shared infrastructure stack initially consumes the module through a local relative path. A future release workflow can replace the relative path with an immutable Git tag.
 
 ## Files to Review
 
-This lab uses `platform-modules` for reusable Terraform logic and `platform-live` for the deployable Development environment.
+This lab uses `platform-modules` for reusable Terraform logic and `platform-live` for the deployable shared AWS infrastructure.
 
 | File | Why it matters |
 |------|----------------|
 | `platform-modules/modules/core/vpc.tf` | Owns reusable VPC, subnet and routing logic |
 | `platform-modules/modules/core/variables.tf` | Defines reusable module inputs |
 | `platform-modules/modules/core/outputs.tf` | Exposes subnet and VPC IDs to live environments |
-| `platform-live/environments/dev/main.tf` | Composes reusable modules for the Development environment |
+| `platform-live/environments/dev/network.tf` | Composes reusable modules for the shared lab network |
 | `platform-live/environments/dev/backend.hcl.example` | Documents the remote backend configuration shape |
-| `platform-live/environments/dev/terraform.tfvars.example` | Provides safe example values for the Development network |
+| `platform-live/environments/dev/terraform.tfvars.example` | Provides safe example values for the shared lab network |
 
 ## Step-by-Step Implementation
 
@@ -174,7 +175,7 @@ Follow the steps below to configure the remote backend, review the network desig
    terraform output
    ```
 
-   Move to the Development root module:
+   Move to the shared infrastructure root module:
 
    ```bash
    cd ../platform-live/environments/dev
@@ -374,7 +375,7 @@ Follow the steps below to configure the remote backend, review the network desig
 
 ## Expected Results
 
-Terraform provisions the Development VPC, public subnets, private platform subnets, optional EKS private subnets, Internet Gateway, NAT Gateway, route tables and subnet discovery tags. State is stored in the S3 backend created in Lab 02.
+Terraform provisions the shared lab VPC, public subnets, private platform subnets, optional EKS private subnets, Internet Gateway, NAT Gateway, route tables and subnet discovery tags. State is stored in the S3 backend created in Lab 02.
 
 ## Validation
 
@@ -437,7 +438,7 @@ Terraform provisions the Development VPC, public subnets, private platform subne
 At completion:
 
 - Terraform state is stored remotely and locked in S3.
-- The Development VPC is deployed across two Availability Zones.
+- The shared lab VPC is deployed across two Availability Zones.
 - Public and private subnets are ready for Amazon EKS.
 - Network code is separated into a reusable module and a live environment stack.
 - No temporary connectivity-test resources remain.

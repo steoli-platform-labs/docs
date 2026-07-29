@@ -8,7 +8,6 @@
 | **Lab** | 18 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 30-45 minutes |
-| **Estimated Cost** | Free |
 | **Primary Tools** | kubectl, Argo CD |
 
 ## Introduction

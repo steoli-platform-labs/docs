@@ -8,12 +8,13 @@
 | **Lab** | 02 |
 | **Difficulty** | Beginner |
 | **Estimated Time** | 20-30 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | Terraform, AWS CLI |
 
 ## Introduction
 
 This lab creates the S3 bucket used as the Terraform remote backend for later labs.
+
+This lab starts AWS billing for the backend bucket and stored state objects. The resources are small, but they remain in the account until the final cleanup lab removes the bootstrap backend.
 
 `platform-bootstrap` starts with local state because it is responsible for creating the backend bucket. After the bucket exists, the bootstrap state is migrated into that bucket.
 
@@ -21,7 +22,7 @@ Concepts introduced in this lab include Terraform state, remote backends, S3 bac
 
 ## Outcome
 
-After this lab, `platform-bootstrap` manages the permanent S3 Terraform backend bucket and its own state has been migrated from local state to that backend.
+After this lab, `platform-bootstrap` manages the S3 Terraform backend bucket and its own state has been migrated from local state to that backend.
 
 ## Prerequisites
 
@@ -234,7 +235,7 @@ At completion, `platform-bootstrap` contains the Terraform code and scripts for 
 
 No cleanup is required.
 
-The backend bucket is permanent platform infrastructure and is protected from normal Terraform destruction.
+The backend bucket is shared lab infrastructure. It remains in place for later Terraform labs and is removed during final cleanup in Lab 19.
 
 Do not commit local generated files:
 

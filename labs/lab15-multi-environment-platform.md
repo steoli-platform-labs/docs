@@ -8,7 +8,6 @@
 | **Lab** | 15 |
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 45-60 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | AWS CLI, Helm, kubectl, Argo CD |
 
 ## Introduction
@@ -33,7 +32,7 @@ Before starting this lab:
 
 - Lab 01 - Lab 14 completed
 - AWS CLI, kubectl, Helm and yq installed
-- Argo CD running in the dev cluster
+- Argo CD running in the shared EKS cluster
 - `sample-api:1.0.0` published to GHCR by Lab 06
 - AWS credentials that can read and write the lab Secrets Manager secret values
 
@@ -306,7 +305,7 @@ The implementation remains GitOps-driven and mergeable to `main`. `platform-conf
 
 ## Cleanup
 
-No cleanup is required. Keep staging and production only if you want the shared dev cluster to continue running all three lab environments.
+No cleanup is required. Keep staging and production only if you want the shared EKS cluster to continue running all three lab environments.
 
 ## Next Steps
 

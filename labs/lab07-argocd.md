@@ -8,7 +8,6 @@
 | **Lab** | 07 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45–75 minutes |
-| **Estimated Cost** | Free |
 | **Primary Tools** | Helm, kubectl, Argo CD |
 
 ## Introduction
@@ -32,7 +31,7 @@ Before starting this lab:
 - GitHub Actions operational
 - Helm installed and operational
 - GitHub Container Registry operational
-- `kubectl` points at the Development EKS cluster created in Lab 04
+- `kubectl` points at the shared EKS cluster created in Lab 04
 
 ## Architecture
 
@@ -124,7 +123,7 @@ Key files:
    - `metadata.namespace`: should be `argocd`, because the Argo CD controller watches Applications in that namespace.
    - `spec.source.repoURL`: must point to your `platform-config` repository.
    - `spec.source.targetRevision`: must point to the branch or tag Argo CD should read, usually `main` for these labs.
-   - `spec.source.path`: must point to `clusters/dev`, where the Development cluster's child Applications live.
+   - `spec.source.path`: must point to `clusters/dev`, where the dev environment's child Applications live.
    - `spec.destination.server`: should be `https://kubernetes.default.svc`, which means the same cluster where Argo CD is running.
    - `spec.syncPolicy.automated.prune`: allows Argo CD to remove resources that were deleted from Git.
    - `spec.syncPolicy.automated.selfHeal`: allows Argo CD to correct manual in-cluster drift back to the Git-defined state.
@@ -165,7 +164,7 @@ Key files:
    grep -A4 'image:' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
-   The Development lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`, the public release image tag published in Lab 06. No image pull secret is required for the reference image.
+   The dev lab path uses `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`, the public release image tag published in Lab 06. No image pull secret is required for the reference image.
 
    Real platforms often keep application images private. In that case, each workload namespace needs a registry credential secret, and the Helm values should set `imagePullSecrets` to reference that secret name. The reference lab does not require this because the published `sample-api` package is public.
 

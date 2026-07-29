@@ -8,7 +8,6 @@
 | **Lab** | 17 |
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-60 minutes |
-| **Estimated Cost** | Free |
 | **Primary Tools** | Helm, kubectl, Argo CD |
 
 ## Introduction

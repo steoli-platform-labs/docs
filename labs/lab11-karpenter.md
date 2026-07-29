@@ -8,12 +8,13 @@
 | **Lab** | 11 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45-75 minutes |
-| **Estimated Cost** | Medium |
 | **Primary Tools** | Terraform, Helm, kubectl, Argo CD, Karpenter |
 
 ## Introduction
 
 This lab introduces Karpenter as the cluster autoscaling component for the platform.
+
+This lab can add AWS cost when Karpenter provisions extra EC2 instances for pending pods. The lab validates that behavior with temporary demand and the final cleanup lab removes any remaining Karpenter-created capacity.
 
 Karpenter watches unschedulable pods and provisions right-sized compute capacity for the EKS cluster. In this lab it is managed through GitOps so autoscaling configuration remains declarative and reviewable.
 

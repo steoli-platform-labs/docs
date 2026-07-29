@@ -8,12 +8,13 @@
 | **Lab** | 12 |
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-60 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | AWS CLI, Terraform, Helm, kubectl, Argo CD, External Secrets Operator |
 
 ## Introduction
 
 This lab introduces External Secrets Operator for synchronizing secrets from AWS Secrets Manager into Kubernetes.
+
+This lab creates AWS Secrets Manager test secrets. They are small lab values, but Secrets Manager charges per stored secret until they are deleted or scheduled for deletion in the final cleanup lab.
 
 The goal is to keep real secret values outside Git while still managing the secret synchronization configuration declaratively through the platform GitOps repository.
 
@@ -135,7 +136,7 @@ Review these files before validation:
      --service-account external-secrets
    ```
 
-   These Terraform-managed resources were created when you applied the current Development infrastructure in the earlier Terraform labs. The role output should exist and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account. If either check is missing, stop and reconcile `platform-live/environments/dev` before continuing; otherwise the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
+   These Terraform-managed resources were created when you applied the current shared AWS infrastructure in the earlier Terraform labs. The role output should exist and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account. If either check is missing, stop and reconcile `platform-live/environments/dev` before continuing; otherwise the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
 
    The Pod Identity association output should include the `external-secrets` namespace and `external-secrets` service account. An empty `associations` list is a stop condition.
 

@@ -8,12 +8,13 @@
 | **Lab** | 04 |
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-60 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | Terraform, AWS CLI, kubectl |
 
 ## Introduction
 
-This lab enables Amazon EKS in the Development Terraform root module.
+This lab enables Amazon EKS in the shared Terraform root module.
+
+This lab adds AWS resources that incur cost while they exist, including the EKS control plane and EC2 worker nodes. These resources are removed in the final cleanup lab.
 
 The EKS cluster uses the VPC and EKS-ready private subnets created in Lab 03.
 
@@ -23,32 +24,32 @@ Concepts introduced in this lab include Amazon EKS, Kubernetes clusters, control
 
 ## Outcome
 
-After this lab, the Development Terraform root module manages an active Amazon EKS cluster with at least one managed node group in private subnets.
+After this lab, the shared infrastructure Terraform root module manages an active Amazon EKS cluster with at least one managed node group in private subnets.
 
 ## Prerequisites
 
 - Lab 01 - Lab 03 completed.
 - AWS CLI, Terraform and kubectl installed.
-- The Development root module is already applied with networking enabled.
+- The shared infrastructure root module is already applied with networking enabled.
 - Terraform can run from `platform-live/environments/dev`.
 
 ## Files to Review
 
-This lab reviews the reusable EKS module in `platform-modules` and the Development environment composition in `platform-live`.
+This lab reviews the reusable EKS module in `platform-modules` and the shared AWS infrastructure composition in `platform-live`.
 
 | File | Why it matters |
 |------|----------------|
 | `platform-modules/modules/eks/main.tf` | Defines reusable EKS cluster and node group resources |
 | `platform-modules/modules/eks/variables.tf` | Exposes EKS version, subnet and node configuration inputs |
 | `platform-modules/modules/eks/outputs.tf` | Exposes cluster connection details to the live stack |
-| `platform-live/environments/dev/main.tf` | Enables or disables EKS in the Development environment |
+| `platform-live/environments/dev/eks.tf` | Enables or disables EKS in the shared AWS infrastructure |
 | `platform-live/environments/dev/terraform.tfvars.example` | Shows safe defaults for enabling EKS |
 
 ## Step-by-Step Implementation
 
-Enable EKS through Terraform, select a supported Kubernetes version and apply the Development root module.
+Enable EKS through Terraform, select a supported Kubernetes version and apply the shared infrastructure root module.
 
-1. Open the Development root module:
+1. Open the shared infrastructure root module:
 
    ```bash
    cd "$WORKSPACE/platform-live/environments/dev"
@@ -208,11 +209,11 @@ If nodes do not join, verify that EKS is using the expected private subnet IDs a
 
 ## Final Repository State
 
-At completion, `platform-live` composes the reusable EKS module for the Development environment and `platform-modules` contains reusable EKS module code. The deployed cluster remains managed by Terraform.
+At completion, `platform-live` composes the reusable EKS module for the shared AWS infrastructure and `platform-modules` contains reusable EKS module code. The deployed cluster remains managed by Terraform.
 
 ## Cleanup
 
-Do not destroy the Development root module. Later labs depend on the EKS cluster.
+Do not destroy the shared infrastructure root module. Later labs depend on the EKS cluster.
 
 Do not commit local generated files:
 

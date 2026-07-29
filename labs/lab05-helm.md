@@ -8,7 +8,6 @@
 | **Lab** | 05 |
 | **Difficulty** | Beginner |
 | **Estimated Time** | 15-25 minutes |
-| **Estimated Cost** | Free |
 | **Primary Tools** | Helm, kubectl |
 
 ## Introduction

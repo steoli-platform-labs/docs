@@ -8,7 +8,6 @@
 | **Lab** | 09 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 30–60 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | Helm, kubectl, Argo CD, Loki, Grafana |
 
 ## Introduction
@@ -114,11 +113,11 @@ Review these files before validation:
    - `repoURL` is `https://grafana.github.io/helm-charts`.
    - `chart` is `loki`.
    - `targetRevision` is pinned instead of using `*`, so the lab does not drift when Grafana publishes a new chart.
-   - `deploymentMode` is `SingleBinary`, which runs Loki as one stateful workload for a small development cluster.
+   - `deploymentMode` is `SingleBinary`, which runs Loki as one stateful workload for the small shared lab cluster.
    - `loki.storage.type` is `filesystem`, so this lab does not need S3 or another object store.
    - `singleBinary.persistence.enabled` is `false`, so Loki does not create a PVC or require a cluster `StorageClass`.
    - `singleBinary.extraVolumes` and `singleBinary.extraVolumeMounts` mount an `emptyDir` at `/var/loki`, giving Loki writable ephemeral storage while keeping the lab lightweight.
-   - `gateway`, `lokiCanary` and Helm `test` are disabled to keep the lab small enough for the current development cluster.
+   - `gateway`, `lokiCanary` and Helm `test` are disabled to keep the lab small enough for the current shared lab cluster.
    - `loki.useTestSchema` is enabled for this non-production lab. Production Loki deployments should use an explicit schema and object storage.
 
 2. Review the Alloy desired state:

@@ -8,7 +8,6 @@
 | **Lab** | 08 |
 | **Difficulty** | Advanced |
 | **Estimated Time** | 45–75 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | Helm, kubectl, Argo CD, Prometheus, Grafana |
 
 ## Introduction

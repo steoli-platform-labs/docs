@@ -8,7 +8,6 @@
 | **Lab** | XX |
 | **Difficulty** | Beginner/Intermediate/Advanced |
 | **Estimated Time** | |
-| **Estimated Cost** | Free/Low/Medium |
 | **Primary Tools** | |
 
 ## Introduction

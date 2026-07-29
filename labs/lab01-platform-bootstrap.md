@@ -8,7 +8,6 @@
 | **Lab** | 01 |
 | **Difficulty** | Beginner |
 | **Estimated Time** | 20–30 minutes |
-| **Estimated Cost** | Free |
 | **Primary Tools** | Git, GitHub, AWS CLI, Terraform |
 
 ## Introduction

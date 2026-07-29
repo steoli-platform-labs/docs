@@ -8,7 +8,6 @@
 | **Lab** | 06 |
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-45 minutes |
-| **Estimated Cost** | Free |
 | **Primary Tools** | GitHub Actions, Docker, Terraform, Helm |
 
 ## Introduction
@@ -187,7 +186,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 6. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 
-   The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. The reference package is public, so no Docker or Kubernetes registry credentials are required for this image.
+   The shared EKS cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. The reference package is public, so no Docker or Kubernetes registry credentials are required for this image.
 
    Verify the image tag:
 

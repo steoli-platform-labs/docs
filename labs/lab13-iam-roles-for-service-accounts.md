@@ -8,7 +8,6 @@
 | **Lab** | 13 |
 | **Difficulty** | Intermediate |
 | **Estimated Time** | 30-45 minutes |
-| **Estimated Cost** | Low |
 | **Primary Tools** | AWS CLI, Terraform, kubectl |
 
 ## Introduction
@@ -69,9 +68,9 @@ Validate the platform workload identity foundation and understand where IRSA ser
 Before starting this lab:
 
 - Lab 01 - Lab 12 completed.
-- `kubectl` points at the Development EKS cluster.
+- `kubectl` points at the shared EKS cluster.
 - Argo CD and the GitOps root Application are operational.
-- The Development Terraform environment has been applied from the current repositories.
+- The shared infrastructure Terraform root has been applied from the current repositories.
 - External Secrets Operator and Karpenter are already healthy from earlier labs.
 - AWS CLI, Terraform, kubectl and Helm are installed, with repository URLs configured.
 
@@ -105,7 +104,7 @@ Review these files before validation:
      --output text
    ```
 
-   `terraform output -raw cluster_name` reads the actual EKS cluster name created in the dev environment. IRSA requires both the EKS OIDC issuer URL and a matching IAM OIDC provider. If either output is empty, stop and reconcile the Development Terraform environment before continuing.
+   `terraform output -raw cluster_name` reads the actual EKS cluster name created by the shared infrastructure root. IRSA requires both the EKS OIDC issuer URL and a matching IAM OIDC provider. If either output is empty, stop and reconcile `platform-live/environments/dev` before continuing.
 
 2. Inspect the existing AWS-integrated controller service accounts:
 
