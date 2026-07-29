@@ -22,9 +22,9 @@ Developer
   -> Container Image
   -> GitHub Container Registry
   -> Helm Values Update
-  -> ArgoCD
+  -> Argo CD
   -> Argo Rollouts
   -> Amazon EKS
 ```
 
-GitHub Actions is responsible for Continuous Integration. ArgoCD is responsible for Kubernetes deployment. CI workflows must not use `kubectl apply`, `helm install` or equivalent direct cluster mutation commands.
+GitHub Actions is responsible for Continuous Integration. Argo CD is responsible for Kubernetes deployment. CI workflows must not use `kubectl apply`, `helm install` or equivalent direct cluster mutation commands.

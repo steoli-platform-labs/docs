@@ -12,9 +12,9 @@
 
 ## Introduction
 
-This lab introduces ArgoCD as the GitOps deployment platform for Kubernetes.
+This lab introduces Argo CD as the GitOps deployment platform for Kubernetes.
 
-ArgoCD continuously monitors Git repositories and automatically synchronizes the desired platform state with the Amazon EKS cluster. From this point onward, Git becomes the single source of truth for Kubernetes deployments.
+Argo CD continuously monitors Git repositories and automatically synchronizes the desired platform state with the Amazon EKS cluster. From this point onward, Git becomes the single source of truth for Kubernetes deployments.
 
 Concepts introduced in this lab include GitOps, Argo CD Applications, app-of-apps, desired state, actual state, reconciliation, sync status, health status, drift, self-heal and pruning. See the [Concepts Reference](../concepts/README.md) for the meaning of each term, including when to refresh `platform-root-dev` versus a child Application.
 
@@ -48,7 +48,7 @@ Before starting this lab:
                      │
             Git Repository Updated
                      │
-                 ArgoCD Server
+                 Argo CD Server
                      │
             Desired State Reconciliation
                      │
@@ -61,7 +61,7 @@ Before starting this lab:
 
 No new AWS infrastructure is provisioned during this lab.
 
-ArgoCD is deployed as a Kubernetes application inside the existing Amazon EKS cluster.
+Argo CD is deployed as a Kubernetes application inside the existing Amazon EKS cluster.
 
 ## Design Decisions
 
@@ -71,27 +71,27 @@ The platform follows modern GitOps best practices.
 
 - **Declarative deployments:** Applications are deployed declaratively using Kubernetes manifests and Helm charts stored in Git.
 
-- **Continuous reconciliation:** ArgoCD continuously compares the desired state in Git with the actual state running inside Kubernetes.
+- **Continuous reconciliation:** Argo CD continuously compares the desired state in Git with the actual state running inside Kubernetes.
 
-- **Self-healing:** When cluster resources drift from the desired state, ArgoCD automatically restores the correct configuration.
+- **Self-healing:** When cluster resources drift from the desired state, Argo CD automatically restores the correct configuration.
 
 - **Drift detection:** Configuration drift is detected automatically without requiring manual validation.
 
 - **Automatic synchronization:** Application changes are deployed automatically after they have been validated by the Continuous Integration pipeline.
 
-- **Helm integration:** ArgoCD uses Helm as the deployment engine for Kubernetes applications. Helm remains the packaging solution while ArgoCD becomes the deployment orchestrator.
+- **Helm integration:** Argo CD uses Helm as the deployment engine for Kubernetes applications. Helm remains the packaging solution while Argo CD becomes the deployment orchestrator.
 
-- **Separation of responsibilities:** GitHub Actions is responsible for validation, testing and building artifacts. ArgoCD is responsible for deployment, synchronization, drift detection and self-healing.
+- **Separation of responsibilities:** GitHub Actions is responsible for validation, testing and building artifacts. Argo CD is responsible for deployment, synchronization, drift detection and self-healing.
 
 ## Implementation Overview
 
 This lab consists of the following high-level tasks.
 
-1. Install ArgoCD using Helm
-2. Configure ArgoCD
-3. Expose the ArgoCD Web UI
-4. Connect ArgoCD to GitHub
-5. Create an ArgoCD Application
+1. Install Argo CD using Helm
+2. Configure Argo CD
+3. Expose the Argo CD Web UI
+4. Connect Argo CD to GitHub
+5. Create an Argo CD Application
 6. Configure automatic synchronization
 7. Deploy the sample application
 8. Verify synchronization
@@ -337,7 +337,7 @@ This lab follows GitOps best practices.
 
 No cleanup is required.
 
-ArgoCD becomes the primary deployment platform for all remaining Kubernetes workloads.
+Argo CD becomes the primary deployment platform for all remaining Kubernetes workloads.
 
 ## References
 

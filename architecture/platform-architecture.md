@@ -14,23 +14,23 @@ GitHub Organization
     |
     +--> platform-bootstrap ----> Terraform state foundation
     +--> platform-modules ------> Reusable Terraform modules
-    +--> platform-live ---------> AWS environments and EKS
+    +--> platform-live ---------> Shared AWS infrastructure and EKS
     +--> helm-charts -----------> Application packaging
     +--> sample-api ------------> Reference workload and CI
-    +--> platform-config -------> ArgoCD desired state
+    +--> platform-config -------> Argo CD desired state
     +--> docs ------------------> Architecture and labs
 
 AWS
     |
     +--> IAM
-    +--> Amazon S3 and DynamoDB
+    +--> Amazon S3
     +--> Amazon VPC
     +--> Amazon EKS
     +--> AWS Secrets Manager
 
 Amazon EKS
     |
-    +--> ArgoCD
+    +--> Argo CD
     +--> Prometheus and Grafana
     +--> Loki and Grafana Alloy
     +--> Tempo and OpenTelemetry Collector
@@ -44,7 +44,7 @@ Amazon EKS
 
 - `platform-bootstrap` creates resources required before the main Terraform state can exist.
 - `platform-modules` contains reusable, environment-independent Terraform modules.
-- `platform-live` composes modules into concrete AWS environments.
+- `platform-live` composes modules into the shared AWS infrastructure used by the lab environments.
 - `platform-config` is the GitOps source of truth for Kubernetes platform and workload configuration.
 - `helm-charts` contains custom charts owned by the project.
 - `sample-api` contains application source code and Continuous Integration workflows.
@@ -52,4 +52,4 @@ Amazon EKS
 
 ## Environment Model
 
-The portfolio implementation uses one EKS cluster with Development, Staging and Production namespaces to control cost. This is an educational compromise. A production implementation would normally evaluate separate AWS accounts and separate clusters for stronger isolation.
+The portfolio implementation uses one shared EKS cluster with dev, staging and production namespaces to control cost. This is an educational compromise. A production implementation would normally evaluate separate AWS accounts and separate clusters for stronger isolation.

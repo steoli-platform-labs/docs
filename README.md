@@ -6,6 +6,16 @@ The platform is built incrementally through a series of hands-on labs, with each
 
 ---
 
+# Why Complete These Labs
+
+These labs give you a practical, end-to-end platform engineering portfolio project instead of a collection of isolated tutorials. You build the foundation, deploy Kubernetes, introduce GitOps, add observability, wire in workload identity and secrets, validate autoscaling and resilience, then decommission everything cleanly.
+
+Completing the series demonstrates that you can reason about real platform ownership boundaries: Terraform owns AWS infrastructure, Argo CD owns Kubernetes desired state, Helm packages workloads, GitHub Actions builds artifacts and operational runbooks explain how to validate and recover the system. That combination is directly relevant to teams building internal developer platforms, modernizing cloud delivery or preparing for production Kubernetes operations on AWS.
+
+The result is a credible reference implementation you can discuss in interviews, adapt for demos or use as a baseline when evaluating platform engineering practices in a real organization.
+
+---
+
 # Platform Vision
 
 The objective of this project is to design, build and operate a cloud-native platform similar to those used by modern Platform Engineering teams.
@@ -36,7 +46,6 @@ Core technologies:
 
 - Terraform
 - Amazon S3
-- DynamoDB
 - Amazon VPC
 - IAM
 
@@ -51,7 +60,7 @@ Core technologies:
 - Amazon EKS
 - Helm
 - GitHub Actions
-- ArgoCD
+- Argo CD
 
 ---
 
@@ -137,7 +146,7 @@ Infrastructure is provisioned and managed using Terraform.
 
 ## GitOps
 
-Kubernetes deployments are managed declaratively through Git using ArgoCD.
+Kubernetes deployments are managed declaratively through Git using Argo CD.
 
 ## Automation
 

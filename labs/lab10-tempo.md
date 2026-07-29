@@ -62,13 +62,13 @@ Before starting this lab:
 
 No additional AWS infrastructure is provisioned during this lab.
 
-Tempo and the OpenTelemetry Collector are deployed into the existing Amazon EKS cluster using ArgoCD and Helm.
+Tempo and the OpenTelemetry Collector are deployed into the existing Amazon EKS cluster using Argo CD and Helm.
 
 ## Design Decisions
 
 The tracing platform follows cloud-native observability best practices.
 
-- **GitOps deployment:** All tracing components are deployed through ArgoCD.
+- **GitOps deployment:** All tracing components are deployed through Argo CD.
 
 - **Tempo:** Grafana Tempo is selected because it integrates naturally with Grafana and complements the existing observability stack.
 
@@ -88,7 +88,7 @@ This lab consists of the following high-level tasks.
 
 1. Configure the Tempo Helm chart
 2. Configure the OpenTelemetry Collector
-3. Create ArgoCD Applications
+3. Create Argo CD Applications
 4. Synchronize applications
 5. Configure Grafana data sources
 6. Instrument the sample application

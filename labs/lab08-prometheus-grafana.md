@@ -29,7 +29,7 @@ Validate the Prometheus and Grafana observability foundation in the complete pla
 Before starting this lab:
 
 - Lab 01 - Lab 07 completed
-- ArgoCD operational
+- Argo CD operational
 - Amazon EKS operational
 - AWS CLI, Terraform, kubectl and Helm installed, with repository URLs configured
 
@@ -57,13 +57,13 @@ Before starting this lab:
 
 No additional AWS infrastructure is provisioned during this lab.
 
-Prometheus and Grafana are deployed into the existing Amazon EKS cluster using ArgoCD and Helm.
+Prometheus and Grafana are deployed into the existing Amazon EKS cluster using Argo CD and Helm.
 
 ## Design Decisions
 
 The observability platform follows cloud-native best practices.
 
-- **GitOps deployment:** Prometheus and Grafana are deployed through ArgoCD. No manual Helm installations are performed.
+- **GitOps deployment:** Prometheus and Grafana are deployed through Argo CD. No manual Helm installations are performed.
 
 - **kube-prometheus-stack:** The platform uses the community-maintained **kube-prometheus-stack** Helm chart, which includes Prometheus Operator and recommended Kubernetes monitoring components.
 
@@ -82,7 +82,7 @@ The observability platform follows cloud-native best practices.
 This lab consists of the following high-level tasks.
 
 1. Configure the kube-prometheus-stack Helm chart
-2. Create an ArgoCD Application
+2. Create an Argo CD Application
 3. Synchronize the application
 4. Verify Prometheus deployment
 5. Verify Grafana deployment

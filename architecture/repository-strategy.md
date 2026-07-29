@@ -10,8 +10,8 @@ The intended GitHub organization is `steoli-platform-labs`.
 |------------|----------------|------------------|
 | platform-bootstrap | Terraform state bootstrap resources | EKS workloads |
 | platform-modules | Reusable Terraform modules | Environment-specific values |
-| platform-live | Environment compositions and AWS deployments | Application source code |
-| platform-config | ArgoCD applications and Kubernetes desired state | Terraform state |
+| platform-live | Shared AWS infrastructure composition and deployment | Application source code |
+| platform-config | Argo CD applications and Kubernetes desired state | Terraform state |
 | helm-charts | Custom Helm charts | Environment credentials |
 | sample-api | Reference application and CI | Cluster deployment commands |
 | docs | Architecture and labs | Secrets or generated state |
@@ -26,7 +26,7 @@ Infrastructure:
 platform-modules -> platform-live -> Terraform -> AWS
 
 Application:
-sample-api -> GitHub Actions -> GHCR -> platform-config -> ArgoCD -> EKS
+sample-api -> GitHub Actions -> GHCR -> platform-config -> Argo CD -> EKS
 ```
 
 ## Branching

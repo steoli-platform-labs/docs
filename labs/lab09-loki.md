@@ -54,7 +54,7 @@ Before starting this lab:
 
 No additional AWS infrastructure is provisioned during this lab.
 
-Loki and Grafana Alloy are deployed into the existing Amazon EKS cluster using ArgoCD and Helm.
+Loki and Grafana Alloy are deployed into the existing Amazon EKS cluster using Argo CD and Helm.
 
 This lab intentionally uses ephemeral Loki storage. Logs are stored on the Loki pod filesystem and are lost if the pod is deleted or restarted. That tradeoff is acceptable for learning log collection and querying without adding new AWS resources. A production Loki deployment should use durable object storage, such as Amazon S3, with explicit retention and access controls.
 
@@ -62,7 +62,7 @@ This lab intentionally uses ephemeral Loki storage. Logs are stored on the Loki 
 
 The logging platform follows cloud-native observability best practices.
 
-- **GitOps deployment:** All logging components are deployed through ArgoCD. No manual Helm installations are performed.
+- **GitOps deployment:** All logging components are deployed through Argo CD. No manual Helm installations are performed.
 
 - **Loki:** Grafana Loki is selected as the centralized logging platform because it integrates natively with Grafana and is optimized for Kubernetes environments.
 
@@ -82,7 +82,7 @@ This lab consists of the following high-level tasks.
 
 1. Configure the Loki Helm chart
 2. Configure Grafana Alloy
-3. Create ArgoCD Applications
+3. Create Argo CD Applications
 4. Synchronize applications
 5. Configure Grafana data sources
 6. Verify log collection
