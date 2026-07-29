@@ -244,7 +244,15 @@ Review these files before cleanup:
    Empty all object versions and delete markers from the versioned backend bucket before destroying it:
 
    ```bash
-   bucket="$(terraform output -raw state_bucket_name)"
+   bucket="$(
+     terraform state show -no-color aws_s3_bucket.terraform_state \
+       | awk -F' = ' '/^[[:space:]]*bucket[[:space:]]*=/{gsub(/"/, "", $2); print $2; exit}'
+   )"
+
+   if [ -z "$bucket" ]; then
+     printf 'Could not determine backend bucket name from Terraform state.\n'
+     exit 1
+   fi
 
    printf '\n===== Delete current and previous state object versions =====\n'
    while read -r key version_id; do
@@ -332,6 +340,7 @@ If Terraform destroy fails:
 - Read the first AWS error carefully; dependency errors usually mean another resource still references the object.
 - Re-run `terraform plan -destroy` after deleting Kubernetes load balancer Services, because cloud load balancers can lag behind Kubernetes deletion.
 - If bootstrap backend destroy fails because the S3 bucket is not empty, run the Step 9 bucket-emptying commands and then create a new destroy plan.
+- If `terraform output -raw state_bucket_name` reports `No outputs found` after a partial bootstrap destroy, use the Step 9 state-based bucket lookup instead. The bucket resource can still be in state even when outputs are no longer available.
 - Do not delete Terraform state files to make errors disappear. Fix the underlying resource or import/remove state deliberately only if you understand the consequence.
 
 If namespaces are stuck terminating:
