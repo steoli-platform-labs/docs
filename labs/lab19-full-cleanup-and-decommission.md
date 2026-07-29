@@ -224,18 +224,38 @@ Review these files before cleanup:
 
 9. Optional: remove the Terraform bootstrap backend after all lab state is no longer needed:
 
+   The bootstrap bucket has two safety properties that make this step intentionally different from the Development environment destroy:
+
+   - Keep `force_destroy_state_bucket = false` while using the labs so a normal configuration cannot empty the backend bucket by accident.
+   - Set `force_destroy_state_bucket = true` only for this final teardown so Terraform can remove the versioned state bucket and its object versions.
+
+   First, set `force_destroy_state_bucket = true` in your local `platform-bootstrap/terraform.tfvars`. Do not commit this local decommission setting.
+
+   Next, migrate the bootstrap state back to local state. This prevents Terraform from trying to write its final state into the same S3 bucket it is destroying:
+
    ```bash
    cd "$WORKSPACE/platform-bootstrap"
 
-   printf '\n===== Bootstrap Terraform init =====\n'
-   terraform init
+   printf '\n===== Disable remote backend for final teardown =====\n'
+   mv backend.tf backend.tf.disabled
+
+   printf '\n===== Migrate bootstrap state back to local state =====\n'
+   terraform init -migrate-state -force-copy
+
+   printf '\n===== Confirm bootstrap state is local and readable =====\n'
+   terraform state list
+   ```
+
+   Finally, destroy the bootstrap resources:
+
+   ```bash
    printf '\n===== Bootstrap destroy plan =====\n'
    terraform plan -destroy -out=tf-bootstrap-destroy-plan
    printf '\n===== Bootstrap destroy apply =====\n'
    terraform apply tf-bootstrap-destroy-plan
    ```
 
-   Only run this step if you are done with the whole lab series and no other Terraform root uses the backend bucket. Removing the backend bucket can make future state inspection impossible unless you saved the information elsewhere.
+   Only run this step if you are done with the whole lab series and no other Terraform root uses the backend bucket. Removing the backend bucket can make future state inspection impossible unless you saved the information elsewhere. The local `terraform.tfstate`, disabled backend file and teardown value in `terraform.tfvars` are local artifacts; keep or remove the local workspace according to your preference after the AWS resources are gone.
 
 ## Expected Results
 
@@ -268,6 +288,7 @@ If Terraform destroy fails:
 
 - Read the first AWS error carefully; dependency errors usually mean another resource still references the object.
 - Re-run `terraform plan -destroy` after deleting Kubernetes load balancer Services, because cloud load balancers can lag behind Kubernetes deletion.
+- If bootstrap backend destroy fails because the S3 bucket is not empty, confirm `force_destroy_state_bucket = true` is set in local `platform-bootstrap/terraform.tfvars`, then create a new destroy plan.
 - Do not delete Terraform state files to make errors disappear. Fix the underlying resource or import/remove state deliberately only if you understand the consequence.
 
 If namespaces are stuck terminating:
