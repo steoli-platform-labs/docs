@@ -17,7 +17,7 @@ This lab decommissions the complete platform built in Labs 01-18.
 
 Cleanup is part of platform engineering. It proves you know what was created, which system owns each resource and how to remove it without leaving cost-generating infrastructure behind.
 
-This lab has two cleanup levels. The standard cleanup removes Kubernetes workloads, Argo CD Applications, lab secrets and the Development infrastructure. The optional full account cleanup also removes the Terraform bootstrap backend after you no longer need any lab state.
+This lab removes Kubernetes workloads, Argo CD Applications, lab secrets, the Development infrastructure and the Terraform bootstrap backend.
 
 Concepts reinforced in this lab include ownership, GitOps shutdown order, Terraform destroy, remote state, finalizers and safe decommissioning. See the [Concepts Reference](../concepts/README.md) for the platform components you are removing.
 
@@ -32,7 +32,7 @@ Before starting this lab:
 - Lab 01 - Lab 18 completed.
 - AWS CLI, Terraform, kubectl, Helm and GitHub CLI installed.
 - Access to the same AWS account, Region and local workspace used for the earlier labs.
-- A clear decision on whether you want to keep or remove the Terraform bootstrap backend.
+- No other Terraform root modules depend on the bootstrap backend bucket.
 
 ## Files to Review
 
@@ -222,16 +222,11 @@ Review these files before cleanup:
 
    `terraform state list` should print no managed resources after a clean destroy. A normal `terraform plan` after destroy will usually show resources to create again because the configuration still describes the desired Development environment; that does not mean destroy failed. Use AWS checks to confirm the previously managed resources are actually gone. AWS may return recently deleted NAT gateways for a short time; `State` should be `deleted` if the lab NAT gateway has already been removed.
 
-9. Optional: remove the Terraform bootstrap backend after all lab state is no longer needed:
+9. Remove the Terraform bootstrap backend:
 
-   The bootstrap bucket has two safety properties that make this step intentionally different from the Development environment destroy:
+   The bootstrap backend needs one extra safeguard because it stores Terraform's own state. Migrate the bootstrap state back to local state first so Terraform does not try to write its final state into the same S3 bucket it is destroying.
 
-   - Keep `force_destroy_state_bucket = false` while using the labs so a normal configuration cannot empty the backend bucket by accident.
-   - Set `force_destroy_state_bucket = true` only for this final teardown so Terraform can remove the versioned state bucket and its object versions.
-
-   First, set `force_destroy_state_bucket = true` in your local `platform-bootstrap/terraform.tfvars`. Do not commit this local decommission setting.
-
-   Next, migrate the bootstrap state back to local state. This prevents Terraform from trying to write its final state into the same S3 bucket it is destroying:
+   `force_destroy_state_bucket` defaults to `true` in the reference bootstrap configuration so Terraform can remove the versioned state bucket and its object versions during this final cleanup. If your local `terraform.tfvars` was created before that setting existed, add `force_destroy_state_bucket = true` before planning the destroy.
 
    ```bash
    cd "$WORKSPACE/platform-bootstrap"
@@ -246,7 +241,7 @@ Review these files before cleanup:
    terraform state list
    ```
 
-   Finally, destroy the bootstrap resources:
+   Then destroy the bootstrap resources:
 
    ```bash
    printf '\n===== Bootstrap destroy plan =====\n'
@@ -255,11 +250,11 @@ Review these files before cleanup:
    terraform apply tf-bootstrap-destroy-plan
    ```
 
-   Only run this step if you are done with the whole lab series and no other Terraform root uses the backend bucket. Removing the backend bucket can make future state inspection impossible unless you saved the information elsewhere. The local `terraform.tfstate`, disabled backend file and teardown value in `terraform.tfvars` are local artifacts; keep or remove the local workspace according to your preference after the AWS resources are gone.
+   Removing the backend bucket can make future state inspection impossible unless you saved the information elsewhere. The local `terraform.tfstate`, disabled backend file and generated destroy plan are local teardown artifacts; keep or remove the local workspace according to your preference after the AWS resources are gone.
 
 ## Expected Results
 
-The Development platform is removed, GitOps is no longer reconciling lab workloads and lab-only secrets are scheduled for deletion.
+The Development platform is removed, GitOps is no longer reconciling lab workloads, lab-only secrets are scheduled for deletion and the Terraform bootstrap backend is removed.
 
 ## Validation
 
@@ -269,7 +264,7 @@ The Development platform is removed, GitOps is no longer reconciling lab workloa
 - `terraform state list` prints no managed resources after destroy.
 - The Development EKS cluster and active lab NAT gateways are absent.
 - Lab Secrets Manager values are scheduled for deletion or already deleted.
-- Optional bootstrap backend cleanup is performed only when no longer needed.
+- Bootstrap backend cleanup removes the final Terraform state bucket.
 
 ## Troubleshooting
 
