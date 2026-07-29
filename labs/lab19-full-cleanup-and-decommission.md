@@ -241,6 +241,54 @@ Review these files before cleanup:
    terraform state list
    ```
 
+   Empty all object versions and delete markers from the versioned backend bucket before destroying it:
+
+   ```bash
+   bucket="$(terraform output -raw state_bucket_name)"
+
+   printf '\n===== Delete current and previous state object versions =====\n'
+   while read -r key version_id; do
+     if [ -n "$key" ] && [ "$key" != "None" ]; then
+       aws s3api delete-object \
+         --bucket "$bucket" \
+         --key "$key" \
+         --version-id "$version_id" \
+         --region "$AWS_REGION" \
+         --profile "$AWS_PROFILE"
+     fi
+   done < <(aws s3api list-object-versions \
+     --bucket "$bucket" \
+     --query 'Versions[].[Key,VersionId]' \
+     --output text \
+     --region "$AWS_REGION" \
+     --profile "$AWS_PROFILE")
+
+   printf '\n===== Delete state bucket delete markers =====\n'
+   while read -r key version_id; do
+     if [ -n "$key" ] && [ "$key" != "None" ]; then
+       aws s3api delete-object \
+         --bucket "$bucket" \
+         --key "$key" \
+         --version-id "$version_id" \
+         --region "$AWS_REGION" \
+         --profile "$AWS_PROFILE"
+     fi
+   done < <(aws s3api list-object-versions \
+     --bucket "$bucket" \
+     --query 'DeleteMarkers[].[Key,VersionId]' \
+     --output text \
+     --region "$AWS_REGION" \
+     --profile "$AWS_PROFILE")
+
+   printf '\n===== Confirm state bucket is empty =====\n'
+   aws s3api list-object-versions \
+     --bucket "$bucket" \
+     --query '{Versions:Versions,DeleteMarkers:DeleteMarkers}' \
+     --output table \
+     --region "$AWS_REGION" \
+     --profile "$AWS_PROFILE"
+   ```
+
    Then destroy the bootstrap resources:
 
    ```bash
@@ -283,7 +331,7 @@ If Terraform destroy fails:
 
 - Read the first AWS error carefully; dependency errors usually mean another resource still references the object.
 - Re-run `terraform plan -destroy` after deleting Kubernetes load balancer Services, because cloud load balancers can lag behind Kubernetes deletion.
-- If bootstrap backend destroy fails because the S3 bucket is not empty, confirm `force_destroy_state_bucket = true` is set in local `platform-bootstrap/terraform.tfvars`, then create a new destroy plan.
+- If bootstrap backend destroy fails because the S3 bucket is not empty, run the Step 9 bucket-emptying commands and then create a new destroy plan.
 - Do not delete Terraform state files to make errors disappear. Fix the underlying resource or import/remove state deliberately only if you understand the consequence.
 
 If namespaces are stuck terminating:
