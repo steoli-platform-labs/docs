@@ -13,7 +13,7 @@
 
 ## Introduction
 
-This lab improves the sample application's availability and resilience configuration.
+This lab validates the sample application's availability and resilience configuration.
 
 The lab validates probes, disruption handling and scheduling rules so the workload behaves predictably during node maintenance, pod restarts and normal cluster changes.
 

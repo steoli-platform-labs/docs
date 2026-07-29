@@ -153,10 +153,13 @@ Review these files before validation:
 9. Delete the temporary namespace after validation:
 
    ```bash
+   printf '\n===== Delete denied-test namespace =====\n'
    kubectl delete namespace network-denied-test
    ```
 
    Proceed when namespace deletion completes or `kubectl get namespace network-denied-test` returns `NotFound`. If the namespace stays `Terminating`, inspect namespace events and finalizers before continuing.
+
+   If this lab created an otherwise empty `ingress-nginx` namespace only for the allowed-source test, you may delete it manually. If your platform already had a real ingress controller in that namespace, keep it.
 
 ## Expected Results
 The `sample-api` chart renders a NetworkPolicy and the deployed application still passes health checks while unintended traffic is denied.

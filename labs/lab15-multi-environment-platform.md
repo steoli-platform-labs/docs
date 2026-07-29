@@ -19,6 +19,8 @@ Labs 01-14 build and validate the dev platform. Lab 15 adds staging and producti
 
 For cost and simplicity, this lab runs dev, staging and production in one shared EKS cluster using separate namespaces and Argo CD environment roots. In many production platforms, these environments would be separated further by using different EKS clusters, different AWS accounts, or both. The GitOps structure shown here still maps to that model: each environment root would point at the desired state for its own cluster instead of another namespace in the same cluster.
 
+In this lab, `production` means a production-shaped namespace and GitOps Application inside the shared lab cluster. It is useful for learning promotion and separation patterns, but it is not a replacement for production-grade account, network and cluster isolation.
+
 Concepts introduced in this lab include environment separation, namespace boundaries, environment root Applications, promotion, environment-specific desired state and Git history as an audit trail. See the [Concepts Reference](../concepts/README.md) for how multi-environment GitOps fits into the platform.
 
 ## Outcome

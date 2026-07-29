@@ -17,6 +17,8 @@ This lab introduces Karpenter as the cluster autoscaling component for the platf
 
 Karpenter watches unschedulable pods and provisions right-sized compute capacity for the EKS cluster. In this lab it is managed through GitOps so autoscaling configuration remains declarative and reviewable.
 
+For beginners, Karpenter answers a practical question: what happens when the cluster needs more room? Instead of keeping oversized nodes running all the time, Karpenter can add capacity when pods are pending and later remove unused capacity to control cost.
+
 Concepts introduced in this lab include Karpenter, unschedulable pods, NodePools, EC2NodeClasses, NodeClaims and consolidation. See the [Concepts Reference](../concepts/README.md) for the Kubernetes and AWS concepts behind cluster autoscaling.
 
 ## Outcome

@@ -228,7 +228,6 @@ Argo Rollouts is installed and the sample API is managed as a Rollout when progr
 - Canary traffic/replica weight progresses through the documented steps.
 - Pause durations are observed.
 - Readiness failures stop progression.
-- Rollback is described as a Git revert or image-tag change back to the previous known-good version in a production GitOps flow.
 - The stable service remains available during progression.
 - Metrics-based analysis is present if the lab claims automated health-based promotion.
 - The demo uses `1.0.0` and `1.0.1` release tags. An unchanged image tag or application-reported version does not provide traceable progressive delivery.

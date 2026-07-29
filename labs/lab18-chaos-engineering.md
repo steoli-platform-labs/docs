@@ -17,6 +17,8 @@ This lab introduces lightweight chaos validation for the platform.
 
 The goal is to run controlled failure tests against the sample application and verify that the platform's deployment, observability and resilience settings recover as expected.
 
+Chaos engineering is controlled validation, not random breaking. You first prove the system is healthy, then inject one small failure, then verify recovery and clean up the test resources.
+
 Concepts introduced in this lab include chaos engineering, controlled failure injection, steady state, recovery objectives, Kubernetes Jobs and least-privilege RBAC for test automation. See the [Concepts Reference](../concepts/README.md) for how chaos validation fits into platform operations.
 
 ## Outcome
@@ -141,7 +143,7 @@ Review these files before validation:
    kubectl -n argocd get application sample-api-dev -o wide
    ```
 
-   In Grafana, check Prometheus metrics, Loki logs and Tempo traces for the test window if those signals are available. The key question is whether the platform recovered within the expected time and whether the observability stack made the disruption visible.
+   In Grafana, check Prometheus metrics, Loki logs and Tempo traces for the test window if those signals are available. Useful beginner signals include a short pod restart or replacement event, a brief request failure or latency spike, and log lines around the deletion time. The key question is whether the platform recovered within the expected time and whether the observability stack made the disruption visible.
 
    For this lab, recovery is acceptable when ready replicas return to the starting count within five minutes and the health loop has no sustained failure longer than a few consecutive checks. If recovery takes longer, keep the evidence and inspect events, Rollout status and PDB status before rerunning the experiment.
 
@@ -202,7 +204,7 @@ If the Job deletes too many pods:
 The implementation remains GitOps-driven and mergeable to `main`.
 
 ## Cleanup
-Delete the one-off chaos Job and confirm the sample API has returned to its steady state.
+Step 8 deletes the one-off chaos Job and temporary RBAC. Confirm the sample API has returned to its steady state before moving on.
 
 ## Next Steps
-Project capstone and operational validation.
+Continue with [Lab 19 - Full Cleanup and Decommission](./lab19-full-cleanup-and-decommission.md).

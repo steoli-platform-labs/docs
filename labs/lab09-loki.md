@@ -17,6 +17,8 @@ This lab introduces centralized logging using Grafana Loki.
 
 Loki stores Kubernetes logs while Grafana Alloy collects logs from the cluster and forwards them to Loki. Grafana is extended with Loki as an additional data source, providing a unified interface for metrics and logs.
 
+Logs complement the Prometheus metrics from Lab 08: metrics show symptoms such as restarts or errors, while logs help explain the specific events around those symptoms.
+
 Concepts introduced in this lab include logs, log aggregation, Loki, Alloy, DaemonSets, labels and Grafana data sources. See the [Concepts Reference](../concepts/README.md) for how logs differ from metrics and traces.
 
 ## Outcome

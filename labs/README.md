@@ -24,6 +24,7 @@ Use the shared [Concepts Reference](../concepts/README.md) for short explanation
 16. [Lab 16 - Progressive Delivery](./lab16-progressive-delivery.md)
 17. [Lab 17 - High Availability and Resilience](./lab17-high-availability-and-resilience.md)
 18. [Lab 18 - Chaos Engineering](./lab18-chaos-engineering.md)
+19. [Lab 19 - Full Cleanup and Decommission](./lab19-full-cleanup-and-decommission.md)
 
 ## Authoring
 

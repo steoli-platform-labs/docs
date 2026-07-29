@@ -1,4 +1,4 @@
-# Lab 13 - Workload Identity
+# Lab 13 - Workload Identity: EKS Pod Identity and IRSA
 
 ## Lab Information
 
@@ -13,7 +13,7 @@
 
 ## Introduction
 
-This lab introduces IAM Roles for Service Accounts (IRSA), the OIDC-based pattern for letting Kubernetes workloads authenticate to AWS without static credentials.
+This lab introduces workload identity, the pattern for letting Kubernetes workloads authenticate to AWS without static credentials.
 
 The current platform already uses workload identity for AWS-integrated controllers. Karpenter and External Secrets Operator use EKS Pod Identity from earlier labs. This lab validates that foundation and explains how IRSA differs when a workload needs the `eks.amazonaws.com/role-arn` service-account annotation pattern.
 

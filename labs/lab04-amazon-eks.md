@@ -17,6 +17,8 @@ This lab enables Amazon EKS in the Development Terraform root module.
 
 The EKS cluster uses the VPC and EKS-ready private subnets created in Lab 03.
 
+EKS is introduced here because the rest of the platform needs a Kubernetes runtime. Helm charts, GitOps controllers, observability tools and sample workloads all need a cluster where they can run.
+
 Concepts introduced in this lab include Amazon EKS, Kubernetes clusters, control planes, worker nodes, node groups, kubeconfig and `kubectl`. See the [Concepts Reference](../concepts/README.md) for the difference between these components.
 
 ## Outcome

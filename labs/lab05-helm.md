@@ -17,6 +17,8 @@ This lab validates the reusable `sample-api` Helm chart.
 
 Application deployment remains GitOps-driven in later labs. This lab only lints and renders the chart locally.
 
+Rendering before deployment matters because it catches broken Kubernetes YAML early. A chart that cannot render correctly will also fail later when Argo CD tries to deploy it.
+
 Concepts introduced in this lab include Helm charts, values, templates, rendered manifests, Kubernetes Deployments, Services, probes, PodDisruptionBudgets and client-side dry runs. See the [Concepts Reference](../concepts/README.md) for the role each item plays.
 
 ## Outcome
