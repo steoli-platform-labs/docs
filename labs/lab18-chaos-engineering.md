@@ -74,9 +74,11 @@ Review these files before validation:
 
    Proceed only if the sample API Rollout has the expected ready replicas, the PDB exists and `sample-api-dev` is `Synced / Healthy`. Stop if the Rollout is degraded, has fewer ready pods than expected or has been `Progressing` for several minutes.
 
-4. Verify the chaos identity before execution:
+4. Create and verify the chaos identity before execution:
 
    ```bash
+   printf '\n===== Apply chaos RBAC only =====\n'
+   yq 'select(.kind != "Job")' platform-config/chaos/delete-pod.yaml | kubectl apply -f -
    printf '\n===== Chaos service account =====\n'
    kubectl -n sample-api-dev get serviceaccount chaos-runner
    printf '\n===== Can chaos-runner delete pods? =====\n'
@@ -88,6 +90,8 @@ Review these files before validation:
    ```
 
    The first answer should be `yes`; the second should be `no`.
+
+   This step applies only the non-destructive RBAC documents from the chaos manifest. The Job is intentionally excluded here so the pod deletion does not happen until Step 6.
 
    `kubectl auth can-i --as=...` impersonates the chaos ServiceAccount for the permission check. This proves the automation can do the narrow action it needs, deleting pods, without granting broader permissions such as deleting Deployments.
 
@@ -111,7 +115,7 @@ Review these files before validation:
 
    ```bash
    printf '\n===== Create chaos Job =====\n'
-   kubectl create -f platform-config/chaos/delete-pod.yaml
+   yq 'select(.kind == "Job")' platform-config/chaos/delete-pod.yaml | kubectl create -f -
    printf '\n===== Chaos Job logs =====\n'
    kubectl -n sample-api-dev logs -f job/delete-sample-api-pod
    printf '\n===== Watch sample-api pods =====\n'
@@ -144,13 +148,13 @@ Review these files before validation:
 8. Remove the one-off chaos Job after validation:
 
    ```bash
-   printf '\n===== Delete chaos Job =====\n'
-   kubectl -n sample-api-dev delete job delete-sample-api-pod
-   printf '\n===== Remaining jobs and pods =====\n'
-   kubectl -n sample-api-dev get job,pod
+   printf '\n===== Delete chaos manifest resources =====\n'
+   kubectl delete -f platform-config/chaos/delete-pod.yaml --ignore-not-found
+   printf '\n===== Remaining chaos resources and pods =====\n'
+   kubectl -n sample-api-dev get serviceaccount,role,rolebinding,job,pod | grep -E 'chaos|delete-sample|sample-api' || true
    ```
 
-   Keep the workload healthy before moving on. Do not leave active chaos Jobs running.
+   Keep the workload healthy before moving on. Do not leave active chaos Jobs or temporary chaos RBAC behind after the test.
 
 ## Expected Results
 The chaos manifest is valid, the sample API starts from a healthy steady state, and the platform recovers after a controlled pod deletion.
@@ -183,7 +187,7 @@ kubectl -n sample-api-dev get pods -o wide
 
 If the chaos Job cannot start:
 
-- Confirm the manifest was created with `kubectl create -f platform-config/chaos/delete-pod.yaml` before checking live RBAC resources.
+- Confirm Step 4 applied the non-Job RBAC documents before checking live RBAC resources.
 - Confirm the `chaos-runner` ServiceAccount exists after the manifest is created.
 - Confirm the RoleBinding points to that ServiceAccount.
 - Confirm the namespace in the manifest is `sample-api-dev`.
