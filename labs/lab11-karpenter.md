@@ -144,15 +144,7 @@ Review these files before validation:
 
    A client-side dry-run asks Kubernetes whether it understands the manifest shape without creating the object. This is especially useful for Karpenter resources because they depend on CRDs being installed before custom resources can be accepted.
 
-6. Confirm there are no unexpected local desired-state changes:
-
-   ```bash
-   git status --short
-   ```
-
-   A fresh lab run should not require edits here. If `git status --short` shows changes, review whether they are intentional before continuing.
-
-7. Refresh the root Argo CD Application, then reconcile `karpenter`:
+6. Refresh the root Argo CD Application, then reconcile `karpenter`:
 
    ```bash
    printf '\n===== Refresh dev root =====\n'
@@ -181,7 +173,7 @@ Review these files before validation:
 
    If the child Application stays on an old revision, inspect `platform-root-dev` before troubleshooting the child Application.
 
-8. Validate Karpenter readiness and configuration:
+7. Validate Karpenter readiness and configuration:
 
    ```bash
    printf '\n===== Karpenter Application =====\n'
@@ -204,7 +196,7 @@ Review these files before validation:
 
    In the `describe` output, look for readiness conditions such as `Ready=True`. If either custom resource is `Ready=False`, read the condition message before creating the inflate workload.
 
-9. Confirm the instance types Karpenter may launch:
+8. Confirm the instance types Karpenter may launch:
 
    ```bash
    cd "$WORKSPACE/platform-config"
@@ -230,7 +222,7 @@ Review these files before validation:
    kubectl describe nodepool karpenter
    ```
 
-10. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
+9. Create a temporary workload that cannot fit on existing nodes, then watch provisioning:
 
    ```bash
    printf '\n===== Create Karpenter test namespace =====\n'
@@ -276,7 +268,7 @@ Review these files before validation:
    kubectl get nodeclaim -o wide
    ```
 
-11. Clean up the temporary namespace after validation:
+10. Clean up the temporary namespace after validation:
 
    ```bash
    printf '\n===== Delete Karpenter test namespace =====\n'

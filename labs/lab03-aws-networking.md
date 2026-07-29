@@ -347,31 +347,27 @@ Follow the steps below to configure the remote backend, review the network desig
 
     Expected output includes public subnet tags for external load balancers and private subnet tags for internal load balancers. Missing tags can prevent Kubernetes load balancer discovery in later labs.
 
-11. Confirm the reference repositories contain only source files. Do not track `backend.hcl`, `terraform.tfvars` or Terraform state files.
+11. Confirm Terraform state and local inputs stay out of source control.
 
-   In `platform-modules`:
+    This lab creates real AWS networking resources and writes live state to S3. The source repositories should contain reusable Terraform code and examples, not your local backend configuration, local variables or generated state files.
 
-   ```bash
-   printf '\n===== platform-modules git status =====\n'
-   git status
-   printf '\n===== platform-modules whitespace check =====\n'
-   git diff --check
-   printf '\n===== platform-modules ignored local files check =====\n'
-   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
-   ```
+    In `platform-modules`:
 
-   In `platform-live`:
+    ```bash
+    cd "$WORKSPACE/platform-modules"
+    printf '\n===== platform-modules ignored local files check =====\n'
+    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
+    ```
 
-   ```bash
-   printf '\n===== platform-live git status =====\n'
-   git status
-   printf '\n===== platform-live whitespace check =====\n'
-   git diff --check
-   printf '\n===== platform-live ignored local files check =====\n'
-   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
-   ```
+    In `platform-live`:
 
-   The `git ls-files` commands should print no local backend, variable or state files.
+    ```bash
+    cd "$WORKSPACE/platform-live"
+    printf '\n===== platform-live ignored local files check =====\n'
+    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
+    ```
+
+    The `git ls-files` commands should print no local backend, variable or state files. Empty output is the expected result because these files are local execution details, not platform source code.
 
 ## Expected Results
 

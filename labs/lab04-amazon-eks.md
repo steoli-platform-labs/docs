@@ -151,16 +151,14 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 
    Exit code `0` means the applied state matches configuration. Exit code `2` means Terraform sees changes and you should review them before continuing. Exit code `1` is an error.
 
-7. Confirm only Terraform source and documentation files are tracked. Keep local `backend.hcl`, `terraform.tfvars` and `.terraform/` ignored.
+7. Confirm EKS Terraform execution artifacts stay local.
+
+   The EKS apply creates or updates remote state and may use local input files. Those artifacts are required for your workstation and backend, but they are not reusable platform code.
 
    In `platform-modules`:
 
    ```bash
    cd "$WORKSPACE/platform-modules"
-   printf '\n===== platform-modules git status =====\n'
-   git status
-   printf '\n===== platform-modules whitespace check =====\n'
-   git diff --check
    printf '\n===== platform-modules ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
@@ -169,15 +167,11 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 
    ```bash
    cd "$WORKSPACE/platform-live"
-   printf '\n===== platform-live git status =====\n'
-   git status
-   printf '\n===== platform-live whitespace check =====\n'
-   git diff --check
    printf '\n===== platform-live ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
 
-   The `git ls-files` commands should print no local backend, variable or state files.
+   The `git ls-files` commands should print no local backend, variable or state files. Empty output confirms Git is not tracking workstation-specific execution artifacts.
 
 ## Expected Results
 

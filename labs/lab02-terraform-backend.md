@@ -155,18 +155,16 @@ later labs
 
    Exit code `0` means no drift and you can continue. Exit code `2` means Terraform sees changes; review the plan and stop before moving on. Exit code `1` means an error occurred and should be troubleshot first.
 
-8. Confirm only source files and scripts are tracked. Local backend, state and variable files must remain ignored:
+8. Confirm backend safety boundaries.
+
+   The backend bootstrap creates local helper files and Terraform state artifacts while it is setting up the remote state bucket. Those files must not become source-controlled inputs. Check only the risk-bearing filenames:
 
    ```bash
-   printf '\n===== Git status =====\n'
-   git status
-   printf '\n===== Whitespace check =====\n'
-   git diff --check
    printf '\n===== Ignored local files check =====\n'
    git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
 
-   The final command should print no local backend, variable or state files.
+   This command should print nothing. If it prints a filename, Git is tracking a local backend, variable or state file and you should stop before continuing. The learning point is state safety: Terraform state belongs in the configured S3 backend, and personal input files belong outside version control.
 
 ## Expected Results
 

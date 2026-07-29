@@ -40,18 +40,10 @@ Review these files before validation:
 
 ## Step-by-Step Implementation
 
-1. Confirm the chaos manifest exists before starting:
+1. Review the chaos experiment boundary before starting:
 
    ```bash
    cd "$WORKSPACE"
-   test -f platform-config/chaos/delete-pod.yaml
-   ```
-
-   If the file does not exist, stop and pull the latest `platform-config` repository before continuing. This lab expects the chaos experiment manifest to already exist.
-
-2. Review the chaos manifest target and RBAC:
-
-   ```bash
    printf '\n===== Chaos manifest identity =====\n'
    yq '.kind, .metadata.name' platform-config/chaos/delete-pod.yaml
    printf '\n===== Chaos manifest RBAC and target references =====\n'
@@ -60,7 +52,9 @@ Review these files before validation:
 
    Confirm the Job targets only `sample-api` pods in `sample-api-dev`. The Role should allow the minimum actions needed for the experiment and should not grant broad workload mutation permissions.
 
-3. Validate the chaos manifest and establish the steady state before injecting failure:
+   This review is the safety gate for the lab. Chaos engineering is controlled failure injection, not random deletion. You should understand which ServiceAccount runs the experiment, which verb it can perform and which workload labels it targets before creating anything in the cluster.
+
+2. Validate the chaos manifest and establish the steady state before injecting failure:
 
    ```bash
    printf '\n===== Chaos manifest dry-run =====\n'
@@ -75,7 +69,7 @@ Review these files before validation:
 
    Proceed only if the sample API Rollout has the expected ready replicas, the PDB exists and `sample-api-dev` is `Synced / Healthy`. Stop if the Rollout is degraded, has fewer ready pods than expected or has been `Progressing` for several minutes.
 
-4. Create and verify the chaos identity before execution:
+3. Create and verify the chaos identity before execution:
 
    ```bash
    printf '\n===== Apply chaos RBAC only =====\n'
@@ -96,7 +90,7 @@ Review these files before validation:
 
    `kubectl auth can-i --as=...` impersonates the chaos ServiceAccount for the permission check. This proves the automation can do the narrow action it needs, deleting pods, without granting broader permissions such as deleting Deployments.
 
-5. Start a simple availability check in a separate terminal:
+4. Start a simple availability check in a separate terminal:
 
    ```bash
    kubectl -n sample-api-dev port-forward svc/sample-api 8080:80
@@ -112,7 +106,7 @@ Review these files before validation:
 
    Wait for at least three consecutive successful health responses before creating the chaos Job. If the port-forward exits or health checks fail before the experiment, fix the baseline first.
 
-6. Run the one-off chaos Job and watch Kubernetes replace the deleted pod:
+5. Run the one-off chaos Job and watch Kubernetes replace the deleted pod:
 
    ```bash
    printf '\n===== Create chaos Job =====\n'
@@ -131,7 +125,7 @@ Review these files before validation:
 
    A Kubernetes Job is one-off automation. It runs the chaos command to completion once; after it succeeds, you delete the Job so a later lab run can create a fresh one with the same name.
 
-7. Validate recovery through platform signals:
+6. Validate recovery through platform signals:
 
    ```bash
    printf '\n===== sample-api recovery state =====\n'
@@ -146,7 +140,7 @@ Review these files before validation:
 
    For this lab, recovery is acceptable when ready replicas return to the starting count within five minutes and the health loop has no sustained failure longer than a few consecutive checks. If recovery takes longer, keep the evidence and inspect events, Rollout status and PDB status before rerunning the experiment.
 
-8. Remove the one-off chaos Job after validation:
+7. Remove the one-off chaos Job after validation:
 
    ```bash
    printf '\n===== Delete chaos manifest resources =====\n'

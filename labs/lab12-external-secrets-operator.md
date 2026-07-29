@@ -162,16 +162,7 @@ Review these files before validation:
 
    `helm lint` should end with `1 chart(s) linted, 0 chart(s) failed`. The render commands redirect output to `/dev/null`, so no output means success.
 
-7. Confirm there are no unexpected local desired-state changes:
-
-   ```bash
-   cd "$WORKSPACE/platform-config"
-   git status --short
-   ```
-
-   A fresh lab run should not require edits here. If `git status --short` shows changes, review whether they are intentional before continuing.
-
-8. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api-dev`:
+7. Refresh the root Argo CD Application, then reconcile `external-secrets`, `external-secrets-config` and `sample-api-dev`:
 
    ```bash
    printf '\n===== Refresh dev root =====\n'
@@ -190,7 +181,7 @@ Review these files before validation:
 
    Expected behavior: after the current `platform-config` revision is reconciled, `external-secrets`, `external-secrets-config` and `sample-api-dev` should move toward `Synced / Healthy`. If any Application shows `OutOfSync / Degraded`, describe that Application and check for sync errors before continuing.
 
-9. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
+8. Validate the operator, store readiness and test `ExternalSecret` reconciliation:
 
    ```bash
    printf '\n===== external-secrets Application =====\n'

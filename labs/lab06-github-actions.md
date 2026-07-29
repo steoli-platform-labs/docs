@@ -184,7 +184,7 @@ Common issues:
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Workflow is missing | Workflow file is missing from `.github/workflows` | Pull the latest reference repository and confirm the file exists |
-| `terraform fmt -check -recursive` fails | Terraform files are not formatted | Run `terraform -chdir=platform-live fmt -recursive` or `terraform -chdir=platform-modules fmt -recursive`, then commit the formatting changes |
+| `terraform fmt -check -recursive` fails | Terraform files are not formatted | Run the matching local `terraform fmt -recursive` command to understand the drift, then compare with the latest reference repository state before continuing |
 | `helm lint` fails | Chart metadata, values or templates are invalid | Run `helm lint charts/sample-api` locally in `helm-charts` and fix the reported chart issue |
 | Python tests fail | Application dependency or test failure | Run the local `sample-api` virtualenv commands and fix the failing test |
 | Docker build fails | Dockerfile or dependency issue | Run `docker build -t sample-api:lab06 .` locally with Docker running |

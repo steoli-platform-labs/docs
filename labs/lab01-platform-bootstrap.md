@@ -423,45 +423,26 @@ Complete the setup steps below in order. This is the only lab that requires manu
 
    The `find` command prints local directory paths, so the exact prefix may differ from the tree shown above. Proceed when the output includes seven directories ending in the expected repository names.
 
-13. Verify common repository files.
+13. Review the local repository layout and ownership boundaries.
 
-   Each reference repository already contains baseline repository files. Confirm the local clones include `README.md` and `.gitignore` where expected:
+   Each cloned repository owns a different part of the platform. Before moving into Terraform and Kubernetes work, make sure the local workspace reflects the intended multi-repository layout:
 
    ```bash
-   for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
-   do
-     test -f "$WORKSPACE/$repo/README.md"
-     test -f "$WORKSPACE/$repo/.gitignore"
+   printf '\n===== Repository READMEs =====\n'
+   for repo in docs platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api; do
+     printf '\n--- %s ---\n' "$repo"
+     sed -n '1,12p' "$WORKSPACE/$repo/README.md"
    done
    ```
 
-   The ignore files are intentionally broad enough to keep local secrets, generated files and Terraform state out of Git.
+   The point is not just that the directories exist. The README snippets help you connect each repository to its responsibility: bootstrap creates the state foundation, modules define reusable Terraform, live composes AWS infrastructure, config stores Kubernetes desired state, charts package workloads, sample-api owns application code and docs owns the lab guide.
 
-   The `test -f` commands are silent on success. If the block stops or returns an error, one of the expected files is missing; reclone or pull the affected repository before continuing.
+   Keep these boundaries in mind throughout the labs. For example, Terraform state and local variable files belong on your workstation or in the backend, not in Git; Kubernetes desired state belongs in `platform-config`; application source belongs in `sample-api`.
 
-14. Confirm the local clones are clean before continuing:
-
-   ```bash
-   for repo in platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
-   do
-      cd "$WORKSPACE/$repo"
-      git status --short
-      test -f README.md
-      test -f .gitignore
-   done
-   ```
-
-   `git status --short` should print nothing for each repository. Any listed file means the checkout has local changes or generated files; inspect that repository before continuing so later labs start from a known clean reference state.
-
-   Return to the workspace:
+14. Run the complete local validation:
 
    ```bash
    cd "$WORKSPACE"
-   ```
-
-   Run the complete local validation:
-
-   ```bash
    set -e
    export AWS_PAGER=""
 
@@ -485,19 +466,11 @@ Complete the setup steps below in order. This is the only lab that requires manu
    gh repo list "$GITHUB_ORG" --limit 20
    ```
 
-   Validate that every local repository has a clean working tree:
-
-   ```bash
-   for repo in docs platform-bootstrap platform-modules platform-live platform-config helm-charts sample-api
-   do
-     printf '\n===== %s git status =====\n' "$repo"
-     git -C "$WORKSPACE/$repo" status --short
-   done
-   ```
+   This validation proves the workstation can reach the systems used by later labs: AWS for infrastructure, GitHub for repositories and packages, Docker for image builds, Terraform for infrastructure code, kubectl for Kubernetes access and Helm for chart rendering. It does not create cloud resources yet.
 
 ## Expected Results
 
-The workstation has the required tools installed, AWS CLI authentication works, all seven reference repositories exist locally and each implementation repository contains a `README.md` and `.gitignore`.
+The workstation has the required tools installed, AWS CLI authentication works, all seven reference repositories exist locally and the repository ownership boundaries are clear.
 
 ## Validation
 
@@ -506,7 +479,7 @@ The workstation has the required tools installed, AWS CLI authentication works, 
 - AWS STS returns the intended account and principal.
 - GitHub CLI reports an authenticated session.
 - All seven reference repositories are accessible and cloned locally.
-- `git status --short` produces no output for committed repositories.
+- Repository README snippets confirm the expected multi-repository layout and ownership boundaries.
 
 ## Troubleshooting
 

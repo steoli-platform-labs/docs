@@ -96,21 +96,19 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 
    The rendered YAML is just text at this point. These searches are a quick way to prove the chart produced the Kubernetes features that later labs rely on before anything is deployed to the cluster.
 
-5. Confirm the Helm chart source is clean and temporary rendered manifests are not tracked.
+5. Connect the rendered output back to Helm chart design.
 
-   In `helm-charts`:
+   The chart is reusable because behavior is controlled through values instead of separate copied manifests for each environment. Inspect the defaults that later labs override from Argo CD Application values:
 
    ```bash
    cd "$WORKSPACE/helm-charts"
-   printf '\n===== helm-charts git status =====\n'
-   git status
-   printf '\n===== helm-charts whitespace check =====\n'
-   git diff --check
-   printf '\n===== Temporary rendered manifest tracking check =====\n'
-   git ls-files /tmp/sample-api-rendered.yaml
+   printf '\n===== Chart values that control platform behavior =====\n'
+   grep -nE 'repository:|tag:|imagePullSecrets:|resources:|autoscaling:|rollout:|pdb:|secret:' charts/sample-api/values.yaml
+   printf '\n===== Rendered workload names =====\n'
+   grep -nE '^kind:|^  name:' /tmp/sample-api-rendered.yaml
    ```
 
-   The final command should print no temporary rendered manifest.
+   This step is about Helm ownership: the chart defines the configurable deployment contract, while later GitOps Applications choose concrete values for each environment. If the rendered names or feature toggles do not match the values file, fix the chart before deploying it through Argo CD.
 
 ## Expected Results
 
