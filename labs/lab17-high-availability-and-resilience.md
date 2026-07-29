@@ -137,7 +137,7 @@ Review these files before validation:
 
    Do not delete or drain anything until the health loop has at least three consecutive successful responses. If the port-forward exits, restart it and re-establish a steady baseline first.
 
-   During pod deletion or node drain, occasional connection resets can happen if the local port-forward target disappears. What matters for this lab is whether the Service quickly returns to healthy responses and avoids sustained failures while Kubernetes replaces or reschedules pods.
+   During pod deletion or node drain, occasional connection resets can happen if the local port-forward target disappears. `kubectl port-forward svc/sample-api` still attaches to a specific backend connection; if that backend pod is the one deleted, the port-forward process can exit. In that case the health loop will keep printing `Failed to connect to localhost port 8080` until you restart the port-forward. That means the local tunnel died, not necessarily that the Kubernetes Service is down.
 
 7. Run controlled pod deletion and measure recovery:
 
@@ -151,7 +151,7 @@ Review these files before validation:
 
    Expected behavior: the selected pod should move to `Terminating`, and Kubernetes should create a replacement pod. The replacement normally moves through `Pending`, `ContainerCreating` and then `Running` with `READY` becoming `1/1`. Press `Ctrl-C` after the replacement pod is running and ready.
 
-   While the pod is being replaced, the continuous health loop should keep returning successful responses once the port-forward is attached to a live endpoint. If requests fail continuously for more than a few cycles, inspect pod readiness and events before moving on.
+   While the pod is being replaced, the continuous health loop should keep returning successful responses once the port-forward is attached to a live endpoint. If requests fail continuously with `Failed to connect to localhost port 8080`, check the first terminal. If the port-forward exited, restart `kubectl -n sample-api-dev port-forward svc/sample-api 8080:80` and continue observing. If the port-forward is still running but requests fail, then inspect pod readiness, Service endpoints and events before moving on.
 
 8. Drain one worker only when the lab environment has enough spare capacity:
 
