@@ -19,11 +19,11 @@ Cleanup is part of platform engineering. It proves you know what was created, wh
 
 This lab has two cleanup levels. The standard cleanup removes Kubernetes workloads, Argo CD Applications, lab secrets and the Development infrastructure. The optional full account cleanup also removes the Terraform bootstrap backend after you no longer need any lab state.
 
-Concepts reinforced in this lab include ownership, GitOps shutdown order, Terraform destroy, remote state, finalizers, cloud cost verification and safe decommissioning. See the [Concepts Reference](../concepts/README.md) for the platform components you are removing.
+Concepts reinforced in this lab include ownership, GitOps shutdown order, Terraform destroy, remote state, finalizers and safe decommissioning. See the [Concepts Reference](../concepts/README.md) for the platform components you are removing.
 
 ## Outcome
 
-Remove the lab platform resources from the AWS account and verify that no expected cost-generating leftovers remain.
+Remove the lab platform resources from the AWS account and verify that the Terraform-managed Development environment is gone.
 
 ## Prerequisites
 
@@ -131,7 +131,7 @@ Review these files before cleanup:
 
    Argo CD continuously tries to make the cluster match Git. Deleting the root Applications first prevents Argo CD from recreating child Applications while you are tearing down the cluster.
 
-5. Delete workload namespaces first, then platform namespaces:
+5. Delete workload namespaces first, then platform namespaces that do not own node lifecycle:
 
    ```bash
    printf '\n===== Delete workload namespaces =====\n'
@@ -153,7 +153,6 @@ Review these files before cleanup:
    kubectl delete namespace \
      monitoring \
      external-secrets \
-     karpenter \
      argo-rollouts \
      argocd \
      ingress-nginx \
@@ -163,18 +162,33 @@ Review these files before cleanup:
    kubectl get namespaces
    ```
 
-   Delete workload namespaces before `external-secrets` so External Secrets Operator and its webhook are still available to clean up `ExternalSecret` finalizers. Namespace deletion can take time because Kubernetes must remove namespaced resources and finalizers. If a namespace stays `Terminating`, inspect it before destroying the cluster so you understand what is blocking cleanup.
+   Delete workload namespaces before `external-secrets` so External Secrets Operator and its webhook are still available to clean up `ExternalSecret` finalizers. Keep the `karpenter` namespace for the next step because the Karpenter controller owns Karpenter node termination. Namespace deletion can take time because Kubernetes must remove namespaced resources and finalizers. If a namespace stays `Terminating`, inspect it before destroying the cluster so you understand what is blocking cleanup.
 
-6. Confirm Karpenter-created capacity is gone or no longer needed:
+6. Remove Karpenter-created capacity while Karpenter is still running:
 
    ```bash
    printf '\n===== Remaining NodeClaims =====\n'
    kubectl get nodeclaim || true
+
+   nodeclaims="$(kubectl get nodeclaim -o name 2>/dev/null || true)"
+   if [ -n "$nodeclaims" ]; then
+     printf '\n===== Delete Karpenter NodeClaims =====\n'
+     kubectl delete $nodeclaims
+
+     printf '\n===== Wait for Karpenter NodeClaims to disappear =====\n'
+     kubectl wait --for=delete $nodeclaims --timeout=10m
+   else
+     printf 'No Karpenter NodeClaims found.\n'
+   fi
+
+   printf '\n===== Delete Karpenter namespace =====\n'
+   kubectl delete namespace karpenter --ignore-not-found
+
    printf '\n===== Current nodes =====\n'
    kubectl get nodes -o wide
    ```
 
-   Karpenter-created nodes may remain briefly while workloads terminate. This check helps you see whether extra capacity from Lab 11 is still present before Terraform destroys the cluster and node infrastructure.
+   Karpenter-created nodes may remain briefly while workloads terminate. Delete any remaining `NodeClaim` objects before deleting the `karpenter` namespace so the Karpenter controller can drain the node, terminate the EC2 instance and remove its finalizers. After this step, the node list should show only the managed node group nodes that Terraform will destroy in the next step.
 
 7. Destroy the Development Terraform environment:
 
@@ -191,11 +205,11 @@ Review these files before cleanup:
 
    Review the destroy plan carefully before applying. It should remove the Development VPC, EKS cluster, managed node group, IAM roles and related resources created by the live environment. This is intentionally destructive.
 
-8. Verify the Development environment is destroyed:
+8. Verify the Development environment state is empty and the AWS resources are gone:
 
    ```bash
-   printf '\n===== Terraform post-destroy check =====\n'
-   terraform plan -detailed-exitcode
+   printf '\n===== Terraform state after destroy =====\n'
+   terraform state list
    printf '\n===== EKS clusters in region =====\n'
    aws eks list-clusters --region "$AWS_REGION" --profile "$AWS_PROFILE"
    printf '\n===== NAT gateways in region =====\n'
@@ -206,37 +220,9 @@ Review these files before cleanup:
      --output table
    ```
 
-   `terraform plan -detailed-exitcode` should return `0` after a clean destroy. If it returns `2`, Terraform still sees resources or changes. If it returns `1`, troubleshoot the error before assuming cleanup is complete.
+   `terraform state list` should print no managed resources after a clean destroy. A normal `terraform plan` after destroy will usually show resources to create again because the configuration still describes the desired Development environment; that does not mean destroy failed. Use AWS checks to confirm the previously managed resources are actually gone. AWS may return recently deleted NAT gateways for a short time; `State` should be `deleted` if the lab NAT gateway has already been removed.
 
-9. Check for common cost-generating leftovers:
-
-   ```bash
-   printf '\n===== Load balancers =====\n'
-   aws elbv2 describe-load-balancers \
-     --region "$AWS_REGION" \
-     --profile "$AWS_PROFILE" \
-     --query 'LoadBalancers[].{Name:LoadBalancerName,State:State.Code,VpcId:VpcId}' \
-     --output table
-
-   printf '\n===== Elastic IP addresses =====\n'
-   aws ec2 describe-addresses \
-     --region "$AWS_REGION" \
-     --profile "$AWS_PROFILE" \
-     --query 'Addresses[].{PublicIp:PublicIp,AllocationId:AllocationId,AssociationId:AssociationId}' \
-     --output table
-
-   printf '\n===== EBS volumes not in use =====\n'
-   aws ec2 describe-volumes \
-     --region "$AWS_REGION" \
-     --profile "$AWS_PROFILE" \
-     --filters Name=status,Values=available \
-     --query 'Volumes[].{VolumeId:VolumeId,Size:Size,State:State}' \
-     --output table
-   ```
-
-   Empty tables are the expected result for these checks in a dedicated lab account and Region. If resources remain, inspect tags and ownership before deleting them manually.
-
-10. Optional: remove the Terraform bootstrap backend after all lab state is no longer needed:
+9. Optional: remove the Terraform bootstrap backend after all lab state is no longer needed:
 
    ```bash
    cd "$WORKSPACE/platform-bootstrap"
@@ -253,15 +239,15 @@ Review these files before cleanup:
 
 ## Expected Results
 
-The Development platform is removed, GitOps is no longer reconciling lab workloads, lab-only secrets are scheduled for deletion and common cost-generating resources are gone from the target AWS account and Region.
+The Development platform is removed, GitOps is no longer reconciling lab workloads and lab-only secrets are scheduled for deletion.
 
 ## Validation
 
 - Temporary namespaces and chaos resources are removed.
 - Argo CD root Applications are deleted before cluster teardown.
 - Terraform destroy for `platform-live/environments/dev` completes successfully.
-- `terraform plan -detailed-exitcode` returns `0` after destroy.
-- EKS clusters, NAT gateways, load balancers, unassociated Elastic IPs and unused EBS volumes are absent unless intentionally retained.
+- `terraform state list` prints no managed resources after destroy.
+- The Development EKS cluster and active lab NAT gateways are absent.
 - Lab Secrets Manager values are scheduled for deletion or already deleted.
 - Optional bootstrap backend cleanup is performed only when no longer needed.
 
@@ -303,6 +289,42 @@ done
 
 printf '\n===== Namespace status after finalizer cleanup =====\n'
 kubectl get namespaces
+```
+
+If a Karpenter `NodeClaim` is stuck terminating after the `karpenter` namespace was already deleted:
+
+- This means the controller that normally removes the `karpenter.sh/termination` finalizer is gone.
+- Confirm the node is only running system DaemonSet pods before manual cleanup.
+- During final decommission, terminate the EC2 instance shown in the `NodeClaim` provider ID, then remove the orphaned Kubernetes finalizers:
+
+```bash
+nodeclaim="$(kubectl get nodeclaim -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+if [ -z "$nodeclaim" ]; then
+  printf 'No Karpenter NodeClaim found.\n'
+  exit 0
+fi
+
+node="$(kubectl get nodeclaim "$nodeclaim" -o jsonpath='{.status.nodeName}' 2>/dev/null || true)"
+provider_id="$(kubectl get nodeclaim "$nodeclaim" -o jsonpath='{.status.providerID}' 2>/dev/null || true)"
+instance_id="${provider_id##*/}"
+if [ -z "$instance_id" ] || [ "$instance_id" = "$provider_id" ]; then
+  printf 'Could not determine the EC2 instance ID from provider ID: %s\n' "$provider_id"
+  exit 1
+fi
+
+printf '\n===== Pods on Karpenter node =====\n'
+kubectl get pods -A -o wide --field-selector spec.nodeName="$node"
+
+printf '\n===== Terminate orphaned Karpenter EC2 instance =====\n'
+aws ec2 terminate-instances \
+  --instance-ids "$instance_id" \
+  --region "$AWS_REGION" \
+  --profile "$AWS_PROFILE"
+
+printf '\n===== Remove orphaned Karpenter finalizers =====\n'
+kubectl patch nodeclaim "$nodeclaim" --type=merge -p '{"metadata":{"finalizers":[]}}'
+kubectl patch node "$node" --type=merge -p '{"metadata":{"finalizers":[]}}' || true
+kubectl delete node "$node" --ignore-not-found
 ```
 
 If AWS resources remain after Terraform destroy:
