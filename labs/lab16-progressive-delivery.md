@@ -145,11 +145,12 @@ Review these files before validation:
    kubectl -n sample-api-rollout-demo get rollout sample-api-rollout-demo \
      -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
 
-   printf '\n===== Demo application version before rollout =====\n'
+   printf '\n===== Start demo port-forward before rollout =====\n'
    kubectl -n sample-api-rollout-demo port-forward svc/sample-api-rollout-demo 8080:80 >/tmp/sample-api-rollout-demo-port-forward.log 2>&1 &
    PF_PID=$!
    trap 'kill "$PF_PID" 2>/dev/null || true' EXIT
    sleep 2
+   printf '\n===== Demo application version before rollout =====\n'
    curl -fsS http://localhost:8080/version | python3 -m json.tool
    kill "$PF_PID"
    trap - EXIT
@@ -194,11 +195,12 @@ Review these files before validation:
    kubectl -n sample-api-rollout-demo get pods \
      -o 'custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[0].ready,IMAGE:.spec.containers[0].image'
 
-   printf '\n===== Demo application version after rollout =====\n'
+   printf '\n===== Start demo port-forward after rollout =====\n'
    kubectl -n sample-api-rollout-demo port-forward svc/sample-api-rollout-demo 8080:80 >/tmp/sample-api-rollout-demo-port-forward.log 2>&1 &
    PF_PID=$!
    trap 'kill "$PF_PID" 2>/dev/null || true' EXIT
    sleep 2
+   printf '\n===== Demo application version after rollout =====\n'
    curl -fsS http://localhost:8080/version | python3 -m json.tool
    kill "$PF_PID"
    trap - EXIT
@@ -259,7 +261,9 @@ The implementation remains GitOps-driven and mergeable to `main`.
 Delete the temporary demo namespace before moving on. Keep Argo Rollouts installed for later resilience validation.
 
 ```bash
+printf '\n===== Remove accidental default-namespace demo resources =====\n'
 kubectl -n default delete rollout,service,serviceaccount,networkpolicy,pdb sample-api-rollout-demo --ignore-not-found
+printf '\n===== Delete demo namespace =====\n'
 kubectl delete namespace sample-api-rollout-demo --ignore-not-found
 rm -f /tmp/sample-api-rollout-demo.yaml
 ```

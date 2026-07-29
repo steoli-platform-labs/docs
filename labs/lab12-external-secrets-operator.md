@@ -171,9 +171,11 @@ Review these files before validation:
    kubectl -n argocd annotate application platform-root-dev argocd.argoproj.io/refresh=hard --overwrite
    printf '\n===== Applications before child refresh =====\n'
    kubectl -n argocd get application external-secrets external-secrets-config sample-api-dev -o wide
-   printf '\n===== Refresh child Applications =====\n'
+   printf '\n===== Refresh external-secrets Application =====\n'
    kubectl -n argocd annotate application external-secrets argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Refresh external-secrets-config Application =====\n'
    kubectl -n argocd annotate application external-secrets-config argocd.argoproj.io/refresh=hard --overwrite
+   printf '\n===== Refresh sample-api-dev Application =====\n'
    kubectl -n argocd annotate application sample-api-dev argocd.argoproj.io/refresh=hard --overwrite
    printf '\n===== Applications after child refresh =====\n'
    kubectl -n argocd get application external-secrets external-secrets-config sample-api-dev -o wide

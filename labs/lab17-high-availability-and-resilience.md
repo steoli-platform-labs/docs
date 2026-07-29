@@ -44,7 +44,10 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE"
+
+   printf '\n===== Default sample-api replica and autoscaling values =====\n'
    yq '.replicaCount, .autoscaling' helm-charts/charts/sample-api/values.yaml
+   printf '\n===== Dev sample-api Helm values =====\n'
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
@@ -53,8 +56,11 @@ Review these files before validation:
 2. Review the sample API chart templates for probes and disruption protection:
 
    ```bash
+   printf '\n===== sample-api Rollout template =====\n'
    sed -n '1,200p' helm-charts/charts/sample-api/templates/rollout.yaml
+   printf '\n===== sample-api Deployment template =====\n'
    sed -n '1,120p' helm-charts/charts/sample-api/templates/deployment.yaml
+   printf '\n===== sample-api PDB template =====\n'
    sed -n '1,120p' helm-charts/charts/sample-api/templates/pdb.yaml
    ```
 
