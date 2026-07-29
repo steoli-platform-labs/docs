@@ -116,9 +116,9 @@ later labs
    printf '\n===== Terraform validate =====\n'
    terraform validate
    printf '\n===== Terraform plan =====\n'
-   terraform plan -out=tfplan
+   terraform plan
    printf '\n===== Terraform apply =====\n'
-   terraform apply tfplan
+   terraform apply
    ```
 
    In this Terraform flow, `init` prepares the working directory and downloads providers, `fmt` normalizes formatting, `validate` checks the configuration syntax, `plan` previews what Terraform will change and `apply` performs the reviewed plan.
@@ -155,7 +155,7 @@ later labs
 
    Exit code `0` means no drift and you can continue. Exit code `2` means Terraform sees changes; review the plan and stop before moving on. Exit code `1` means an error occurred and should be troubleshot first.
 
-8. Confirm only source files and scripts are tracked. Local backend, state, variable and plan files must remain ignored:
+8. Confirm only source files and scripts are tracked. Local backend, state and variable files must remain ignored:
 
    ```bash
    printf '\n===== Git status =====\n'
@@ -163,10 +163,10 @@ later labs
    printf '\n===== Whitespace check =====\n'
    git diff --check
    printf '\n===== Ignored local files check =====\n'
-   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
 
-   The final command should print no local backend, variable, state or plan files.
+   The final command should print no local backend, variable or state files.
 
 ## Expected Results
 
@@ -203,9 +203,9 @@ The backend bucket exists with versioning, encryption and Block Public Access en
 
    ```bash
    printf '\n===== Terraform plan =====\n'
-   terraform plan -out=tfplan
+   terraform plan
    printf '\n===== Terraform apply =====\n'
-   terraform apply tfplan
+   terraform apply
    ```
 
 - **State migration was interrupted:** Do not delete either state copy.
@@ -229,7 +229,7 @@ The backend bucket exists with versioning, encryption and Block Public Access en
 
 ## Final Repository State
 
-At completion, `platform-bootstrap` contains the Terraform code and scripts for the backend foundation, while `terraform.tfvars`, `backend.tf`, `backend.hcl`, state files, plan files and `.terraform/` remain local or ignored.
+At completion, `platform-bootstrap` contains the Terraform code and scripts for the backend foundation, while `terraform.tfvars`, `backend.tf`, `backend.hcl`, state files and `.terraform/` remain local or ignored.
 
 ## Cleanup
 
@@ -242,7 +242,6 @@ Do not commit local generated files:
 - `terraform.tfvars`
 - `terraform.tfstate`
 - `terraform.tfstate.*`
-- `tfplan`
 - `backend.tf`
 - `backend.hcl`
 - `.terraform/`

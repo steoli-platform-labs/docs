@@ -91,9 +91,9 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    printf '\n===== Terraform validate =====\n'
    terraform validate
    printf '\n===== Terraform plan =====\n'
-   terraform plan -out=tfplan
+   terraform plan
    printf '\n===== Terraform apply =====\n'
-   terraform apply tfplan
+   terraform apply
    ```
 
    Review the plan before applying. EKS creation can take several minutes.
@@ -151,7 +151,7 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 
    Exit code `0` means the applied state matches configuration. Exit code `2` means Terraform sees changes and you should review them before continuing. Exit code `1` is an error.
 
-7. Confirm only Terraform source and documentation files are tracked. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
+7. Confirm only Terraform source and documentation files are tracked. Keep local `backend.hcl`, `terraform.tfvars` and `.terraform/` ignored.
 
    In `platform-modules`:
 
@@ -162,7 +162,7 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    printf '\n===== platform-modules whitespace check =====\n'
    git diff --check
    printf '\n===== platform-modules ignored local files check =====\n'
-   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
 
    In `platform-live`:
@@ -174,10 +174,10 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    printf '\n===== platform-live whitespace check =====\n'
    git diff --check
    printf '\n===== platform-live ignored local files check =====\n'
-   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
 
-   The `git ls-files` commands should print no local backend, variable, state or plan files.
+   The `git ls-files` commands should print no local backend, variable or state files.
 
 ## Expected Results
 
@@ -219,7 +219,6 @@ Do not commit local generated files:
 
 - `backend.hcl`
 - `terraform.tfvars`
-- `tfplan`
 - `.terraform/`
 
 ## Next Steps

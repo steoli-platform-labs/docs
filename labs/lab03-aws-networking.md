@@ -252,7 +252,7 @@ Follow the steps below to configure the remote backend, review the network desig
 5. Review the plan:
 
    ```bash
-   terraform plan -out=tfplan
+   terraform plan
    ```
 
    Review all resources before applying. Confirm that:
@@ -272,7 +272,7 @@ Follow the steps below to configure the remote backend, review the network desig
 6. Apply the network:
 
    ```bash
-   terraform apply tfplan
+   terraform apply
    ```
 
    NAT Gateway creation can take several minutes.
@@ -347,7 +347,7 @@ Follow the steps below to configure the remote backend, review the network desig
 
     Expected output includes public subnet tags for external load balancers and private subnet tags for internal load balancers. Missing tags can prevent Kubernetes load balancer discovery in later labs.
 
-11. Confirm the reference repositories contain only source files. Do not track `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
+11. Confirm the reference repositories contain only source files. Do not track `backend.hcl`, `terraform.tfvars` or Terraform state files.
 
    In `platform-modules`:
 
@@ -357,7 +357,7 @@ Follow the steps below to configure the remote backend, review the network desig
    printf '\n===== platform-modules whitespace check =====\n'
    git diff --check
    printf '\n===== platform-modules ignored local files check =====\n'
-   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
 
    In `platform-live`:
@@ -368,10 +368,10 @@ Follow the steps below to configure the remote backend, review the network desig
    printf '\n===== platform-live whitespace check =====\n'
    git diff --check
    printf '\n===== platform-live ignored local files check =====\n'
-   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup '*.tfplan'
+   git ls-files backend.hcl terraform.tfvars terraform.tfstate terraform.tfstate.backup
    ```
 
-   The `git ls-files` commands should print no local backend, variable, state or plan files.
+   The `git ls-files` commands should print no local backend, variable or state files.
 
 ## Expected Results
 

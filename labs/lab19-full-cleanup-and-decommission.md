@@ -197,9 +197,9 @@ Review these files before cleanup:
    printf '\n===== Terraform init =====\n'
    terraform init -backend-config=backend.hcl
    printf '\n===== Terraform destroy plan =====\n'
-   terraform plan -destroy -out=tf-destroy-plan
+   terraform plan -destroy
    printf '\n===== Terraform destroy apply =====\n'
-   terraform apply tf-destroy-plan
+   terraform destroy
    ```
 
    Review the destroy plan carefully before applying. It should remove the shared VPC, EKS cluster, managed node group, IAM roles and related resources created by the live environment. This is intentionally destructive.
@@ -300,12 +300,12 @@ Review these files before cleanup:
 
    ```bash
    printf '\n===== Bootstrap destroy plan =====\n'
-   terraform plan -destroy -out=tf-bootstrap-destroy-plan
+   terraform plan -destroy
    printf '\n===== Bootstrap destroy apply =====\n'
-   terraform apply tf-bootstrap-destroy-plan
+   terraform destroy
    ```
 
-   Removing the backend bucket can make future state inspection impossible unless you saved the information elsewhere. The local `terraform.tfstate`, disabled backend file and generated destroy plan are local teardown artifacts; keep or remove the local workspace according to your preference after the AWS resources are gone.
+   Removing the backend bucket can make future state inspection impossible unless you saved the information elsewhere. The local `terraform.tfstate` and disabled backend file are local teardown artifacts; keep or remove the local workspace according to your preference after the AWS resources are gone.
 
 ## Expected Results
 
