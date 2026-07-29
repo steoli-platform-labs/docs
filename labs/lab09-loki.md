@@ -207,6 +207,8 @@ Review these files before validation:
 
    `SYNC STATUS` should move to `Synced`. If an Application shows `Unknown`, Argo CD could not compare the live cluster to the target manifests. The most common cause is a Helm render error, and pods will not exist until that is fixed.
 
+   Continue when both `loki` and `alloy` are `Synced` and not `Unknown` or `Degraded`. If either Application remains unhealthy after a refresh, describe it before checking workloads.
+
 6. If either Application is not `Synced`, inspect the Argo CD condition before checking pods:
 
    ```bash
@@ -259,6 +261,8 @@ Review these files before validation:
 
    A successful response confirms the Loki HTTP API is reachable through the local port-forward.
 
+   Expected response is the literal text `ready`. `connection refused` usually means the port-forward is not running or the Service has no ready endpoints yet.
+
 10. Generate a known application log line:
 
    ```bash
@@ -286,6 +290,8 @@ Review these files before validation:
    ```
 
    The response should include a `status` of `success` and the `loki smoke test from sample-api-dev` line. If the `result` array is empty, wait a minute and retry. Log ingestion is usually quick, but Alloy must read and forward the log stream before Loki can return it.
+
+   If the response is successful but does not contain the smoke-test text, retry with a wider time window before troubleshooting. If the response is an error, confirm Loki readiness and Alloy logs first.
 
 12. Add Loki as a Grafana data source through the Grafana UI:
 

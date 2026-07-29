@@ -48,7 +48,7 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
 
 ## Step-by-Step Implementation
 
-1. Review the `.github/workflows` files in each repository listed above. Confirm the workflow triggers, permissions and commands match the repository responsibility.
+1. Review the `.github/workflows` files in each repository listed above. Confirm the workflow triggers, permissions and commands match the repository responsibility. A good review checks what event starts the workflow, what permissions it receives, what commands it runs and whether it only validates/builds artifacts. Only `sample-api` should publish the application image; none of these workflows should deploy workloads directly.
 2. Run the repository-level validation commands from the workspace root:
 
    ```bash
@@ -67,6 +67,8 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    ```
 
    Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
+
+   `terraform fmt` may rewrite files if formatting drift exists. In the reference repos, no changed files should remain after this step; if files change, inspect why before continuing. `helm lint` should report zero failed charts, and the namespace dry-run should print resources as `created (dry run)` or `configured (dry run)`.
 3. Confirm the reference workflow files are present and clean.
 
    This lab series uses the public repositories as reference templates. You validate the committed workflow state; you do not push workflow changes to the shared reference repositories.
@@ -127,6 +129,8 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    test -f .github/workflows/terraform.yaml
    ```
 
+   `git diff --check` and `test -f` are silent on success. `git status` should show a clean worktree, and any output from the whitespace check or missing workflow file should be treated as a stop condition.
+
 4. Open each repository in GitHub and inspect a recent workflow run:
 
    1. Open the repository, for example `helm-charts`.
@@ -175,6 +179,8 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    cd ../platform-live && terraform fmt -check -recursive
    ```
 
+   Expected output: `pytest -q` reports passing tests, Docker finishes with `Successfully tagged sample-api:lab06`, Helm lint reports zero failed charts and Terraform format checks print no filenames. A filename from `terraform fmt -check` means that repository is not formatted as CI expects.
+
 6. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 
    The Development cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. The reference package is public, so no Docker or Kubernetes registry credentials are required for this image.
@@ -190,6 +196,8 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    ```
 
    The `docker pull` command confirms that the release image exists and is readable. The `docker inspect` command should print a digest such as `ghcr.io/<github-organization>/sample-api@sha256:...`, which proves the tag resolves to a concrete image artifact. Later rollout and promotion labs compare GitOps release tags, for example `1.0.0` and `1.0.1`.
+
+   If `RepoDigests` is empty or does not include `@sha256:`, the image tag did not resolve to the expected immutable artifact. Recheck the organization, package visibility and tag before continuing.
 
    You can also inspect the public package metadata with GitHub CLI:
 

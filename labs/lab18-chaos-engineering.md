@@ -72,6 +72,8 @@ Review these files before validation:
 
    Do not inject failure unless the sample API starts healthy and Argo CD is already synced.
 
+   Proceed only if the sample API Rollout has the expected ready replicas, the PDB exists and `sample-api-dev` is `Synced / Healthy`. Stop if the Rollout is degraded, has fewer ready pods than expected or has been `Progressing` for several minutes.
+
 4. Verify the chaos identity before execution:
 
    ```bash
@@ -101,6 +103,8 @@ Review these files before validation:
 
    This establishes the steady state and lets you see whether the controlled failure causes user-visible errors.
 
+   Wait for at least three consecutive successful health responses before creating the chaos Job. If the port-forward exits or health checks fail before the experiment, fix the baseline first.
+
 6. Run the one-off chaos Job and watch Kubernetes replace the deleted pod:
 
    ```bash
@@ -116,6 +120,8 @@ Review these files before validation:
 
    Expected behavior: one pod is deleted, the Rollout/ReplicaSet creates a replacement and the service returns to the expected ready replica count.
 
+   The Job log should show which pod was selected and deleted, then complete. Press `Ctrl-C` after the log reaches completion if the follow command remains attached. In the pod watch, continue until the replacement pod is `Running` and `READY 1/1`, then press `Ctrl-C`.
+
 7. Validate recovery through platform signals:
 
    ```bash
@@ -128,6 +134,8 @@ Review these files before validation:
    ```
 
    In Grafana, check Prometheus metrics, Loki logs and Tempo traces for the test window if those signals are available. The key question is whether the platform recovered within the expected time and whether the observability stack made the disruption visible.
+
+   For this lab, recovery is acceptable when ready replicas return to the starting count within five minutes and the health loop has no sustained failure longer than a few consecutive checks. If recovery takes longer, keep the evidence and inspect events, Rollout status and PDB status before rerunning the experiment.
 
 8. Remove the one-off chaos Job after validation:
 

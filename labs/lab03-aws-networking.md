@@ -192,6 +192,8 @@ Follow the steps below to configure the remote backend, review the network desig
 
    `backend.hcl` is intentionally ignored by Git because it contains account-specific configuration.
 
+   Use the backend bucket name from the Lab 02 `terraform output`; do not use the state object key as the bucket. The key for this lab is already defined by the checked-in backend example.
+
    `TF_VAR_workspace_path` records the local checkout path as a `Workspace` tag on supported AWS resources.
 
 2. Review the network design. The default network uses:
@@ -224,6 +226,8 @@ Follow the steps below to configure the remote backend, review the network desig
    ```
 
    Terraform should initialize the S3 backend and download the AWS provider and the pinned VPC module dependency.
+
+   Expected output ends with `Terraform has been successfully initialized!`. Stop on backend bucket, key, profile or Region errors because a failed init means Terraform is not using the intended remote state.
 
    The checked-in `.terraform.lock.hcl` records the selected provider versions and checksums after successful initialization.
 
@@ -260,6 +264,8 @@ Follow the steps below to configure the remote backend, review the network desig
 
    The exact resource count can change between module releases. Validate the intended architecture rather than relying only on a fixed count.
 
+   Proceed only if the plan is additive or updates expected networking resources. Stop on destroy actions, wrong CIDRs, wrong Region, missing private routing, missing subnet tags or resources planned in an unexpected account.
+
 6. Apply the network:
 
    ```bash
@@ -273,6 +279,8 @@ Follow the steps below to configure the remote backend, review the network desig
    ```bash
    terraform output
    ```
+
+   Expected output includes a non-empty VPC ID and subnet ID lists. Empty outputs usually mean the apply failed or you are in the wrong workspace/root module.
 
 7. Validate Terraform state and outputs:
 
@@ -299,6 +307,8 @@ Follow the steps below to configure the remote backend, review the network desig
    aws s3api head-object   --bucket "$(awk -F'"' '/bucket/ {print $2}' backend.hcl)"   --key "platform-live/dev/terraform.tfstate"
    ```
 
+   A successful `head-object` prints JSON metadata for the remote state object. `NoSuchKey`, `NotFound` or `AccessDenied` means the bucket, key, Region or AWS profile does not match the backend configuration.
+
 9. Inspect the AWS resource configuration:
 
    ```bash
@@ -314,6 +324,8 @@ Follow the steps below to configure the remote backend, review the network desig
    aws ec2 describe-route-tables   --filters "Name=vpc-id,Values=${VPC_ID}"   --query 'RouteTables[].{RouteTableId:RouteTableId,Routes:Routes[].{Destination:DestinationCidrBlock,Gateway:GatewayId,NatGateway:NatGatewayId}}'
    ```
 
+   Expected output: VPC DNS support and hostnames are enabled, NAT Gateway state is `available`, public routes point to an internet gateway and private routes point to a NAT Gateway.
+
 10. Check EKS subnet discovery tags:
 
    ```bash
@@ -327,6 +339,8 @@ Follow the steps below to configure the remote backend, review the network desig
    ```
 
     The tag commands use `jq`. You may also inspect the subnet tags in the AWS Console.
+
+    Expected output includes public subnet tags for external load balancers and private subnet tags for internal load balancers. Missing tags can prevent Kubernetes load balancer discovery in later labs.
 
 11. Confirm the reference repositories contain only source files. Do not track `backend.hcl`, `terraform.tfvars`, Terraform state or plan files.
 

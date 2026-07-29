@@ -88,6 +88,8 @@ Review these files before validation:
 
    Confirm the rendered output contains a `Rollout` and not only a `Deployment`. Rendering locally catches chart mistakes before you change the deployed image tag.
 
+   Proceed only if the output starts with or includes `kind: Rollout`. If `grep` prints nothing, stop and inspect `rollout.enabled` and the chart values before continuing.
+
 3. Confirm the current deployed rollout state:
 
    ```bash
@@ -111,6 +113,8 @@ Review these files before validation:
    ```
 
    This confirms the controller and current `sample-api` Rollout are healthy before you run the isolated demo. Record the current image tag and ReplicaSet names so you can compare the GitOps-managed workload with the temporary demo workload.
+
+   Proceed when the Argo Rollouts Application is `Synced / Healthy`, controller pods are `Running` and the `sample-api` Rollout has available replicas. Stop on missing Rollout CRDs, controller pods in `CrashLoopBackOff` or image pull errors.
 
 4. Create an isolated temporary rollout demo from the same chart:
 
@@ -177,6 +181,8 @@ Review these files before validation:
    The Rollout should create a new ReplicaSet and progress through the canary steps. During the canary, it is normal to briefly see more current pods than the desired replica count. For example, `DESIRED=2`, `CURRENT=3`, `UP-TO-DATE=1`, `AVAILABLE=2` means Argo Rollouts has created one new `1.0.1` canary pod while keeping the stable `1.0.0` pods available. This is not finished yet.
 
    Keep watching until the rollout settles back to the desired replica count with the new ReplicaSet fully updated. The final healthy state should look like `DESIRED=2`, `CURRENT=2`, `UP-TO-DATE=2`, `AVAILABLE=2`. The canary strategy includes pause steps, so this can take a few minutes. Press `Ctrl-C` after you have seen the rollout progress, or after it reaches the final healthy state, then continue to the inspection step. If the image tag and `APP_VERSION` value do not change together, the pod image and application-reported version can drift.
+
+   Do not continue if the watch output or pod status shows `Degraded`, `ImagePullBackOff` or unavailable replicas that do not recover after the configured pauses.
 
 6. Inspect the rollout result:
 

@@ -135,6 +135,8 @@ Review these files before validation:
 
    These Terraform-managed resources were created when you applied the current Development infrastructure in the earlier Terraform labs. The role output should exist and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account. If either check is missing, stop and reconcile `platform-live/environments/dev` before continuing; otherwise the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
 
+   The Pod Identity association output should include the `external-secrets` namespace and `external-secrets` service account. An empty `associations` list is a stop condition.
+
 6. Render the relevant charts before relying on Argo CD:
 
    ```bash
@@ -154,6 +156,8 @@ Review these files before validation:
    ```
 
    A render failure here means Argo CD will also fail to generate manifests.
+
+   `helm lint` should end with `1 chart(s) linted, 0 chart(s) failed`. The render commands redirect output to `/dev/null`, so no output means success.
 
 7. Confirm there are no unexpected local desired-state changes:
 
@@ -205,6 +209,8 @@ Review these files before validation:
    ```
 
    Expected behavior: operator pods are ready, the store reports `Ready=True` and the `ExternalSecret` reports `Ready=True` after it syncs.
+
+   In the describe output, stop on `Ready=False`, `AccessDenied`, missing remote key, missing Pod Identity credentials or AWS client errors. The target Kubernetes Secret should exist, but you should only inspect metadata and key names, not decoded values.
 
    Create or identify a non-sensitive test secret in AWS Secrets Manager, enable the chart's ExternalSecret configuration, sync Argo CD and verify the Kubernetes Secret metadata and key names without printing values:
 

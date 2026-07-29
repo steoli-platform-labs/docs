@@ -138,6 +138,8 @@ Review these files before activation:
 
    The chart creates an `ExternalSecret` per environment. External Secrets Operator reads these paths from AWS Secrets Manager and writes Kubernetes Secrets into the target namespace.
 
+   On the first run, `create-secret` should print metadata such as an ARN and VersionId. On later runs, `create-secret` may print `ResourceExistsException`; that is expected when the following `put-secret-value` succeeds. Stop only if both create and update fail for an environment.
+
 5. Run local validation before Argo CD applies the new desired state:
 
    ```bash
@@ -172,6 +174,8 @@ Review these files before activation:
 
    These checks confirm Kubernetes can parse the bootstrap manifests and the chart can render all three environment values blocks.
 
+   Each dry-run should print `created (dry run)` or `configured (dry run)`. `helm lint` should report zero failed charts, and each `helm template` command is normally silent because output is redirected to `/dev/null`.
+
 6. Apply the environment root Applications:
 
    ```bash
@@ -187,56 +191,60 @@ Review these files before activation:
 
    Applying root Applications is a bootstrap exception to the GitOps rule. After these roots exist, Argo CD owns the child Applications and workloads.
 
+   Expected output is `application.argoproj.io/... created` on the first run or `configured` on later runs. Stop if Kubernetes does not recognize `applications.argoproj.io`; that means Argo CD is not installed or its CRDs are not ready.
+
 7. Refresh and inspect all environment roots and sample API Applications:
 
-     ```bash
-     printf '\n===== Refresh environment roots =====\n'
-     for app in platform-root-dev platform-root-staging platform-root-production; do
-       kubectl -n argocd annotate application "$app" argocd.argoproj.io/refresh=hard --overwrite
-     done
+   ```bash
+   printf '\n===== Refresh environment roots =====\n'
+   for app in platform-root-dev platform-root-staging platform-root-production; do
+     kubectl -n argocd annotate application "$app" argocd.argoproj.io/refresh=hard --overwrite
+   done
 
-     printf '\n===== Environment root and sample API Applications =====\n'
-     kubectl -n argocd get application \
-       platform-root-dev \
-      platform-root-staging \
-      platform-root-production \
-      platform-namespaces \
-      sample-api-dev \
-      sample-api-staging \
-      sample-api-production \
-      -o wide
-    ```
+   printf '\n===== Environment root and sample API Applications =====\n'
+   kubectl -n argocd get application \
+     platform-root-dev \
+     platform-root-staging \
+     platform-root-production \
+     platform-namespaces \
+     sample-api-dev \
+     sample-api-staging \
+     sample-api-production \
+     -o wide
+   ```
 
-    Expected result: each root is `Synced / Healthy`, `platform-namespaces` is `Synced / Healthy`, and the three sample API Applications are created. Workload health depends on the public GHCR image, AWS secret values and cluster capacity being ready.
+   Expected result: each root is `Synced / Healthy`, `platform-namespaces` is `Synced / Healthy`, and the three sample API Applications are created. Workload health depends on the public GHCR image, AWS secret values and cluster capacity being ready.
 
 8. Validate namespace separation and workload state:
 
-    ```bash
-    printf '\n===== Namespace labels =====\n'
-    kubectl get namespaces -L environment
+   ```bash
+   printf '\n===== Namespace labels =====\n'
+   kubectl get namespaces -L environment
 
-    for ns in sample-api-dev sample-api-staging sample-api-production; do
-      printf '\n===== %s resources =====\n' "$ns"
-      kubectl -n "$ns" get rollout,svc,pod,externalsecret,networkpolicy,pdb
-    done
-    ```
+   for ns in sample-api-dev sample-api-staging sample-api-production; do
+     printf '\n===== %s resources =====\n' "$ns"
+     kubectl -n "$ns" get rollout,svc,pod,externalsecret,networkpolicy,pdb
+   done
+   ```
 
-    Each namespace should show its own sample API resources. If staging or production pods are pending, inspect the pod events before changing GitOps desired state.
+   Each namespace should show its own sample API resources. If staging or production pods are pending, inspect the pod events before changing GitOps desired state.
 
 9. Query each environment's API:
 
-     ```bash
-     for ns in sample-api-dev sample-api-staging sample-api-production; do
-       printf '\n===== %s health =====\n' "$ns"
-       kubectl -n "$ns" port-forward svc/sample-api 8080:80 >/tmp/$ns-port-forward.log 2>&1 &
-       PF_PID=$!
-      sleep 2
-      curl -fsS http://localhost:8080/health || true
-      kill "$PF_PID"
-    done
-    ```
+   ```bash
+   for ns in sample-api-dev sample-api-staging sample-api-production; do
+     printf '\n===== %s health =====\n' "$ns"
+     kubectl -n "$ns" port-forward svc/sample-api 8080:80 >/tmp/$ns-port-forward.log 2>&1 &
+     PF_PID=$!
+     sleep 2
+     curl -fsS http://localhost:8080/health || true
+     kill "$PF_PID"
+   done
+   ```
 
-    In a completed multi-environment setup, each environment returns a healthy response from its own namespace.
+   In a completed multi-environment setup, each environment returns a healthy response from its own namespace.
+
+   If a port-forward fails with `Address already in use`, stop the previous port-forward process before testing the next namespace. If `curl` fails, inspect the matching `/tmp/<namespace>-port-forward.log` and the namespace pod events before moving on.
 
 ## Expected Results
 

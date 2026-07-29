@@ -211,6 +211,8 @@ Review these files before validation:
 
    `SYNC STATUS` should move to `Synced`. If an Application shows `Unknown`, inspect the Application before checking pods because Argo CD may have failed during Helm rendering.
 
+   Continue only when both Applications are `Synced` and preferably `Healthy`. `Unknown` or `Degraded` means Argo CD cannot reliably tell you the live state yet, so inspect render or sync errors before moving on.
+
 7. If either Application is not `Synced`, inspect the Argo CD condition:
 
    ```bash
@@ -248,6 +250,8 @@ Review these files before validation:
    ```
 
    The logs should show the collector starting receivers and exporters. Repeated errors connecting to Tempo mean the collector pipeline or Tempo service address is wrong.
+
+   Normal startup logs mention OTLP receivers, pipelines or exporters starting. Stop on repeated `connection refused`, `exporter failed`, DNS lookup failures for Tempo or receiver bind errors; those indicate traces will not reach Tempo.
 
 10. Port-forward Tempo and check readiness:
 
@@ -334,6 +338,8 @@ Review these files before validation:
    ```
 
    Expected result: the ephemeral container reports `terminated=Completed exit=0`, and its logs include `traces generated`. This validates the telemetry path from generator to collector to Tempo, even before the sample API is instrumented.
+
+   If `telemetrygen` already exists on the pod or exits non-zero, restart the collector pod using the cleanup command below, wait for it to become ready and rerun the debug command once. Do not proceed until the ephemeral container reports `Completed` with exit code `0`.
 
    Ephemeral containers cannot be removed from a running pod after they complete. This is harmless for the lab. If you want to remove the completed debug container from the pod status, restart the collector pod and wait for Kubernetes to recreate it:
 

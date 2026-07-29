@@ -135,6 +135,8 @@ Review these files before validation:
 
    Keep the first terminal open for the port-forward. The second terminal should print a UTC timestamp followed by a successful health response every two seconds. If port-forwarding is not ready yet, the first one or two requests may fail; wait until the loop is consistently successful before starting disruption tests.
 
+   Do not delete or drain anything until the health loop has at least three consecutive successful responses. If the port-forward exits, restart it and re-establish a steady baseline first.
+
    During pod deletion or node drain, occasional connection resets can happen if the local port-forward target disappears. What matters for this lab is whether the Service quickly returns to healthy responses and avoids sustained failures while Kubernetes replaces or reschedules pods.
 
 7. Run controlled pod deletion and measure recovery:
@@ -170,6 +172,8 @@ Review these files before validation:
    ```
 
    This step tests voluntary disruption handling. `kubectl drain` cordons the node, evicts eligible pods and waits for replacements. The PDB should allow only one sample API pod eviction at a time. If the command blocks with a PDB-related message, that can be correct protection: Kubernetes is refusing to reduce availability below the budget.
+
+   Before running the drain, confirm there are at least two schedulable nodes or enough autoscaling capacity for a replacement, no sample API pods are already `Pending` and the PDB `Allowed disruptions` value is `1`. If `Allowed disruptions` is `0`, skip the drain and use pod deletion as the controlled recovery test.
 
    Only run this in a lab cluster with enough spare capacity or autoscaling capacity to place replacements. If the replacement pod stays `Pending`, stop and inspect scheduling events; do not keep draining additional nodes. After the test, `kubectl uncordon` returns the node to scheduling service. Confirm the continuous health loop has recovered before ending the lab.
 

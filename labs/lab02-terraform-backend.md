@@ -74,6 +74,8 @@ later labs
    aws sts get-caller-identity --profile "$AWS_PROFILE"
    ```
 
+   Expected output includes the AWS account ID and ARN for the account you intend to use for the labs. Stop if the account ID or profile is wrong; Terraform provider account guards will fail later, and creating resources in the wrong account is harder to unwind.
+
 3. Open the bootstrap repository:
 
    ```bash
@@ -116,11 +118,15 @@ later labs
    terraform apply tfplan
    ```
 
+   Review the plan before applying. It should create only the bootstrap backend resources, such as the S3 bucket and related configuration, in the intended Region and account. Stop on any destroy action, unexpected bucket name or wrong account/Region.
+
 6. Migrate the bootstrap state to S3:
 
    ```bash
    ./scripts/migrate-state.sh
    ```
+
+   Expected behavior: the script creates local backend configuration, reinitializes Terraform with the S3 backend and migrates the bootstrap state. If migration is interrupted or Terraform reports backend/state errors, stop and inspect before deleting any local or remote state files.
 
 7. Validate the backend:
 
@@ -139,6 +145,8 @@ later labs
    ```
 
    `terraform plan -detailed-exitcode` should exit with code `0` when there are no pending changes.
+
+   Exit code `0` means no drift and you can continue. Exit code `2` means Terraform sees changes; review the plan and stop before moving on. Exit code `1` means an error occurred and should be troubleshot first.
 
 8. Confirm only source files and scripts are tracked. Local backend, state, variable and plan files must remain ignored:
 

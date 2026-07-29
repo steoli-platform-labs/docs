@@ -139,6 +139,8 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
    kubectl -n argocd get application prometheus -o wide
    ```
 
+   The refresh command should report that the `prometheus` Application was annotated. After refresh, `SYNC STATUS` should move toward `Synced`; if it stays `OutOfSync` or `Degraded`, describe the Application before checking pods.
+
 5. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
 
    ```bash
@@ -177,6 +179,8 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 
    Open `http://localhost:9090/targets` and confirm that Kubernetes, kube-state-metrics and node-exporter targets are present. Some managed-control-plane targets may be unavailable on EKS depending on endpoint access, but the node, kubelet and kube-state-metrics targets should be active.
 
+   `/-/ready` should return `Prometheus Server is Ready`. The API query responses should contain `"status": "success"`; `data.result` should not be empty for `up` once targets have been scraped.
+
 8. Get the chart-generated Grafana credentials:
 
    ```bash
@@ -197,6 +201,8 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
 10. Open `http://localhost:3000` and log in with the username and password from the secret.
 
    Confirm the Prometheus data source is healthy from **Connections** -> **Data sources** -> **Prometheus** -> **Save & test**.
+
+   A successful test shows a green success message such as `Successfully queried the Prometheus API`. If the test fails, confirm the Grafana pod can reach `http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090` and that Prometheus has endpoints.
 
 11. Review the preloaded Kubernetes dashboards in Grafana.
 

@@ -90,6 +90,8 @@ Review these files before validation:
    kubectl -n argocd get application sample-api-dev -o wide
    ```
 
+   Proceed when `sample-api-dev` is `Synced` and `Healthy`. If it is `OutOfSync`, refresh and wait briefly. If it is `Degraded` or `Missing`, describe the Application before running connectivity tests.
+
 5. Confirm that the deployed NetworkPolicy and pods match the rendered intent:
 
    ```bash
@@ -98,6 +100,8 @@ Review these files before validation:
    printf '\n===== sample-api pods =====\n'
    kubectl -n sample-api-dev get pods -l app.kubernetes.io/name=sample-api -o wide
    ```
+
+   Expected output includes one `NetworkPolicy` named `sample-api` and sample API pods in `Running` with `READY` as `1/1`. The policy selector should match the pod label `app.kubernetes.io/name=sample-api`; otherwise the policy may exist but not apply to the workload.
 
 6. Run a positive connectivity test from the allowed namespace or expected source:
 
@@ -144,6 +148,8 @@ Review these files before validation:
    ```bash
    kubectl delete namespace network-denied-test
    ```
+
+   Proceed when namespace deletion completes or `kubectl get namespace network-denied-test` returns `NotFound`. If the namespace stays `Terminating`, inspect namespace events and finalizers before continuing.
 
 ## Expected Results
 The `sample-api` chart renders a NetworkPolicy and the deployed application still passes health checks while unintended traffic is denied.

@@ -198,6 +198,8 @@ Key files:
 
    The pinned version in `platform-config/clusters/dev/argocd.yaml` is the version tested by this lab. Newer chart versions may exist by the time you run the lab. Do not change the pinned version just because a newer version is available; Helm charts can change required values between releases.
 
+   Continue only when `kubectl get nodes` shows `Ready` nodes and the Helm install or upgrade completes successfully. If Helm times out, inspect `kubectl -n argocd get pods` before retrying; partially created pods usually explain whether the issue is scheduling, image pull or readiness.
+
 4. Bootstrap the dev root Application from `platform-config/bootstrap/root-application-dev.yaml`:
 
    ```bash
@@ -233,6 +235,8 @@ Key files:
    The Argo CD application controller runs as a StatefulSet in the Helm chart used by this lab, so the log command targets `statefulset/argocd-application-controller`.
 
    For this lab, `platform-root-dev` and `argocd` should be `Synced / Healthy`. Later-lab Applications may appear as `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs provide the required values, CRDs, IAM roles, secrets or chart versions.
+
+   Treat `platform-root-dev` or `argocd` being `Degraded` as a stop condition. Treat later-lab Applications as informational unless their errors block Argo CD itself or the `sample-api-dev` Application used in the next labs.
 
 6. Access the Argo CD UI and inspect the same Applications visually.
 
@@ -271,11 +275,7 @@ Argo CD is installed in the `argocd` namespace, the `platform-root-dev` Applicat
 - If `sample-api-dev` shows `ImagePullBackOff`, the image tag is missing or the package is no longer public.
 - Later-lab Applications may be `Progressing`, `OutOfSync` or `Unknown` until their dedicated labs complete the required configuration.
 - The Argo CD UI is reachable through local port-forwarding and shows the same Application statuses as `kubectl`.
-- Changing a harmless Git-managed annotation is reconciled into the cluster.
-- Manually changing that annotation in-cluster is reverted by self-heal.
-- Removing a Git-managed test resource removes it from the cluster when pruning is enabled.
 - Controller logs contain no repository authentication, manifest-generation or comparison errors.
-- Do not test self-heal or pruning on production workloads; use a temporary test object.
 
 ## Troubleshooting
 

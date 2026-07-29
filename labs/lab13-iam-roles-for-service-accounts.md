@@ -118,6 +118,8 @@ Review these files before validation:
 
    These service accounts are intentionally not annotated with `eks.amazonaws.com/role-arn` because these controllers use EKS Pod Identity, not IRSA annotations.
 
+   Proceed if each service account exists and `metadata.annotations` is absent or does not contain `eks.amazonaws.com/role-arn`. Stop if either service account is missing, because the Pod Identity associations in the next step would have nothing to bind to.
+
 3. Confirm the EKS Pod Identity associations created by earlier labs:
 
    ```bash
@@ -145,6 +147,8 @@ Review these files before validation:
    ```
 
    Confirm External Secrets can read only the lab secret path and Karpenter has the EC2 permissions needed for node provisioning. IAM permissions belong in Terraform, not in Kubernetes manifests.
+
+   Expected matches include EKS Pod Identity association resources, Secrets Manager read permissions scoped to the lab secret path and Karpenter EC2 permissions such as instance launch permissions. If `grep` returns no matches, verify you are on the current `platform-modules` checkout before assuming the platform has no workload identity configuration.
 
 5. Review the IRSA annotation pattern for workloads that need it:
 
@@ -183,6 +187,8 @@ Review these files before validation:
    ```
 
    Successful validation means the controllers use the intended service accounts and can call their required AWS APIs without static credentials. Look for the absence of `AccessDenied`, `NoCredentialProviders` and web identity errors.
+
+   Normal logs may contain reconciliation or startup messages. Stop on repeated `AccessDenied`, `NoCredentialProviders`, `InvalidIdentityToken`, `WebIdentityErr` or AWS API credential errors, because those indicate workload identity is not functioning.
 
 ## Expected Results
 

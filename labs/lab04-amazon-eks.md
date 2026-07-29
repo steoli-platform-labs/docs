@@ -65,6 +65,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 
    Choose a version in standard support unless you intentionally need an older version. EKS versions change over time, so prefer the newest standard-support version that is compatible with the platform components used in these labs.
 
+   The `kubernetes_version` you choose in the next step must appear in this command output. If the example version is not listed, use a listed standard-support version instead of copying the example blindly.
+
    If `eks_private_subnet_cidrs` is set, EKS uses those dedicated private subnets from the secondary VPC CIDR. If it is empty, EKS uses the platform private subnets from the primary VPC CIDR instead.
 
 3. Edit `terraform.tfvars` and enable EKS:
@@ -91,6 +93,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 
    Review the plan before applying. EKS creation can take several minutes.
 
+   Proceed only if the plan creates the EKS cluster, managed node group and access resources without destroying the VPC networking from Lab 03. EKS control plane and node group creation commonly take 10 minutes or more and incur hourly cost while running.
+
 5. Configure kubectl:
 
    ```bash
@@ -98,6 +102,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    CLUSTER="$(terraform output -raw cluster_name)"
    aws eks update-kubeconfig --name "$CLUSTER" --region "$AWS_REGION"
    ```
+
+   Expected output says a kubeconfig context was added or updated. Stop if `CLUSTER` is empty or AWS returns `ResourceNotFoundException`; that means Terraform output or cluster creation did not complete as expected.
 
 6. Verify the cluster:
 
@@ -124,6 +130,17 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    printf '\n===== Kubernetes readyz =====\n'
    kubectl get --raw='/readyz?verbose'
    ```
+
+   Proceed when the cluster status is `ACTIVE`, at least one node group is listed, `kubectl get nodes` shows nodes in `Ready`, system pods are running and `/readyz` ends with a successful ready check.
+
+   Run a final no-drift check after apply:
+
+   ```bash
+   printf '\n===== Terraform drift check =====\n'
+   terraform plan -detailed-exitcode
+   ```
+
+   Exit code `0` means the applied state matches configuration. Exit code `2` means Terraform sees changes and you should review them before continuing. Exit code `1` is an error.
 
 7. Confirm only Terraform source and documentation files are tracked. Keep local `backend.hcl`, `terraform.tfvars`, plan files and `.terraform/` ignored.
 

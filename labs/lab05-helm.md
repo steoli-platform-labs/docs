@@ -66,6 +66,8 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
      > /tmp/sample-api-rendered.yaml
    ```
 
+   `helm lint` should end with `1 chart(s) linted, 0 chart(s) failed`. The template command writes the rendered manifests to `/tmp/sample-api-rendered.yaml` and is normally silent on success.
+
 3. Validate the rendered manifests client-side:
 
    ```bash
@@ -73,6 +75,8 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
    ```
 
    This is a dry run only. Do not deploy the application with `helm install`, `helm upgrade`, or `kubectl apply`.
+
+   Expected output lists resources as `created (dry run)` or `configured (dry run)`. Stop on schema or validation errors; those mean the rendered Kubernetes manifests are not valid for the client-side API schema.
 
    The chart can render an Argo Rollout when `rollout.enabled=true`, but the Argo Rollouts CRD is introduced later. This lab disables Rollout rendering during client-side schema validation so only built-in Kubernetes APIs are checked.
 
@@ -84,6 +88,8 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
    printf '\n===== Rendered platform features =====\n'
    grep -nE 'readinessProbe|livenessProbe|startupProbe|resources:|NetworkPolicy|PodDisruptionBudget' /tmp/sample-api-rendered.yaml
    ```
+
+   Expected output includes workload resources plus health probes, resource requests/limits, a `NetworkPolicy` and a `PodDisruptionBudget`. Missing lines mean either the chart changed or the render values disabled a feature that later labs expect.
 
 5. Confirm the Helm chart source is clean and temporary rendered manifests are not tracked.
 

@@ -236,6 +236,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
    aws configure set output json --profile "$AWS_PROFILE"
    ```
 
+   Continue only after the browser login completes successfully and the profile exists locally. If account or role selection fails, stop and fix AWS access before continuing; later labs assume this profile can create infrastructure.
+
    Alternative: existing short-lived credentials.
 
    When an approved mechanism already exports temporary credentials, keep the named profile and follow your organization's authentication process. Avoid creating long-lived access keys solely for this project.
@@ -342,6 +344,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
    gh auth status
    ```
 
+   Expected result: GitHub CLI reports that you are logged in to `github.com`, shows the intended GitHub username and has access through HTTPS. Stop if authentication is missing or points at the wrong account.
+
 11. Verify access to the reference GitHub organization.
 
    The public `steoli-platform-labs/*` repositories are reference templates for this lab series. Learners inspect, apply and validate the committed reference state rather than pushing changes to shared repositories.
@@ -412,6 +416,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
    └── sample-api/
    ```
 
+   The `find` command prints local directory paths, so the exact prefix may differ from the tree shown above. Proceed when the output includes seven directories ending in the expected repository names.
+
 13. Verify common repository files.
 
    Each reference repository already contains baseline repository files. Confirm the local clones include `README.md` and `.gitignore` where expected:
@@ -426,6 +432,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
 
    The ignore files are intentionally broad enough to keep local secrets, generated files and Terraform state out of Git.
 
+   The `test -f` commands are silent on success. If the block stops or returns an error, one of the expected files is missing; reclone or pull the affected repository before continuing.
+
 14. Confirm the local clones are clean before continuing:
 
    ```bash
@@ -437,6 +445,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
       test -f .gitignore
    done
    ```
+
+   `git status --short` should print nothing for each repository. Any listed file means the checkout has local changes or generated files; inspect that repository before continuing so later labs start from a known clean reference state.
 
    Return to the workspace:
 

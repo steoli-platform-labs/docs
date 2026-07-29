@@ -137,6 +137,8 @@ Review these files before validation:
 
    No output from `helm template` means the chart rendered successfully. Any Helm error here will also fail in Argo CD. The `targetRevision` value should be pinned to a tested Karpenter chart version so future chart changes do not unexpectedly change this lab. The Helm value `settings.clusterName` must match the Terraform `cluster_name` output from the dev environment.
 
+   Each `kubectl apply --dry-run=client` should print resources as `created (dry run)` or `configured (dry run)`. Stop on unknown kinds or schema errors because Argo CD will hit the same API validation problem.
+
 6. Confirm there are no unexpected local desired-state changes:
 
    ```bash
@@ -194,6 +196,8 @@ Review these files before validation:
    ```
 
    The controller pod being ready only proves Karpenter is installed. `NodePool` and `EC2NodeClass` must also report ready before provisioning can work. The lab NodePool uses on-demand capacity so the first run does not depend on EC2 Spot service-linked-role setup or current Spot availability.
+
+   In the `describe` output, look for readiness conditions such as `Ready=True`. If either custom resource is `Ready=False`, read the condition message before creating the inflate workload.
 
 9. Confirm the instance types Karpenter may launch:
 
@@ -253,6 +257,8 @@ Review these files before validation:
    ```
 
    Expected behavior: pods become pending first, Karpenter creates one or more `NodeClaim` resources, one or more new nodes join the cluster and the pending pods schedule. The exact number of nodes depends on current free capacity, selected instance types, daemonset overhead and how many test pods you created. Do not expect exactly three nodes.
+
+   The watch streams are safe to stop with `Ctrl-C` after test pods are `Running`, a `NodeClaim` exists and at least one new node reaches `Ready`. If pods stay `Pending`, inspect Karpenter logs and NodeClaim conditions instead of creating more test workloads.
 
    The `kubectl get node -w` command is a watch stream. It can print the same node multiple times as status changes from `NotReady` to `Ready`, so repeated lines do not mean Kubernetes created duplicate nodes with the same name. To see the current unique nodes, run a normal non-watch query in another terminal:
 
