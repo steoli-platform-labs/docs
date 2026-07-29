@@ -68,7 +68,11 @@ Review these files before validation:
    sed -n '1,120p' helm-charts/charts/sample-api/templates/pdb.yaml
    ```
 
-   Confirm readiness probes protect traffic, liveness probes restart broken containers and the PDB protects against voluntary disruption.
+   In the `Rollout` template, look for `kind: Rollout`, `replicas: {{ .Values.replicaCount }}`, the canary `steps`, `terminationGracePeriodSeconds: 30`, `readinessProbe` on `/ready`, `livenessProbe` on `/health`, resource requests/limits and `APP_VERSION` from the image tag. This is the template used by the GitOps-managed dev workload because the chart default has `rollout.enabled: true`.
+
+   In the `Deployment` template, look for the same basic pod controls plus `startupProbe`, preferred pod anti-affinity on `kubernetes.io/hostname` and `topologySpreadConstraints` across `topology.kubernetes.io/zone`. This template is reviewed because it shows the non-Rollout workload pattern, but those Deployment-only scheduling fields are not active when the workload is rendered as an Argo Rollout.
+
+   In the `PodDisruptionBudget` template, confirm `maxUnavailable` is rendered from `.Values.pdb.maxUnavailable` and the selector uses `app.kubernetes.io/name: sample-api`. That selector is what connects the PDB to the sample API pods.
 
 3. Render the chart locally and confirm the HA settings are present:
 
@@ -84,7 +88,9 @@ Review these files before validation:
    grep -nE 'readinessProbe|livenessProbe|startupProbe|PodDisruptionBudget|topologySpreadConstraints|podAntiAffinity' /tmp/sample-api-ha.yaml
    ```
 
-   If `topologySpreadConstraints` or `podAntiAffinity` are not present, either the chart does not implement them yet or the values do not enable them. Do not claim that the lab validates a setting that is not rendered.
+   `helm lint` should end with `1 chart(s) linted, 0 chart(s) failed`. The render command intentionally sets `rollout.enabled=false` so you can inspect the Deployment form of the chart, including `startupProbe`, `podAntiAffinity` and `topologySpreadConstraints`.
+
+   Expected grep output should include lines for `readinessProbe`, `livenessProbe`, `startupProbe`, `PodDisruptionBudget`, `podAntiAffinity` and `topologySpreadConstraints`. If any of those are missing, check whether the chart changed or whether the render command used different values. Do not claim that the lab validates a setting that is not rendered.
 
 4. Refresh Argo CD and confirm `sample-api` is healthy:
 
@@ -94,6 +100,8 @@ Review these files before validation:
    printf '\n===== sample-api-dev Application =====\n'
    kubectl -n argocd get application sample-api-dev -o wide
    ```
+
+   The refresh annotation asks Argo CD to re-read the current Git revision. The `kubectl get application` output should show `sample-api-dev` moving toward `Synced` and `Healthy`. If it remains `OutOfSync`, wait briefly and run the command again. If it shows `Degraded`, describe the Application before continuing because the workload may not be safe to disrupt.
 
 5. Inspect the deployed workload before testing recovery:
 
@@ -109,7 +117,9 @@ Review these files before validation:
    kubectl get nodes -L topology.kubernetes.io/zone
    ```
 
-   Confirm pods are ready and note which nodes they run on. If all replicas are on one node, pod deletion can still be tested, but node failure and zone-spread claims cannot be fully validated.
+   Expected workload output: one `rollout.argoproj.io/sample-api`, at least two ready pods and one `poddisruptionbudget.policy/sample-api`. The PDB details should show `Max unavailable: 1`, current healthy pods and allowed disruptions. With two ready replicas, `Allowed disruptions` should normally be `1`; if it is `0`, Kubernetes does not currently think one pod can be safely evicted.
+
+   Use the pod placement and node zone output to understand the blast radius of the next tests. If pods are on different nodes, pod deletion and node drain better represent high availability. If all replicas are on one node, pod deletion can still be tested, but node failure and zone-spread claims cannot be fully validated in that cluster shape.
 
 6. Run continuous traffic while testing recovery:
 
@@ -123,7 +133,9 @@ Review these files before validation:
    while true; do date -u; curl -fsS http://localhost:8080/health || echo "request failed"; sleep 2; done
    ```
 
-   This gives you a simple signal for whether the service remains available during disruption.
+   Keep the first terminal open for the port-forward. The second terminal should print a UTC timestamp followed by a successful health response every two seconds. If port-forwarding is not ready yet, the first one or two requests may fail; wait until the loop is consistently successful before starting disruption tests.
+
+   During pod deletion or node drain, occasional connection resets can happen if the local port-forward target disappears. What matters for this lab is whether the Service quickly returns to healthy responses and avoids sustained failures while Kubernetes replaces or reschedules pods.
 
 7. Run controlled pod deletion and measure recovery:
 
@@ -135,7 +147,9 @@ Review these files before validation:
    kubectl -n sample-api-dev get pods -w
    ```
 
-   Expected behavior: Kubernetes creates a replacement pod, the Service keeps at least one ready endpoint and the repeated health requests do not fail for a sustained period.
+   Expected behavior: the selected pod should move to `Terminating`, and Kubernetes should create a replacement pod. The replacement normally moves through `Pending`, `ContainerCreating` and then `Running` with `READY` becoming `1/1`. Press `Ctrl-C` after the replacement pod is running and ready.
+
+   While the pod is being replaced, the continuous health loop should keep returning successful responses once the port-forward is attached to a live endpoint. If requests fail continuously for more than a few cycles, inspect pod readiness and events before moving on.
 
 8. Drain one worker only when the lab environment has enough spare capacity:
 
@@ -155,19 +169,21 @@ Review these files before validation:
    kubectl uncordon "$TEST_NODE"
    ```
 
-   Run repeated requests during each test and record error rate and recovery time.
+   This step tests voluntary disruption handling. `kubectl drain` cordons the node, evicts eligible pods and waits for replacements. The PDB should allow only one sample API pod eviction at a time. If the command blocks with a PDB-related message, that can be correct protection: Kubernetes is refusing to reduce availability below the budget.
+
+   Only run this in a lab cluster with enough spare capacity or autoscaling capacity to place replacements. If the replacement pod stays `Pending`, stop and inspect scheduling events; do not keep draining additional nodes. After the test, `kubectl uncordon` returns the node to scheduling service. Confirm the continuous health loop has recovered before ending the lab.
 
 ## Expected Results
-The sample API has health probes, disruption protection and scheduling rules that keep it available during controlled failures.
+The sample API has health probes and disruption protection that keep it available during controlled failures. The lab also verifies the Deployment rendering path for startup probes and scheduling preferences, while the live dev workload remains an Argo Rollout.
 
 ## Validation
 - At least the documented number of replicas are available.
-- Pods are spread across more than one node and, when capacity exists, more than one zone.
-- Readiness, liveness and startup probes behave as intended.
+- The live Rollout renders and runs readiness and liveness probes.
+- The Deployment render path includes startup probes, pod anti-affinity and topology spread constraints.
 - Deleting a pod causes automatic replacement without sustained service failure.
 - PDB allows one voluntary disruption at a time and blocks disruption beyond `maxUnavailable`.
 - Graceful termination completes within the configured grace period.
-- HPA and scheduling constraints do not conflict with the PDB or available capacity.
+- Autoscaling, disruption budgets and available capacity do not conflict during the controlled tests.
 
 ## Troubleshooting
 Start with workload status, events and scheduling placement:
@@ -191,15 +207,22 @@ If the PDB blocks a drain:
 
 If all pods schedule on one node:
 
-- Confirm anti-affinity or topology spread constraints are actually rendered.
-- Confirm the cluster has enough nodes and zones to satisfy the constraints.
-- Confirm Karpenter or existing node capacity can place additional pods.
+- Confirm whether the live workload is a Rollout or Deployment. In this lab, the Rollout path is active for dev and does not currently include the Deployment-only anti-affinity and topology spread fields.
+- Confirm the cluster has enough nodes and zones before making any availability claims based on node or zone spread.
+- Pod deletion still validates replacement behavior even when all replicas are on one node.
 
 ## Final Repository State
 The implementation remains GitOps-driven and mergeable to `main`.
 
 ## Cleanup
 Uncordon any node drained during validation and remove temporary rendered files such as `/tmp/sample-api-ha.yaml`.
+
+```bash
+printf '\n===== Confirm nodes are schedulable =====\n'
+kubectl get nodes
+printf '\n===== Remove temporary HA render =====\n'
+rm -f /tmp/sample-api-ha.yaml
+```
 
 ## Next Steps
 Continue with [Lab 18 - Chaos Engineering](./lab18-chaos-engineering.md).
