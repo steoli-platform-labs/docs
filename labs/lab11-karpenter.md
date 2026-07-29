@@ -139,6 +139,8 @@ Review these files before validation:
 
    Each `kubectl apply --dry-run=client` should print resources as `created (dry run)` or `configured (dry run)`. Stop on unknown kinds or schema errors because Argo CD will hit the same API validation problem.
 
+   A client-side dry-run asks Kubernetes whether it understands the manifest shape without creating the object. This is especially useful for Karpenter resources because they depend on CRDs being installed before custom resources can be accepted.
+
 6. Confirm there are no unexpected local desired-state changes:
 
    ```bash
@@ -259,6 +261,8 @@ Review these files before validation:
    Expected behavior: pods become pending first, Karpenter creates one or more `NodeClaim` resources, one or more new nodes join the cluster and the pending pods schedule. The exact number of nodes depends on current free capacity, selected instance types, daemonset overhead and how many test pods you created. Do not expect exactly three nodes.
 
    The watch streams are safe to stop with `Ctrl-C` after test pods are `Running`, a `NodeClaim` exists and at least one new node reaches `Ready`. If pods stay `Pending`, inspect Karpenter logs and NodeClaim conditions instead of creating more test workloads.
+
+   The `pause` image does almost nothing, but each replica still needs a schedulable pod slot. Scaling it beyond current capacity intentionally creates `Pending` pods, and Karpenter reacts by creating new node capacity.
 
    The `kubectl get node -w` command is a watch stream. It can print the same node multiple times as status changes from `NotReady` to `Ready`, so repeated lines do not mean Kubernetes created duplicate nodes with the same name. To see the current unique nodes, run a normal non-watch query in another terminal:
 

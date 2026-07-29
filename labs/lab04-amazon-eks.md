@@ -78,6 +78,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    node_instance_types = ["t3.medium"]
    ```
 
+   `enable_eks = true` turns on the Kubernetes cluster portion of the live Terraform stack. Without it, the network from Lab 03 exists, but there is no EKS control plane or worker node group for `kubectl` to use.
+
 4. Plan and apply:
 
    ```bash
@@ -104,6 +106,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    ```
 
    Expected output says a kubeconfig context was added or updated. Stop if `CLUSTER` is empty or AWS returns `ResourceNotFoundException`; that means Terraform output or cluster creation did not complete as expected.
+
+   `kubectl` does not automatically know about new EKS clusters. `aws eks update-kubeconfig` writes a local Kubernetes context with the cluster endpoint and AWS authentication settings so later `kubectl` commands know which cluster to contact.
 
 6. Verify the cluster:
 
@@ -132,6 +136,8 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
    ```
 
    Proceed when the cluster status is `ACTIVE`, at least one node group is listed, `kubectl get nodes` shows nodes in `Ready`, system pods are running and `/readyz` ends with a successful ready check.
+
+   The AWS CLI checks prove the cloud-side EKS resources exist. The `kubectl` checks prove the Kubernetes API is reachable and the worker nodes can actually run pods.
 
    Run a final no-drift check after apply:
 

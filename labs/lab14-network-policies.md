@@ -79,6 +79,8 @@ Review these files before validation:
 
    Expected result: only the rendered `NetworkPolicy` is printed. It should select `sample-api` pods, include `policyTypes: [Ingress, Egress]`, allow ingress from the `ingress-nginx` namespace on port `8080`, allow DNS egress to `kube-system` on TCP and UDP port `53` and allow HTTPS egress on TCP port `443`.
 
+   This file is a Helm template, not the final Kubernetes object. Helm fills in template values such as names and labels before Kubernetes sees the manifest.
+
    Rendering locally catches template mistakes before Argo CD deploys them. The rendered file contains every manifest from the chart, so use `yq` to extract only the `NetworkPolicy` document instead of showing a fixed number of lines after the match.
 
 4. Refresh Argo CD and verify `sample-api-dev` is synced:
@@ -103,11 +105,14 @@ Review these files before validation:
 
    Expected output includes one `NetworkPolicy` named `sample-api` and sample API pods in `Running` with `READY` as `1/1`. The policy selector should match the pod label `app.kubernetes.io/name=sample-api`; otherwise the policy may exist but not apply to the workload.
 
-6. Run a positive connectivity test from the allowed namespace or expected source:
+6. Run a positive connectivity test from the allowed namespace:
 
    ```bash
-   kubectl -n sample-api-dev run allowed-client --rm -it --restart=Never \
-      --image=curlimages/curl -- curl -fsS http://sample-api/
+   printf '\n===== Ensure allowed-source namespace exists =====\n'
+   kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
+   printf '\n===== Allowed client request =====\n'
+   kubectl -n ingress-nginx run allowed-client --rm -it --restart=Never \
+      --image=curlimages/curl -- curl -fsS http://sample-api.sample-api-dev.svc.cluster.local/
    ```
 
    Expected result: the command prints the sample API response and then deletes the temporary pod:
@@ -119,6 +124,8 @@ Review these files before validation:
    You may also see messages such as `couldn't attach to pod`, `falling back to streaming logs` or the JSON response printed twice. That is normal for short-lived `kubectl run --rm -it` pods: the curl container can finish before kubectl attaches, so kubectl falls back to reading the completed pod logs before deleting it.
 
    Treat the test as successful when the response contains `"service":"sample-api"` and the temporary `allowed-client` pod is deleted. If the curl command exits with an HTTP error, times out or cannot resolve `sample-api`, inspect the Service, endpoints and NetworkPolicy before running deny tests.
+
+   This client runs in `ingress-nginx` because the policy explicitly allows ingress from that namespace. The namespace creation command is a no-op if an ingress namespace already exists; otherwise it creates the minimum namespace needed for this source-based test. A pod in a different namespace should not be able to reach the API once network policy enforcement is active.
 
 7. Run a negative test from an unintended namespace:
 

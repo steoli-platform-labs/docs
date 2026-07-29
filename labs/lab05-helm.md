@@ -68,6 +68,8 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
 
    `helm lint` should end with `1 chart(s) linted, 0 chart(s) failed`. The template command writes the rendered manifests to `/tmp/sample-api-rendered.yaml` and is normally silent on success.
 
+   `helm lint` checks the chart structure. `helm template` turns chart templates plus values into plain Kubernetes YAML without installing anything. The `--set` flags override values only for this validation run, and `/tmp` keeps generated output outside the Git repository.
+
 3. Validate the rendered manifests client-side:
 
    ```bash
@@ -90,6 +92,8 @@ Lint the chart, render manifests with validation values and run a Kubernetes cli
    ```
 
    Expected output includes workload resources plus health probes, resource requests/limits, a `NetworkPolicy` and a `PodDisruptionBudget`. Missing lines mean either the chart changed or the render values disabled a feature that later labs expect.
+
+   The rendered YAML is just text at this point. These searches are a quick way to prove the chart produced the Kubernetes features that later labs rely on before anything is deployed to the cluster.
 
 5. Confirm the Helm chart source is clean and temporary rendered manifests are not tracked.
 

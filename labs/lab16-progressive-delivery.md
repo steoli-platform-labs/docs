@@ -184,6 +184,8 @@ Review these files before validation:
 
    Do not continue if the watch output or pod status shows `Degraded`, `ImagePullBackOff` or unavailable replicas that do not recover after the configured pauses.
 
+   The JSON patch changes the Rollout's pod template. Kubernetes treats that as a new version of the workload, so Argo Rollouts creates a new ReplicaSet and gradually shifts replicas from the old template to the new one.
+
 6. Inspect the rollout result:
 
    ```bash

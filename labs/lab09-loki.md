@@ -280,6 +280,8 @@ Review these files before validation:
 
    The `sample-api` application does not emit an access log for every request, so this writes one explicit smoke-test line to the existing application container stdout. Alloy should collect the same pod log stream and send it to Loki.
 
+   `/proc/1/fd/1` is the stdout stream of the main process inside the container. Writing there makes Kubernetes treat the text like a normal application log line, which is exactly what Alloy is configured to collect.
+
 11. Query Loki for recent application logs:
 
    ```bash
@@ -292,6 +294,8 @@ Review these files before validation:
    The response should include a `status` of `success` and the `loki smoke test from sample-api-dev` line. If the `result` array is empty, wait a minute and retry. Log ingestion is usually quick, but Alloy must read and forward the log stream before Loki can return it.
 
    If the response is successful but does not contain the smoke-test text, retry with a wider time window before troubleshooting. If the response is an error, confirm Loki readiness and Alloy logs first.
+
+   Loki queries logs by labels first, such as `namespace="sample-api-dev"`, and then by time range. The `start` and `end` values are Unix timestamps converted to nanoseconds because Loki's API expects nanosecond precision.
 
 12. Add Loki as a Grafana data source through the Grafana UI:
 

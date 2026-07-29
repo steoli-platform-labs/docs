@@ -309,6 +309,8 @@ Review these files before validation:
 
    The development cluster is intentionally small before Lab 11 introduces Karpenter. Creating a separate generator Job can fail with `Too many pods`, so this lab runs `telemetrygen` as an ephemeral container inside the existing OpenTelemetry Collector pod. That reuses an already scheduled pod and avoids changing any GitOps-managed replica counts.
 
+   An ephemeral container is a temporary debugging container added to an existing pod. Here it runs a trace generator inside the already scheduled collector pod, which avoids needing extra cluster capacity just to create test telemetry.
+
    ```bash
    COLLECTOR_POD=$(kubectl -n monitoring get pod \
      -l app.kubernetes.io/name=opentelemetry-collector \
@@ -342,6 +344,8 @@ Review these files before validation:
    If `telemetrygen` already exists on the pod or exits non-zero, restart the collector pod using the cleanup command below, wait for it to become ready and rerun the debug command once. Do not proceed until the ephemeral container reports `Completed` with exit code `0`.
 
    Ephemeral containers cannot be removed from a running pod after they complete. This is harmless for the lab. If you want to remove the completed debug container from the pod status, restart the collector pod and wait for Kubernetes to recreate it:
+
+   Deleting this pod is safe because it is owned by a controller. Kubernetes recreates it automatically from the desired state, and the new pod no longer carries the completed debug container status.
 
    ```bash
    printf '\n===== Delete collector pod =====\n'

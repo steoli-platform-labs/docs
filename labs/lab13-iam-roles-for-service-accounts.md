@@ -150,6 +150,8 @@ Review these files before validation:
 
    Expected matches include EKS Pod Identity association resources, Secrets Manager read permissions scoped to the lab secret path and Karpenter EC2 permissions such as instance launch permissions. If `grep` returns no matches, verify you are on the current `platform-modules` checkout before assuming the platform has no workload identity configuration.
 
+   This source-code review shows the intended IAM design. Terraform outputs show the roles Terraform created, and controller logs later show whether the running pods can actually use those permissions.
+
 5. Review the IRSA annotation pattern for workloads that need it:
 
    ```bash
@@ -189,6 +191,8 @@ Review these files before validation:
    Successful validation means the controllers use the intended service accounts and can call their required AWS APIs without static credentials. Look for the absence of `AccessDenied`, `NoCredentialProviders` and web identity errors.
 
    Normal logs may contain reconciliation or startup messages. Stop on repeated `AccessDenied`, `NoCredentialProviders`, `InvalidIdentityToken`, `WebIdentityErr` or AWS API credential errors, because those indicate workload identity is not functioning.
+
+   You are validating credentials by symptoms: if the controllers can reconcile AWS-backed resources without static keys and without credential errors, their temporary workload identity path is working.
 
 ## Expected Results
 

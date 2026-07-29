@@ -170,6 +170,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
    git config --global init.defaultBranch main
    ```
 
+   This makes new local Git repositories use `main` as their first branch name. The reference repositories on GitHub also use `main`, so this avoids branch-name differences later when you compare local files with the published reference state.
+
    Validate:
 
    ```bash
@@ -237,6 +239,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
    ```
 
    Continue only after the browser login completes successfully and the profile exists locally. If account or role selection fails, stop and fix AWS access before continuing; later labs assume this profile can create infrastructure.
+
+   The `export` values used in these labs are temporary shortcuts for the current terminal session. The AWS profile tells the AWS CLI which account and role to use; the Region tells AWS where to create regional resources such as VPCs and EKS clusters.
 
    Alternative: existing short-lived credentials.
 
@@ -396,6 +400,8 @@ Complete the setup steps below in order. This is the only lab that requires manu
      gh repo clone "$GITHUB_ORG/$repo"
    done
    ```
+
+   Keep these repositories as siblings under one workspace directory. Later Terraform, Helm and validation commands use relative paths between repositories, so the folder layout is part of the lab setup rather than just personal preference.
 
    Validate the directory structure:
 

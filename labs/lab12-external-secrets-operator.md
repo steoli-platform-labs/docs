@@ -117,6 +117,8 @@ Review these files before validation:
 
    `SECRET_ID` is the AWS Secrets Manager name or ARN referenced by the sample API `ExternalSecret`. By default, it comes from the sample API chart's `secret.remoteKey` value. The command creates a deliberately non-sensitive JSON test value if the secret does not exist, then confirms only the secret metadata. Do not run commands that print secret values during the lab.
 
+   The remote key is the name of the secret in AWS Secrets Manager. The `ExternalSecret` points at that remote key, and External Secrets Operator creates or updates a normal Kubernetes Secret inside the application namespace.
+
 5. Confirm the External Secrets IAM and Pod Identity prerequisites from the earlier Terraform labs:
 
    ```bash
@@ -229,6 +231,8 @@ Review these files before validation:
    ```
 
    This is the expected successful ending for the secret synchronization path. It proves that External Secrets Operator read the `platform-labs/sample-api-dev` test secret from AWS Secrets Manager and created the `sample-api-dev/sample-api` Kubernetes Secret with the expected key. The sample application does not consume `EXAMPLE_CONFIG` yet; this lab validates the platform secret-management capability without introducing a real application credential.
+
+   Checking the Secret name and key list is safe because it proves synchronization happened without exposing the actual value. Decoding or printing the value would turn a secret-management lab into a secret-leak risk.
 
    Do not decode, print or screenshot real secret values in terminals, issue comments, pull requests or CI logs.
 

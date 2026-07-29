@@ -88,6 +88,8 @@ later labs
    cp terraform.tfvars.example terraform.tfvars
    ```
 
+   The `.example` file is a safe template committed to Git. `terraform.tfvars` is your local copy with account-specific values, and it is ignored by Git so you do not publish personal account IDs, names or tags.
+
    Edit `terraform.tfvars`:
 
    ```hcl
@@ -118,6 +120,8 @@ later labs
    terraform apply tfplan
    ```
 
+   In this Terraform flow, `init` prepares the working directory and downloads providers, `fmt` normalizes formatting, `validate` checks the configuration syntax, `plan` previews what Terraform will change and `apply` performs the reviewed plan.
+
    Review the plan before applying. It should create only the bootstrap backend resources, such as the S3 bucket and related configuration, in the intended Region and account. Stop on any destroy action, unexpected bucket name or wrong account/Region.
 
 6. Migrate the bootstrap state to S3:
@@ -127,6 +131,8 @@ later labs
    ```
 
    Expected behavior: the script creates local backend configuration, reinitializes Terraform with the S3 backend and migrates the bootstrap state. If migration is interrupted or Terraform reports backend/state errors, stop and inspect before deleting any local or remote state files.
+
+   Terraform state is Terraform's inventory of the infrastructure it manages. This step moves that inventory from your laptop into S3 so later runs use the same source of truth instead of depending on one local file.
 
 7. Validate the backend:
 

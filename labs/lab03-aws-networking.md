@@ -194,6 +194,8 @@ Follow the steps below to configure the remote backend, review the network desig
 
    Use the backend bucket name from the Lab 02 `terraform output`; do not use the state object key as the bucket. The key for this lab is already defined by the checked-in backend example.
 
+   The bootstrap stack created the shared state bucket. This live stack now uses that bucket to store its own state file, so Terraform can remember the VPC and subnet resources it creates in this lab.
+
    `TF_VAR_workspace_path` records the local checkout path as a `Workspace` tag on supported AWS resources.
 
 2. Review the network design. The default network uses:
@@ -308,6 +310,8 @@ Follow the steps below to configure the remote backend, review the network desig
    ```
 
    A successful `head-object` prints JSON metadata for the remote state object. `NoSuchKey`, `NotFound` or `AccessDenied` means the bucket, key, Region or AWS profile does not match the backend configuration.
+
+   Think of the S3 bucket as the storage container and the backend key as the file path inside that container. This command checks that Terraform wrote the live environment state file to the expected path.
 
 9. Inspect the AWS resource configuration:
 

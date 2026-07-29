@@ -209,6 +209,8 @@ Key files:
    kubectl apply -f platform-config/bootstrap/root-application-dev.yaml
    ```
 
+   `kubectl wait` makes sure the Argo CD API server is ready to accept work. Applying the root Application is the bootstrap handoff: after this object exists, Argo CD reads Git and creates the child Applications for the platform.
+
 5. Verify that Argo CD creates child Applications and reports the Lab 07 bootstrap resources as healthy:
 
    ```bash
@@ -254,6 +256,8 @@ Key files:
    ```
 
    Open `http://localhost:8080`, log in with username `admin` and the password from the secret, then inspect `platform-root-dev`, `argocd` and `sample-api-dev`.
+
+   The `jsonpath` command extracts only the password field from the Kubernetes Secret, and `base64 --decode` turns Kubernetes' stored representation back into readable text. The port-forward gives browser access from your laptop without exposing Argo CD publicly on the internet.
 
    Use the UI to confirm the application tree, sync status, health status, rendered resources and any diffs. This lab uses local port-forwarding only; do not expose the Argo CD server publicly without an approved access pattern such as SSO, VPN or an internal ingress.
 

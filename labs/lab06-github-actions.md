@@ -69,6 +69,8 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
 
    `terraform fmt` may rewrite files if formatting drift exists. In the reference repos, no changed files should remain after this step; if files change, inspect why before continuing. `helm lint` should report zero failed charts, and the namespace dry-run should print resources as `created (dry run)` or `configured (dry run)`.
+
+   These local commands mirror what CI checks remotely. Running them yourself helps connect a green GitHub Actions result to concrete tools: Terraform formatting, Helm linting and Kubernetes manifest validation.
 3. Confirm the reference workflow files are present and clean.
 
    This lab series uses the public repositories as reference templates. You validate the committed workflow state; you do not push workflow changes to the shared reference repositories.
@@ -180,6 +182,8 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    ```
 
    Expected output: `pytest -q` reports passing tests, Docker finishes with `Successfully tagged sample-api:lab06`, Helm lint reports zero failed charts and Terraform format checks print no filenames. A filename from `terraform fmt -check` means that repository is not formatted as CI expects.
+
+   The Python virtual environment isolates this application's dependencies from your system Python. The Docker build creates a local test image only; it does not publish anything to GHCR.
 
 6. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 

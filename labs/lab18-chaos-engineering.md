@@ -89,6 +89,8 @@ Review these files before validation:
 
    The first answer should be `yes`; the second should be `no`.
 
+   `kubectl auth can-i --as=...` impersonates the chaos ServiceAccount for the permission check. This proves the automation can do the narrow action it needs, deleting pods, without granting broader permissions such as deleting Deployments.
+
 5. Start a simple availability check in a separate terminal:
 
    ```bash
@@ -121,6 +123,8 @@ Review these files before validation:
    Expected behavior: one pod is deleted, the Rollout/ReplicaSet creates a replacement and the service returns to the expected ready replica count.
 
    The Job log should show which pod was selected and deleted, then complete. Press `Ctrl-C` after the log reaches completion if the follow command remains attached. In the pod watch, continue until the replacement pod is `Running` and `READY 1/1`, then press `Ctrl-C`.
+
+   A Kubernetes Job is one-off automation. It runs the chaos command to completion once; after it succeeds, you delete the Job so a later lab run can create a fresh one with the same name.
 
 7. Validate recovery through platform signals:
 

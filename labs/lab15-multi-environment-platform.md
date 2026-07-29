@@ -176,6 +176,8 @@ Review these files before activation:
 
    Each dry-run should print `created (dry run)` or `configured (dry run)`. `helm lint` should report zero failed charts, and each `helm template` command is normally silent because output is redirected to `/dev/null`.
 
+   These are preflight checks. They catch YAML, CRD and chart-rendering problems before Argo CD tries to reconcile the same desired state for three environments.
+
 6. Apply the environment root Applications:
 
    ```bash
@@ -243,6 +245,8 @@ Review these files before activation:
    ```
 
    In a completed multi-environment setup, each environment returns a healthy response from its own namespace.
+
+   This proves the same reusable chart is deployed three separate times with environment-specific values. The app is the same, but namespace, Argo CD Application and secret path are different for dev, staging and production.
 
    If a port-forward fails with `Address already in use`, stop the previous port-forward process before testing the next namespace. If `curl` fails, inspect the matching `/tmp/<namespace>-port-forward.log` and the namespace pod events before moving on.
 

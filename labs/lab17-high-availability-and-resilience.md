@@ -40,6 +40,8 @@ Review these files before validation:
 
 ## Step-by-Step Implementation
 
+This lab tests resilience in layers. The Rollout keeps the desired number of pods running, probes decide when a pod is safe to receive traffic, the PodDisruptionBudget controls voluntary evictions and node placement affects how much a single node or zone problem can hurt the app. Each step below looks at one of those layers before you intentionally disrupt the workload.
+
 1. Review the currently configured replica, autoscaling and disruption-budget values:
 
    ```bash
@@ -72,6 +74,8 @@ Review these files before validation:
 
    In the `Deployment` template, look for the same basic pod controls plus `startupProbe`, preferred pod anti-affinity on `kubernetes.io/hostname` and `topologySpreadConstraints` across `topology.kubernetes.io/zone`. This template is reviewed because it shows the non-Rollout workload pattern, but those Deployment-only scheduling fields are not active when the workload is rendered as an Argo Rollout.
 
+   This distinction matters: a chart can contain more than one rendering path. In dev, the live workload uses the Rollout path. The Deployment path is still useful to review because it shows reusable chart behavior, but reviewing it does not mean those fields are currently applied to the live Rollout.
+
    In the `PodDisruptionBudget` template, confirm `maxUnavailable` is rendered from `.Values.pdb.maxUnavailable` and the selector uses `app.kubernetes.io/name: sample-api`. That selector is what connects the PDB to the sample API pods.
 
 3. Render the chart locally and confirm the HA settings are present:
@@ -89,6 +93,8 @@ Review these files before validation:
    ```
 
    `helm lint` should end with `1 chart(s) linted, 0 chart(s) failed`. The render command intentionally sets `rollout.enabled=false` so you can inspect the Deployment form of the chart, including `startupProbe`, `podAntiAffinity` and `topologySpreadConstraints`.
+
+   Local rendering is a safe preview, not a deployment. This step validates chart capability and generated YAML; it does not change the live cluster.
 
    Expected grep output should include lines for `readinessProbe`, `livenessProbe`, `startupProbe`, `PodDisruptionBudget`, `podAntiAffinity` and `topologySpreadConstraints`. If any of those are missing, check whether the chart changed or whether the render command used different values. Do not claim that the lab validates a setting that is not rendered.
 
@@ -121,6 +127,8 @@ Review these files before validation:
 
    Use the pod placement and node zone output to understand the blast radius of the next tests. If pods are on different nodes, pod deletion and node drain better represent high availability. If all replicas are on one node, pod deletion can still be tested, but node failure and zone-spread claims cannot be fully validated in that cluster shape.
 
+   Read these outputs as three layers: the Rollout should maintain replica count, the PDB should limit voluntary disruption and pod placement shows whether one node problem could affect all replicas.
+
 6. Run continuous traffic while testing recovery:
 
    ```bash
@@ -137,6 +145,8 @@ Review these files before validation:
 
    Do not delete or drain anything until the health loop has at least three consecutive successful responses. If the port-forward exits, restart it and re-establish a steady baseline first.
 
+   The health loop establishes steady state before failure. If the app is already unhealthy before you delete anything, you cannot tell whether later failures were caused by your test or by an existing problem.
+
    During pod deletion or node drain, occasional connection resets can happen if the local port-forward target disappears. `kubectl port-forward svc/sample-api` still attaches to a specific backend connection; if that backend pod is the one deleted, the port-forward process can exit. In that case the health loop will keep printing `Failed to connect to localhost port 8080` until you restart the port-forward. That means the local tunnel died, not necessarily that the Kubernetes Service is down.
 
 7. Run controlled pod deletion and measure recovery:
@@ -150,6 +160,8 @@ Review these files before validation:
    ```
 
    Expected behavior: the selected pod should move to `Terminating`, and Kubernetes should create a replacement pod. The replacement normally moves through `Pending`, `ContainerCreating` and then `Running` with `READY` becoming `1/1`. Press `Ctrl-C` after the replacement pod is running and ready.
+
+   This is safe because pods are disposable members of a higher-level workload. The Rollout and ReplicaSet notice that one replica disappeared and create a replacement; readiness then controls when the new pod can receive Service traffic.
 
    While the pod is being replaced, the continuous health loop should keep returning successful responses once the port-forward is attached to a live endpoint. If requests fail continuously with `Failed to connect to localhost port 8080`, check the first terminal. If the port-forward exited, restart `kubectl -n sample-api-dev port-forward svc/sample-api 8080:80` and continue observing. If the port-forward is still running but requests fail, then inspect pod readiness, Service endpoints and events before moving on.
 
@@ -174,6 +186,8 @@ Review these files before validation:
    This step tests voluntary disruption handling. `kubectl drain` cordons the node, evicts eligible pods and waits for replacements. The PDB should allow only one sample API pod eviction at a time. If the command blocks with a PDB-related message, that can be correct protection: Kubernetes is refusing to reduce availability below the budget.
 
    Before running the drain, confirm there are at least two schedulable nodes or enough autoscaling capacity for a replacement, no sample API pods are already `Pending` and the PDB `Allowed disruptions` value is `1`. If `Allowed disruptions` is `0`, skip the drain and use pod deletion as the controlled recovery test.
+
+   Draining simulates planned node maintenance. Kubernetes cordons the node so no new pods land there, then evicts eligible pods. A PDB protects voluntary evictions like drain operations, but it cannot prevent every unplanned failure such as a node suddenly disappearing.
 
    Only run this in a lab cluster with enough spare capacity or autoscaling capacity to place replacements. If the replacement pod stays `Pending`, stop and inspect scheduling events; do not keep draining additional nodes. After the test, `kubectl uncordon` returns the node to scheduling service. Confirm the continuous health loop has recovered before ending the lab.
 

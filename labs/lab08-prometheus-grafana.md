@@ -127,6 +127,8 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
    ```
 
    No output means the chart rendered successfully. Any Helm error here will also fail in Argo CD.
+
+   This is a preflight check. It proves Helm can combine the chart and committed values into Kubernetes YAML before Argo CD attempts the same render in the cluster workflow. Output goes to `/dev/null` because you only need to know whether rendering succeeds.
 4. Let Argo CD reconcile the `prometheus` Application from Git:
 
    ```bash
@@ -140,6 +142,8 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
    ```
 
    The refresh command should report that the `prometheus` Application was annotated. After refresh, `SYNC STATUS` should move toward `Synced`; if it stays `OutOfSync` or `Degraded`, describe the Application before checking pods.
+
+   The annotation is a signal to Argo CD to re-read Git and chart state. It is not a manual deployment of Prometheus; Argo CD still performs the reconciliation from the committed desired state.
 
 5. Verify that Prometheus, Grafana and the monitoring CRDs become healthy:
 
@@ -180,6 +184,8 @@ Review the Prometheus and Grafana desired state in `platform-config/clusters/dev
    Open `http://localhost:9090/targets` and confirm that Kubernetes, kube-state-metrics and node-exporter targets are present. Some managed-control-plane targets may be unavailable on EKS depending on endpoint access, but the node, kubelet and kube-state-metrics targets should be active.
 
    `/-/ready` should return `Prometheus Server is Ready`. The API query responses should contain `"status": "success"`; `data.result` should not be empty for `up` once targets have been scraped.
+
+   These checks answer different questions: `/-/ready` asks whether Prometheus itself is usable, `up` asks whether scrape targets are reachable and `kube_pod_info` proves Kubernetes object metrics are being ingested.
 
 8. Get the chart-generated Grafana credentials:
 
