@@ -20,12 +20,12 @@ Concepts introduced in this lab include CI, GitHub Actions workflows, container 
 
 ## Outcome
 
-After this lab, the project repositories have GitHub Actions workflows that validate Terraform, lint Helm charts, test the sample API and publish an immutable sample API image to GHCR on pushes to `main`.
+After this lab, the project repositories have GitHub Actions workflows that validate Terraform, lint Helm charts, test the sample API and publish immutable sample API release images to GHCR from Git release tags.
 
 ## Prerequisites
 
 - Lab 01 - Lab 05 completed
-- Git, Terraform, Helm, kubectl, Python 3 and Docker Desktop or another Docker daemon installed
+- Git, Terraform, Helm, Python 3 and Docker Desktop or another Docker daemon installed
 - GitHub repositories connected to the local workspace
 - Public `sample-api` package available in GitHub Container Registry
 
@@ -37,121 +37,44 @@ Review these files:
 
 | Repository | Workflow file | Purpose |
 |------------|---------------|---------|
-| `sample-api` | `.github/workflows/ci.yaml` | Runs Python tests, builds the container image and publishes it to GHCR on pushes to `main` |
+| `sample-api` | `.github/workflows/ci.yaml` | Runs Python tests, builds the container image and publishes release images to GHCR from Git tags |
 | `helm-charts` | `.github/workflows/helm.yaml` | Installs Helm and lints the reusable `sample-api` chart |
 | `platform-modules` | `.github/workflows/terraform.yaml` | Checks Terraform formatting for reusable modules |
 | `platform-live` | `.github/workflows/terraform.yaml` | Checks Terraform formatting for deployable live environments |
-| `platform-config` | `environments/namespaces.yaml` | Provides a built-in Kubernetes manifest for client-side dry-run validation |
 
 These workflows are repository-local. For example, `helm-charts/.github/workflows/helm.yaml` appears only in the `helm-charts` repository Actions tab, not in `sample-api` or `platform-live`.
 
 ## Step-by-Step Implementation
 
-1. Review the `.github/workflows` files in each repository listed above. Confirm the workflow triggers, permissions and commands match the repository responsibility. A good review checks what event starts the workflow, what permissions it receives, what commands it runs and whether it only validates/builds artifacts. Only `sample-api` should publish the application image; none of these workflows should deploy workloads directly.
-2. Run the repository-level validation commands from the workspace root:
+1. Review the `.github/workflows` files in each repository listed above.
 
-   ```bash
-   cd "$WORKSPACE"
-   printf '\n===== platform-modules Terraform format =====\n'
-   terraform -chdir=platform-modules fmt -recursive
+   A GitHub Actions workflow is a YAML file that tells GitHub what automation to run for that repository. The important parts to understand are:
 
-   printf '\n===== platform-live Terraform format =====\n'
-   terraform -chdir=platform-live fmt -recursive
+   | Workflow field | What it controls | What to check in this lab |
+   |----------------|------------------|---------------------------|
+   | `name` | The workflow name shown in the repository **Actions** tab | Names are short and repository-specific, such as `ci`, `helm` or `terraform` |
+   | `on` | The events that start the workflow | Pull requests validate changes; pushes validate merged changes; `sample-api` tags publish release images |
+   | `permissions` | The default token permissions available to the workflow | `sample-api` needs `packages: write` to publish to GHCR; validation-only workflows do not need package publishing permissions |
+   | `jobs` | One or more independent units of work | Each current workflow has one focused job |
+   | `runs-on` | The GitHub-hosted runner image | The labs use `ubuntu-latest` runners |
+   | `steps` | The commands or reusable actions executed by the job | Steps install tools, run checks, build images or publish images |
 
-   printf '\n===== Helm chart lint =====\n'
-   helm lint helm-charts/charts/sample-api
+   Check the workflow boundaries carefully:
 
-   printf '\n===== Namespace manifest dry-run =====\n'
-   kubectl apply --dry-run=client -f platform-config/environments/namespaces.yaml
-   ```
+   | Repository | Trigger behavior | Job behavior | Deployment boundary |
+   |------------|------------------|--------------|---------------------|
+   | `sample-api` | Pull requests and pushes run tests/builds; tags like `v1.0.0` also publish | Checks out code, installs Python, runs `pytest`, computes an image tag, logs in to GHCR only for release tags and builds the image | Publishes an image artifact only; it does not update Kubernetes |
+   | `helm-charts` | Pushes and pull requests run chart validation | Checks out code, installs Helm and runs `helm lint charts/sample-api` | Validates chart packaging only; it does not install the chart |
+   | `platform-modules` | Pushes and pull requests run Terraform formatting validation | Checks out code, installs Terraform and runs `terraform fmt -check -recursive` | Validates reusable module formatting only; it does not run `terraform apply` |
+   | `platform-live` | Pushes and pull requests run Terraform formatting validation | Checks out code, installs Terraform and runs `terraform fmt -check -recursive` | Validates live Terraform formatting only; it does not provision AWS resources |
 
-   Do not dry-run the whole `platform-config` tree in this lab. It contains future Argo CD, Karpenter and External Secrets resources whose CRDs are installed in later labs.
+   This distinction is the purpose of the lab: CI should make changes safer before they are merged or released, but CI should not silently mutate infrastructure or Kubernetes workloads. Terraform deployment remains explicit, and Kubernetes delivery moves to Argo CD in Lab 07.
 
-   `terraform fmt` may rewrite files if formatting drift exists. In the reference repos, no changed files should remain after this step; if files change, inspect why before continuing. `helm lint` should report zero failed charts, and the namespace dry-run should print resources as `created (dry run)` or `configured (dry run)`.
+2. Run the same checks locally that GitHub Actions runs remotely.
 
-   These local commands mirror what CI checks remotely. Running them yourself helps connect a green GitHub Actions result to concrete tools: Terraform formatting, Helm linting and Kubernetes manifest validation.
-3. Confirm the reference workflow files are present and clean.
+   These commands are not separate lab goals. They exist so you can connect a green workflow run to the exact tool invocation inside the workflow. If one of these commands fails locally, the matching GitHub Actions step should fail for the same reason.
 
-   This lab series uses the public repositories as reference templates. You validate the committed workflow state; you do not push workflow changes to the shared reference repositories.
-
-   In `sample-api`:
-
-   ```bash
-   cd "$WORKSPACE/sample-api"
-   printf '\n===== sample-api git status =====\n'
-   git status
-
-   printf '\n===== sample-api whitespace check =====\n'
-   git diff --check
-
-   printf '\n===== sample-api workflow file =====\n'
-   test -f .github/workflows/ci.yaml
-   ```
-
-   In `helm-charts`:
-
-   ```bash
-   cd "$WORKSPACE/helm-charts"
-   printf '\n===== helm-charts git status =====\n'
-   git status
-
-   printf '\n===== helm-charts whitespace check =====\n'
-   git diff --check
-
-   printf '\n===== Helm workflow file =====\n'
-   test -f .github/workflows/helm.yaml
-   ```
-
-   In `platform-modules`:
-
-   ```bash
-   cd "$WORKSPACE/platform-modules"
-   printf '\n===== platform-modules git status =====\n'
-   git status
-
-   printf '\n===== platform-modules whitespace check =====\n'
-   git diff --check
-
-   printf '\n===== Terraform workflow file =====\n'
-   test -f .github/workflows/terraform.yaml
-   ```
-
-   In `platform-live`:
-
-   ```bash
-   cd "$WORKSPACE/platform-live"
-   printf '\n===== platform-live git status =====\n'
-   git status
-
-   printf '\n===== platform-live whitespace check =====\n'
-   git diff --check
-
-   printf '\n===== Terraform workflow file =====\n'
-   test -f .github/workflows/terraform.yaml
-   ```
-
-   `git diff --check` and `test -f` are silent on success. `git status` should show a clean worktree, and any output from the whitespace check or missing workflow file should be treated as a stop condition.
-
-4. Open each repository in GitHub and inspect a recent workflow run:
-
-   1. Open the repository, for example `helm-charts`.
-   2. Select the **Actions** tab.
-   3. Open the latest workflow run for the reference repository.
-   4. Confirm the run status is green.
-   5. Open each job and expand the command steps.
-   6. Confirm the expected validation command ran successfully.
-
-   Expected workflows:
-
-   | Repository | Workflow | Expected check |
-   |------------|----------|----------------|
-   | `sample-api` | `ci` | `pytest -q` passes, Docker build succeeds and the image is published on pushes to `main` |
-   | `helm-charts` | `helm` | `helm lint charts/sample-api` passes |
-   | `platform-modules` | `terraform` | `terraform fmt -check -recursive` passes |
-   | `platform-live` | `terraform` | `terraform fmt -check -recursive` passes |
-
-   Warnings are not automatically failures. Treat deprecation warnings, such as a GitHub Actions Node.js runtime warning, as maintenance work if the job is still green. Treat red steps, non-zero exits, missing workflow runs, or skipped required checks as failures to fix before moving on.
-5. Run the same application checks locally. The `sample-api` checks require the Python virtual environment shown below because `pytest` is a project dependency, not a global requirement. The Docker build check also requires Docker Desktop or another Docker daemon to be running.
+   Start with the application workflow checks. The Python virtual environment isolates this application's dependencies from your system Python. The Docker build creates a local test image only; it does not publish anything to GHCR.
 
    ```bash
    cd "$WORKSPACE/sample-api"
@@ -173,18 +96,38 @@ These workflows are repository-local. For example, `helm-charts/.github/workflow
    printf '\n===== Helm chart lint =====\n'
    cd ../helm-charts && helm lint charts/sample-api
 
-   printf '\n===== platform-modules Terraform format =====\n'
+   printf '\n===== platform-modules Terraform format check =====\n'
    cd ../platform-modules && terraform fmt -check -recursive
 
-   printf '\n===== platform-live Terraform format =====\n'
+   printf '\n===== platform-live Terraform format check =====\n'
    cd ../platform-live && terraform fmt -check -recursive
    ```
 
    Expected output: `pytest -q` reports passing tests, Docker finishes with `Successfully tagged sample-api:lab06`, Helm lint reports zero failed charts and Terraform format checks print no filenames. A filename from `terraform fmt -check` means that repository is not formatted as CI expects.
 
-   The Python virtual environment isolates this application's dependencies from your system Python. The Docker build creates a local test image only; it does not publish anything to GHCR.
+   Notice the difference between `terraform fmt -check` and `terraform fmt`. The workflow uses `-check` because CI should report formatting drift without rewriting files. Developers can run `terraform fmt -recursive` locally when they intentionally want Terraform to rewrite formatting.
 
-6. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
+3. Open each repository in GitHub and inspect a recent workflow run:
+
+   1. Open the repository, for example `helm-charts`.
+   2. Select the **Actions** tab.
+   3. Open the latest workflow run for the reference repository.
+   4. Confirm the run status is green.
+   5. Open each job and expand the command steps.
+   6. Confirm the expected validation command ran successfully.
+
+   Expected workflows:
+
+   | Repository | Workflow | Expected check |
+   |------------|----------|----------------|
+   | `sample-api` | `ci` | `pytest -q` passes, Docker build succeeds and release tags publish images |
+   | `helm-charts` | `helm` | `helm lint charts/sample-api` passes |
+   | `platform-modules` | `terraform` | `terraform fmt -check -recursive` passes |
+   | `platform-live` | `terraform` | `terraform fmt -check -recursive` passes |
+
+   Warnings are not automatically failures. Treat deprecation warnings, such as a GitHub Actions Node.js runtime warning, as maintenance work if the job is still green. Treat red steps, non-zero exits, missing workflow runs, or skipped required checks as failures to fix before moving on.
+
+4. Verify the initial `sample-api` release image used by GitOps in the next lab. The workflow publishes Docker image tags from Git tags. The committed reference release `v1.0.0` publishes `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0`.
 
    The shared EKS cluster pulls `ghcr.io/${GITHUB_ORG}/sample-api:1.0.0` in Lab 07. The reference package is public, so no Docker or Kubernetes registry credentials are required for this image.
 
