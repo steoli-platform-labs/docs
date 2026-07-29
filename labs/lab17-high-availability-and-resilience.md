@@ -40,18 +40,22 @@ Review these files before validation:
 
 ## Step-by-Step Implementation
 
-1. Review the currently configured replica and autoscaling values:
+1. Review the currently configured replica, autoscaling and disruption-budget values:
 
    ```bash
    cd "$WORKSPACE"
 
    printf '\n===== Default sample-api replica and autoscaling values =====\n'
    yq '.replicaCount, .autoscaling' helm-charts/charts/sample-api/values.yaml
+   printf '\n===== Default sample-api PodDisruptionBudget values =====\n'
+   yq '.pdb' helm-charts/charts/sample-api/values.yaml
    printf '\n===== Dev sample-api Helm values =====\n'
    yq '.spec.source.helm.values' platform-config/clusters/dev/sample-api-dev.yaml
    ```
 
-   Confirm the dev environment keeps a small steady-state replica count while still allowing controlled maintenance. The chart uses a `PodDisruptionBudget` with `maxUnavailable: 1`, which protects the service from losing both replicas during voluntary disruption without requiring an extra baseline pod.
+   Expected output: chart defaults should show `replicaCount: 3`, autoscaling enabled with `minReplicas: 3`, and `pdb: {enabled: true, maxUnavailable: 1}`. The dev environment values should override the steady-state size to `replicaCount: 2` and autoscaling `minReplicas: 2`, while not overriding `pdb`.
+
+   Because dev does not override `pdb`, it inherits the chart's `PodDisruptionBudget` with `maxUnavailable: 1`. With two ready dev replicas, Kubernetes should allow one voluntary disruption at a time, such as one pod eviction during node drain, while preventing both replicas from being voluntarily evicted together.
 
 2. Review the sample API chart templates for probes and disruption protection:
 
