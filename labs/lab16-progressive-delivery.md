@@ -173,7 +173,9 @@ Review these files before validation:
    kubectl -n sample-api-rollout-demo get rollout sample-api-rollout-demo -w
    ```
 
-   The Rollout should create a new ReplicaSet and progress through the canary steps. Press `Ctrl-C` after you have observed the status change. If the image tag and `APP_VERSION` value do not change together, the pod image and application-reported version can drift.
+   The Rollout should create a new ReplicaSet and progress through the canary steps. During the canary, it is normal to briefly see more current pods than the desired replica count. For example, `DESIRED=2`, `CURRENT=3`, `UP-TO-DATE=1`, `AVAILABLE=2` means Argo Rollouts has created one new `1.0.1` canary pod while keeping the stable `1.0.0` pods available. This is not finished yet.
+
+   Keep watching until the rollout settles back to the desired replica count with the new ReplicaSet fully updated. The final healthy state should look like `DESIRED=2`, `CURRENT=2`, `UP-TO-DATE=2`, `AVAILABLE=2`. The canary strategy includes pause steps, so this can take a few minutes. Press `Ctrl-C` after you have seen the rollout progress, or after it reaches the final healthy state, then continue to the inspection step. If the image tag and `APP_VERSION` value do not change together, the pod image and application-reported version can drift.
 
 6. Inspect the rollout result:
 
