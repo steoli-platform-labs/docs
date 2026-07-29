@@ -88,19 +88,25 @@ Review these files before cleanup:
 
    printf '\n===== Schedule sample-api lab secrets for deletion =====\n'
    for secret in \
+     platform-labs/sample-api \
      platform-labs/sample-api-dev \
      platform-labs/sample-api-staging \
      platform-labs/sample-api-production
    do
-     aws secretsmanager delete-secret \
-       --secret-id "$secret" \
-       --recovery-window-in-days 7 \
-       --region "$AWS_REGION" \
-       --profile "$AWS_PROFILE" || true
+     if aws secretsmanager describe-secret --secret-id "$secret" --region "$AWS_REGION" --profile "$AWS_PROFILE" >/dev/null 2>&1; then
+       aws secretsmanager delete-secret \
+         --secret-id "$secret" \
+         --recovery-window-in-days 7 \
+         --region "$AWS_REGION" \
+         --profile "$AWS_PROFILE"
+     else
+       printf 'Secret not found, skipping: %s\n' "$secret"
+     fi
    done
 
    printf '\n===== Secret deletion status =====\n'
    aws secretsmanager list-secrets \
+     --include-planned-deletion \
      --region "$AWS_REGION" \
      --profile "$AWS_PROFILE" \
      --query 'SecretList[?starts_with(Name, `platform-labs/sample-api`)].{Name:Name,DeletedDate:DeletedDate}' \
