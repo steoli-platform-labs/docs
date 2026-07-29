@@ -131,7 +131,7 @@ Review these files before cleanup:
 
    Argo CD continuously tries to make the cluster match Git. Deleting the root Applications first prevents Argo CD from recreating child Applications while you are tearing down the cluster.
 
-5. Delete workload and platform namespaces from Kubernetes:
+5. Delete workload namespaces first, then platform namespaces:
 
    ```bash
    printf '\n===== Delete workload namespaces =====\n'
@@ -139,6 +139,18 @@ Review these files before cleanup:
      sample-api-production \
      sample-api-staging \
      sample-api-dev \
+     --ignore-not-found \
+     --wait=false
+
+   printf '\n===== Wait for workload namespaces to disappear =====\n'
+   kubectl wait --for=delete namespace/sample-api-production --timeout=10m || true
+   printf '\n===== Wait for staging namespace to disappear =====\n'
+   kubectl wait --for=delete namespace/sample-api-staging --timeout=10m || true
+   printf '\n===== Wait for dev namespace to disappear =====\n'
+   kubectl wait --for=delete namespace/sample-api-dev --timeout=10m || true
+
+   printf '\n===== Delete platform namespaces =====\n'
+   kubectl delete namespace \
      monitoring \
      external-secrets \
      karpenter \
@@ -151,7 +163,7 @@ Review these files before cleanup:
    kubectl get namespaces
    ```
 
-   Namespace deletion can take time because Kubernetes must remove namespaced resources and finalizers. If a namespace stays `Terminating`, inspect it before destroying the cluster so you understand what is blocking cleanup.
+   Delete workload namespaces before `external-secrets` so External Secrets Operator and its webhook are still available to clean up `ExternalSecret` finalizers. Namespace deletion can take time because Kubernetes must remove namespaced resources and finalizers. If a namespace stays `Terminating`, inspect it before destroying the cluster so you understand what is blocking cleanup.
 
 6. Confirm Karpenter-created capacity is gone or no longer needed:
 
@@ -277,6 +289,21 @@ If namespaces are stuck terminating:
 - Inspect finalizers and events for the namespace.
 - Confirm the API server is still reachable before destroying EKS.
 - Delete GitOps roots first so controllers do not recreate resources while cleanup is in progress.
+- If the namespace condition mentions `external-secrets-webhook.external-secrets.svc` not found, the External Secrets webhook was removed before workload `ExternalSecret` objects finished deleting. During final decommission, remove the stale webhook configurations and then remove the orphaned `ExternalSecret` finalizers:
+
+```bash
+printf '\n===== Remove stale External Secrets webhooks =====\n'
+kubectl delete validatingwebhookconfiguration externalsecret-validate secretstore-validate --ignore-not-found
+
+printf '\n===== Remove orphaned ExternalSecret finalizers =====\n'
+for ns in sample-api-dev sample-api-staging sample-api-production; do
+  printf '\n===== Remove ExternalSecret finalizer in %s =====\n' "$ns"
+  kubectl -n "$ns" patch externalsecret sample-api --type=merge -p '{"metadata":{"finalizers":[]}}' || true
+done
+
+printf '\n===== Namespace status after finalizer cleanup =====\n'
+kubectl get namespaces
+```
 
 If AWS resources remain after Terraform destroy:
 
