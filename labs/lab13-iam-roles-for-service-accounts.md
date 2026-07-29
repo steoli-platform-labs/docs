@@ -78,7 +78,7 @@ Before starting this lab:
 
 Review these files before validation:
 
-- `platform-live/environments/dev`: Terraform outputs for the EKS cluster, OIDC provider and controller IAM roles.
+- `platform-live/environments/shared`: Terraform outputs for the EKS cluster, OIDC provider and controller IAM roles.
 - `platform-modules/modules/eks/karpenter.tf`: Karpenter IAM role and EKS Pod Identity association.
 - `platform-modules/modules/eks/external-secrets.tf`: External Secrets IAM role and EKS Pod Identity association.
 - `platform-config/clusters/dev/external-secrets.yaml` and `platform-config/clusters/dev/karpenter.yaml`: GitOps Applications for AWS-integrated controllers.
@@ -88,7 +88,7 @@ Review these files before validation:
 1. Confirm the EKS cluster has an OIDC issuer and matching IAM OIDC provider:
 
    ```bash
-   cd "$WORKSPACE/platform-live/environments/dev"
+   cd "$WORKSPACE/platform-live/environments/shared"
    export AWS_PAGER=""
 
    CLUSTER_NAME=$(terraform output -raw cluster_name)
@@ -104,7 +104,7 @@ Review these files before validation:
      --output text
    ```
 
-   `terraform output -raw cluster_name` reads the actual EKS cluster name created by the shared infrastructure root. IRSA requires both the EKS OIDC issuer URL and a matching IAM OIDC provider. If either output is empty, stop and reconcile `platform-live/environments/dev` before continuing.
+   `terraform output -raw cluster_name` reads the actual EKS cluster name created by the shared infrastructure root. IRSA requires both the EKS OIDC issuer URL and a matching IAM OIDC provider. If either output is empty, stop and reconcile `platform-live/environments/shared` before continuing.
 
 2. Inspect the existing AWS-integrated controller service accounts:
 
@@ -136,9 +136,9 @@ Review these files before validation:
    cd "$WORKSPACE"
 
    printf '\n===== Karpenter controller role ARN =====\n'
-   terraform -chdir=platform-live/environments/dev output karpenter_controller_role_arn
+   terraform -chdir=platform-live/environments/shared output karpenter_controller_role_arn
    printf '\n===== External Secrets role ARN =====\n'
-   terraform -chdir=platform-live/environments/dev output external_secrets_role_arn
+   terraform -chdir=platform-live/environments/shared output external_secrets_role_arn
 
    printf '\n===== Terraform workload identity resources =====\n'
    grep -R "aws_eks_pod_identity_association\|secretsmanager:GetSecretValue\|ec2:RunInstances" -n \

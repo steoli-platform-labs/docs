@@ -160,9 +160,9 @@ This lab uses `platform-modules` for reusable Terraform logic and `platform-live
 | `platform-modules/modules/core/vpc.tf` | Owns reusable VPC, subnet and routing logic |
 | `platform-modules/modules/core/variables.tf` | Defines reusable module inputs |
 | `platform-modules/modules/core/outputs.tf` | Exposes subnet and VPC IDs to live environments |
-| `platform-live/environments/dev/network.tf` | Composes reusable modules for the shared lab network |
-| `platform-live/environments/dev/backend.hcl.example` | Documents the remote backend configuration shape |
-| `platform-live/environments/dev/terraform.tfvars.example` | Provides safe example values for the shared lab network |
+| `platform-live/environments/shared/network.tf` | Composes reusable modules for the shared lab network |
+| `platform-live/environments/shared/backend.hcl.example` | Documents the remote backend configuration shape |
+| `platform-live/environments/shared/terraform.tfvars.example` | Provides safe example values for the shared lab network |
 
 ## Step-by-Step Implementation
 
@@ -178,7 +178,7 @@ Follow the steps below to configure the remote backend, review the network desig
    Move to the shared infrastructure root module:
 
    ```bash
-   cd ../platform-live/environments/dev
+   cd ../platform-live/environments/shared
    cp backend.hcl.example backend.hcl
    cp terraform.tfvars.example terraform.tfvars
    export TF_VAR_workspace_path="$WORKSPACE"
@@ -307,7 +307,7 @@ Follow the steps below to configure the remote backend, review the network desig
    ```bash
    export AWS_PAGER=""
 
-   aws s3api head-object   --bucket "$(awk -F'"' '/bucket/ {print $2}' backend.hcl)"   --key "platform-live/dev/terraform.tfstate"
+   aws s3api head-object   --bucket "$(awk -F'"' '/bucket/ {print $2}' backend.hcl)"   --key "platform-live/shared/terraform.tfstate"
    ```
 
    A successful `head-object` prints JSON metadata for the remote state object. `NoSuchKey`, `NotFound` or `AccessDenied` means the bucket, key, Region or AWS profile does not match the backend configuration.

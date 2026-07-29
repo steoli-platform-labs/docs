@@ -39,7 +39,7 @@ Review these files before validation:
 - `platform-config/clusters/dev/karpenter.yaml`: Argo CD Application for the Karpenter Helm chart.
 - `platform-config/clusters/dev/karpenter-provisioning.yaml`: Argo CD Application for Karpenter `NodePool` and `EC2NodeClass` resources.
 - `platform-config/addons/karpenter/nodepool.yaml` and `platform-config/addons/karpenter/ec2nodeclass.yaml`: provisioning resources required for Karpenter to create nodes.
-- `platform-live/environments/dev`: Terraform outputs and tags that Karpenter depends on, such as cluster name, private subnets, security groups and node IAM role details.
+- `platform-live/environments/shared`: Terraform outputs and tags that Karpenter depends on, such as cluster name, private subnets, security groups and node IAM role details.
 - `platform-modules/modules/eks/karpenter.tf`: Karpenter controller IAM role, node IAM role, EKS Pod Identity association and node access entry.
 
 ## Step-by-Step Implementation
@@ -67,7 +67,7 @@ Review these files before validation:
 3. Confirm the AWS inputs that Karpenter needs:
 
    ```bash
-   cd "$WORKSPACE/platform-live/environments/dev"
+   cd "$WORKSPACE/platform-live/environments/shared"
    export AWS_PAGER=""
 
    CLUSTER_NAME=$(terraform output -raw cluster_name)
@@ -94,7 +94,7 @@ Review these files before validation:
 4. Verify the Terraform resources required by Karpenter:
 
    ```bash
-   cd "$WORKSPACE/platform-live/environments/dev"
+   cd "$WORKSPACE/platform-live/environments/shared"
    printf '\n===== Karpenter controller role ARN =====\n'
    terraform output -raw karpenter_controller_role_arn
    printf '\n===== Karpenter node role name =====\n'

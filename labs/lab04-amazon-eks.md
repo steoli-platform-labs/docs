@@ -31,7 +31,7 @@ After this lab, the shared infrastructure Terraform root module manages an activ
 - Lab 01 - Lab 03 completed.
 - AWS CLI, Terraform and kubectl installed.
 - The shared infrastructure root module is already applied with networking enabled.
-- Terraform can run from `platform-live/environments/dev`.
+- Terraform can run from `platform-live/environments/shared`.
 
 ## Files to Review
 
@@ -42,8 +42,8 @@ This lab reviews the reusable EKS module in `platform-modules` and the shared AW
 | `platform-modules/modules/eks/main.tf` | Defines reusable EKS cluster and node group resources |
 | `platform-modules/modules/eks/variables.tf` | Exposes EKS version, subnet and node configuration inputs |
 | `platform-modules/modules/eks/outputs.tf` | Exposes cluster connection details to the live stack |
-| `platform-live/environments/dev/eks.tf` | Enables or disables EKS in the shared AWS infrastructure |
-| `platform-live/environments/dev/terraform.tfvars.example` | Shows safe defaults for enabling EKS |
+| `platform-live/environments/shared/eks.tf` | Enables or disables EKS in the shared AWS infrastructure |
+| `platform-live/environments/shared/terraform.tfvars.example` | Shows safe defaults for enabling EKS |
 
 ## Step-by-Step Implementation
 
@@ -52,7 +52,7 @@ Enable EKS through Terraform, select a supported Kubernetes version and apply th
 1. Open the shared infrastructure root module:
 
    ```bash
-   cd "$WORKSPACE/platform-live/environments/dev"
+   cd "$WORKSPACE/platform-live/environments/shared"
    ```
 
 2. Check the EKS versions available in your AWS region:

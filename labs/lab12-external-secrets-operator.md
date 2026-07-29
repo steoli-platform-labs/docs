@@ -38,7 +38,7 @@ Review these files before validation:
 - `platform-config/clusters/dev/external-secrets-config.yaml`: Argo CD Application that applies the External Secrets configuration under `addons/external-secrets`.
 - `platform-config/addons/external-secrets/cluster-secret-store.yaml`: `ClusterSecretStore` for AWS Secrets Manager.
 - `platform-modules/modules/eks/external-secrets.tf`: IAM role, policy and EKS Pod Identity association for External Secrets Operator.
-- `platform-live/environments/dev/outputs.tf`: exposes the External Secrets IAM role ARN for validation.
+- `platform-live/environments/shared/outputs.tf`: exposes the External Secrets IAM role ARN for validation.
 - `helm-charts/charts/sample-api/templates/externalsecret.yaml`: optional workload-level ExternalSecret template.
 - `platform-config/clusters/dev/sample-api-dev.yaml`: values that enable or disable the dev sample API ExternalSecret.
 
@@ -124,10 +124,10 @@ Review these files before validation:
 
    ```bash
    cd "$WORKSPACE"
-   CLUSTER_NAME="$(terraform -chdir=platform-live/environments/dev output -raw cluster_name)"
+   CLUSTER_NAME="$(terraform -chdir=platform-live/environments/shared output -raw cluster_name)"
 
    printf '\n===== External Secrets role ARN =====\n'
-   terraform -chdir=platform-live/environments/dev output external_secrets_role_arn
+   terraform -chdir=platform-live/environments/shared output external_secrets_role_arn
 
    printf '\n===== External Secrets Pod Identity association =====\n'
    aws eks list-pod-identity-associations \
@@ -136,7 +136,7 @@ Review these files before validation:
      --service-account external-secrets
    ```
 
-   These Terraform-managed resources were created when you applied the current shared AWS infrastructure in the earlier Terraform labs. The role output should exist and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account. If either check is missing, stop and reconcile `platform-live/environments/dev` before continuing; otherwise the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
+   These Terraform-managed resources were created when you applied the current shared AWS infrastructure in the earlier Terraform labs. The role output should exist and the EKS Pod Identity association should target the `external-secrets/external-secrets` Kubernetes service account. If either check is missing, stop and reconcile `platform-live/environments/shared` before continuing; otherwise the `ClusterSecretStore` can exist but will report `Ready=False` because the operator cannot create an AWS Secrets Manager client.
 
    The Pod Identity association output should include the `external-secrets` namespace and `external-secrets` service account. An empty `associations` list is a stop condition.
 

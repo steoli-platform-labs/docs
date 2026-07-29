@@ -37,7 +37,7 @@ Before starting this lab:
 
 Review these files before cleanup:
 
-- `platform-live/environments/dev`: Terraform root module for the shared VPC, EKS cluster, IAM roles and supporting resources.
+- `platform-live/environments/shared`: Terraform root module for the shared VPC, EKS cluster, IAM roles and supporting resources.
 - `platform-bootstrap`: Terraform backend bucket and bootstrap validation scripts.
 - `platform-config/bootstrap/root-application-*.yaml`: Argo CD environment root Applications.
 - `platform-config/environments/namespaces.yaml`: namespaces created for the platform environments.
@@ -192,7 +192,7 @@ Review these files before cleanup:
 7. Destroy the shared Terraform infrastructure:
 
    ```bash
-   cd "$WORKSPACE/platform-live/environments/dev"
+   cd "$WORKSPACE/platform-live/environments/shared"
 
    printf '\n===== Terraform init =====\n'
    terraform init -backend-config=backend.hcl
@@ -315,7 +315,7 @@ The shared AWS infrastructure is removed, GitOps is no longer reconciling lab wo
 
 - Temporary namespaces and chaos resources are removed.
 - Argo CD root Applications are deleted before cluster teardown.
-- Terraform destroy for `platform-live/environments/dev` completes successfully.
+- Terraform destroy for `platform-live/environments/shared` completes successfully.
 - `terraform state list` prints no managed resources after destroy.
 - The shared EKS cluster and active lab NAT gateways are absent.
 - Lab Secrets Manager values are scheduled for deletion or already deleted.
